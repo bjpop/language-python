@@ -3,11 +3,11 @@ module Language.Python.Version3.Parser.Lexer
    (initStartCodeStack, lexToken, endOfFileToken, lexCont) where
 
 import Language.Python.Version3.Parser.Token hiding (True, False)
-import qualified Language.Python.Version3.Parser.Token 
+import qualified Language.Python.Version3.Parser.Token as Token
 import Language.Python.Version3.Parser.ParserMonad
-import Language.Python.SrcLocation
+import Language.Python.Data.SrcLocation
 import qualified Data.Map as Map
-import Monad (liftM)
+import Control.Monad (liftM)
 import Data.List (foldl')
 import Numeric (readHex, readOct)
 import qualified Data.ByteString.Char8 as BS (pack)

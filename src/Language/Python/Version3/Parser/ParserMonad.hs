@@ -26,7 +26,7 @@ module Language.Python.Version3.Parser.ParserMonad
    , getParenStackDepth
    ) where
 
-import Language.Python.SrcLocation (SrcLocation (..))
+import Language.Python.Data.SrcLocation (SrcLocation (..))
 import Language.Python.Version3.Parser.Token (Token (..))
 
 newtype ParseError = ParseError ([String], SrcLocation)

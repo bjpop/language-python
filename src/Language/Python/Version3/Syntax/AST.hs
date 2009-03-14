@@ -24,7 +24,7 @@ module Language.Python.Version3.Syntax.AST
    )
    where
 
-import Token ( Ident (..) ) 
+import Language.Python.Version3.Parser.Token ( Ident (..) ) 
 import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------

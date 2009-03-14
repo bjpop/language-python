@@ -4,7 +4,7 @@ module Language.Python.Version3.Parser.Token
    )
 where
 
-import SrcLocation (SrcLocation (..), Location (location))
+import Language.Python.Data.SrcLocation (SrcLocation (..), Location (location))
 import qualified Data.ByteString.Char8 as BS (ByteString)
 
 newtype Ident = Ident String

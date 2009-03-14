@@ -4,11 +4,11 @@ module Language.Python.Version3.Parser.Parser where
 import Data.Char (isSpace, isAlpha, isDigit)
 import Language.Python.Version3.Parser.Lexer
 import Language.Python.Version3.Parser.Token hiding (True, False)
-import qualified Language.Python.Version3.Parser.Token 
-import Language.Python.Version3.Syntax.AST
+import qualified Language.Python.Version3.Parser.Token as Token
+import Language.Python.Version3.Syntax.AST as AST
 import Language.Python.Version3.Parser.ParserUtils
 import Language.Python.Version3.Parser.ParserMonad
-import Language.Python.SrcLocation
+import Language.Python.Data.SrcLocation
 import Data.List (foldl')
 import qualified Data.ByteString.Char8 as BS (ByteString)
 }

@@ -1,6 +1,6 @@
 module Language.Python.Version3.Syntax.Pretty where
 
-import AST 
+import Language.Python.Version3.Syntax.AST 
 
 -- import Text.PrettyPrint.HughesPJ as HPJ
 import Text.PrettyPrint as TextPP

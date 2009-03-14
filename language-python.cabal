@@ -14,13 +14,12 @@ homepage:            http://projects.haskell.org/language-python/
 build-depends:       base
 build-type:          Simple
 stability:           experimental
-ghc-options:         
 extra-source-files:  src/Language/Python/Version3/Parser/Parser.y 
                      src/Language/Python/Version3/Parser/Lexer.x 
 
 Library
    hs-source-dirs:   src
-   build-depends:    base, containers, pretty, bytestring
+   build-depends:    base, containers, pretty, bytestring, array
    build-tools:      happy, alex
    exposed-modules:
       Language.Python.Data.SrcLocation
