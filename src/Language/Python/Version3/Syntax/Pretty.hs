@@ -1,3 +1,15 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      : Language.Python.Version3.Syntax.Pretty 
+-- Copyright   : (c) 2009 Bernie Pope 
+-- License     : BSD-style
+-- Maintainer  : bjpop@csse.unimelb.edu.au
+-- Stability   : experimental
+-- Portability : ghc
+--
+-- Pretty printing of the Python version 3 abstract syntax. 
+-----------------------------------------------------------------------------
+
 module Language.Python.Version3.Syntax.Pretty where
 
 import Language.Python.Version3.Syntax.AST 

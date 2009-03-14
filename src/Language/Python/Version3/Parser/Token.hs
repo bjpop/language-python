@@ -1,3 +1,16 @@
+{-# OPTIONS  #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      : Language.Python.Version3.Parser.Token 
+-- Copyright   : (c) 2009 Bernie Pope 
+-- License     : BSD-style
+-- Maintainer  : bjpop@csse.unimelb.edu.au
+-- Stability   : experimental
+-- Portability : ghc
+--
+-- Lexical tokens for the Python version 3 lexer. 
+-----------------------------------------------------------------------------
+
 module Language.Python.Version3.Parser.Token 
    ( Token (..)
    , Ident (..)

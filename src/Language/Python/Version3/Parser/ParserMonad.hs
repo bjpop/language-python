@@ -1,3 +1,16 @@
+{-# OPTIONS  #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      : Language.Python.Version3.Parser.ParserMonad 
+-- Copyright   : (c) 2009 Bernie Pope 
+-- License     : BSD-style
+-- Maintainer  : bjpop@csse.unimelb.edu.au
+-- Stability   : experimental
+-- Portability : ghc
+--
+-- Monad support for Python parser and lexer. 
+-----------------------------------------------------------------------------
+
 module Language.Python.Version3.Parser.ParserMonad 
    ( P
    , execParser

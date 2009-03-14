@@ -1,3 +1,16 @@
+{-# OPTIONS  #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      : Language.Python.Version3.Parser.ParserUtils 
+-- Copyright   : (c) 2009 Bernie Pope 
+-- License     : BSD-style
+-- Maintainer  : bjpop@csse.unimelb.edu.au
+-- Stability   : experimental
+-- Portability : ghc
+--
+-- Various utilities to support the Python parser. 
+-----------------------------------------------------------------------------
+
 module Language.Python.Version3.Parser.ParserUtils where
 
 import Language.Python.Version3.Syntax.AST as AST

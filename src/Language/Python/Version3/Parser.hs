@@ -1,3 +1,16 @@
+{-# OPTIONS  #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      : Language.Python.Version3.Parser
+-- Copyright   : (c) 2009 Bernie Pope 
+-- License     : BSD-style
+-- Maintainer  : bjpop@csse.unimelb.edu.au
+-- Stability   : experimental
+-- Portability : ghc
+--
+-- A parser for Python version 3 programs. 
+-----------------------------------------------------------------------------
+
 module Language.Python.Version3.Parser (parse) where
 
 import Language.Python.Version3.Parser.Parser (parseFileInput)
