@@ -23,7 +23,7 @@ module Language.Python.Version3.Parser.ParserMonad
    , setInput
    , getLastToken
    , setLastToken
-   , ParseError (..)
+   , ParseError (ParseError)
    , State
    , initialState
    , pushStartCode
@@ -42,7 +42,8 @@ module Language.Python.Version3.Parser.ParserMonad
 import Language.Python.Data.SrcLocation (SrcLocation (..))
 import Language.Python.Version3.Parser.Token (Token (..))
 
-newtype ParseError = ParseError ([String], SrcLocation)
+-- | Parse error. A list of error messages and a source location.
+newtype ParseError = ParseError ([String], SrcLocation) 
    deriving Show
 
 data ParseResult a

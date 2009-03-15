@@ -9,15 +9,16 @@
 -- Portability : ghc
 --
 -- Source location information for the Python parser. 
+-- XXX We will probably move to source spans at some point.
 -----------------------------------------------------------------------------
 
 module Language.Python.Data.SrcLocation (
-  -- * Classes 
+  -- * Projection of locations from values 
   Location (..),
-  -- * Types
+  -- * Construction 
   SrcLocation (..),
-  -- * Functions
   initialSrcLocation,
+  -- * Modification
   incColumn, 
   incLine,
   incTab 
@@ -26,7 +27,6 @@ module Language.Python.Data.SrcLocation (
 -- | A location for a syntactic entity from the source code.
 -- The location is specified by its filename, and starting row
 -- and column. 
--- XXX We will probably move to source spans at some point.
 data SrcLocation = 
    Sloc { sloc_filename :: String
         , sloc_row :: !Int
@@ -35,11 +35,14 @@ data SrcLocation =
    | NoLocation
    deriving (Eq, Ord, Show)
 
+-- | Types which have a source location.
 class Location a where
+   -- | Project the location from a value.
    location :: a -> SrcLocation 
-   -- default declaration
+   -- | By default a value has no location. 
    location x = NoLocation
 
+-- | Construct the initial source location for a file.
 initialSrcLocation :: String -> SrcLocation
 initialSrcLocation filename 
     = Sloc 
@@ -48,7 +51,7 @@ initialSrcLocation filename
       , sloc_column = 1
       }
 
--- | Increment the column of a location by character. 
+-- | Increment the column of a location by one. 
 incColumn :: Int -> SrcLocation -> SrcLocation
 incColumn n loc@(Sloc { sloc_column = col })
    = loc { sloc_column = col + n }
@@ -60,7 +63,7 @@ incTab loc@(Sloc { sloc_column = col })
    where
    newCol = col + 8 - (col - 1) `mod` 8
 
--- | Increment the line (row) number of a location by one.
+-- | Increment the line number (row) of a location by one.
 incLine :: Int -> SrcLocation -> SrcLocation
 incLine n loc@(Sloc { sloc_row = row }) 
    = loc { sloc_column = 1, sloc_row = row + n }

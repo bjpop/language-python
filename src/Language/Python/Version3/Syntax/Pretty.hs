@@ -7,31 +7,32 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
--- Pretty printing of the Python version 3 abstract syntax. 
+-- Pretty printing of the Python version 3 abstract syntax. XXX not quite
+-- complete.
 -----------------------------------------------------------------------------
 
 module Language.Python.Version3.Syntax.Pretty where
 
 import Language.Python.Version3.Syntax.AST 
 
--- import Text.PrettyPrint.HughesPJ as HPJ
 import Text.PrettyPrint as TextPP
 import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------
 
--- all types which can be turned into a Doc
+-- | All types which can be transformed into a 'Doc'.
 class Pretty a where
    pretty :: a -> Doc
 
--- turn values into printable strings 
+-- | Transform values into strings.
 prettyText :: Pretty a => a -> String
 prettyText = render . pretty
 
--- conditionally wrap parentheses around an item
+-- | Conditionally wrap parentheses around an item.
 parensIf :: Pretty a => (a -> Bool) -> a -> Doc
 parensIf test x = if test x then parens $ pretty x else pretty x 
 
+-- | A list of things separated by commas.
 commaList :: Pretty a => [a] -> Doc
 commaList = hsep . punctuate comma . map pretty 
 
@@ -60,9 +61,9 @@ prettyString :: String -> Doc
    -- XXX should handle the escaping properly
 prettyString str = text (show str)
 
-instance Pretty Program where
-   -- pretty :: Program -> Doc 
-   pretty (Program stmts) = vcat $ map pretty stmts 
+instance Pretty Module where
+   -- pretty :: Module -> Doc 
+   pretty (Module stmts) = vcat $ map pretty stmts 
 
 instance Pretty Ident where
    pretty (Ident name) = text name
@@ -170,7 +171,7 @@ instance Pretty Statement where
    pretty (Global { global_vars = idents }) = text "global" <+> commaList idents
    pretty (NonLocal { nonLocal_vars = idents }) = text "nonlocal" <+> commaList idents
    pretty (Assert { assert_exprs = es }) = text "assert" <+> commaList es
-   pretty other = text "Statement"
+   -- pretty other = text "Statement"
 
 prettyHandlers :: [Handler] -> Doc
 prettyHandlers = foldr (\next rec -> prettyHandler next $+$ rec) empty
@@ -196,7 +197,7 @@ instance Pretty Parameter where
    pretty (VarArgsKeyword { param_name = ident, param_annotation = annot })
       = text "**" <> pretty ident <> (maybe empty (\e -> colon <> pretty e) annot)
    pretty EndPositional = char '*' 
-   pretty x = text "Parameter"
+   -- pretty x = text "Parameter"
 
 instance Pretty Argument where
    pretty (ArgExpr { arg_expr = e }) = pretty e
@@ -204,7 +205,7 @@ instance Pretty Argument where
    pretty (ArgVarArgsKeyword { arg_expr = e }) = text "**" <> pretty e
    pretty (ArgKeyword { arg_keyword = ident, arg_expr = e }) 
       = pretty ident <> equals <> pretty e
-   pretty x = text "Argument"
+   -- pretty x = text "Argument"
 
 instance Pretty a => Pretty (Comprehension a) where
    pretty x = text "Comprehension"
@@ -247,13 +248,13 @@ instance Pretty Expr where
    pretty (Dictionary { dict_mappings = mappings })
       = braces (hsep (punctuate comma $ map (\ (e1,e2) -> pretty e1 <> colon <> pretty e2) mappings))
    pretty (Set { set_exprs = es }) = braces $ commaList es
-   pretty x = text "Expr"
+   -- pretty x = text "Expr"
 
 instance Pretty Slice where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })
       = pretty lower <> colon <> pretty upper <> (maybe empty (\s -> colon <> pretty s) stride)
    pretty (SliceExpr { slice_expr = e }) = pretty e
-   pretty x = text "Slice"
+   -- pretty x = text "Slice"
 
 instance Pretty Op where
    pretty And = text "and"
