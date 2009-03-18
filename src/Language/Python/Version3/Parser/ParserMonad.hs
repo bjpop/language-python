@@ -14,6 +14,7 @@
 module Language.Python.Version3.Parser.ParserMonad 
    ( P
    , execParser
+   , runParser
    , failP
    , thenP
    , returnP
@@ -24,7 +25,7 @@ module Language.Python.Version3.Parser.ParserMonad
    , getLastToken
    , setLastToken
    , ParseError (ParseError)
-   , State
+   , State (..)
    , initialState
    , pushStartCode
    , popStartCode
@@ -83,6 +84,12 @@ execParser (P parser) initialState =
    case parser initialState of
       PFailed message errloc -> Left (ParseError (message, errloc))
       POk st result -> Right result
+
+runParser :: P a -> State -> Either ParseError (State, a)
+runParser (P parser) initialState =
+   case parser initialState of
+      PFailed message errloc -> Left (ParseError (message, errloc))
+      POk st result -> Right (st, result)
 
 initToken :: Token
 initToken = Newline NoLocation

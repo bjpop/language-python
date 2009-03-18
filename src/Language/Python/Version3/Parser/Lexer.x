@@ -17,7 +17,7 @@ module Language.Python.Version3.Parser.Lexer
 
 import Language.Python.Version3.Parser.Token hiding (True, False)
 import qualified Language.Python.Version3.Parser.Token as Token
-import Language.Python.Version3.Parser.ParserMonad
+import Language.Python.Version3.Parser.ParserMonad hiding (location)
 import Language.Python.Data.SrcLocation
 import qualified Data.Map as Map
 import Control.Monad (liftM)

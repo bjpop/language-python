@@ -171,7 +171,6 @@ instance Pretty Statement where
    pretty (Global { global_vars = idents }) = text "global" <+> commaList idents
    pretty (NonLocal { nonLocal_vars = idents }) = text "nonlocal" <+> commaList idents
    pretty (Assert { assert_exprs = es }) = text "assert" <+> commaList es
-   -- pretty other = text "Statement"
 
 prettyHandlers :: [Handler] -> Doc
 prettyHandlers = foldr (\next rec -> prettyHandler next $+$ rec) empty
@@ -197,7 +196,6 @@ instance Pretty Parameter where
    pretty (VarArgsKeyword { param_name = ident, param_annotation = annot })
       = text "**" <> pretty ident <> (maybe empty (\e -> colon <> pretty e) annot)
    pretty EndPositional = char '*' 
-   -- pretty x = text "Parameter"
 
 instance Pretty Argument where
    pretty (ArgExpr { arg_expr = e }) = pretty e
@@ -205,19 +203,22 @@ instance Pretty Argument where
    pretty (ArgVarArgsKeyword { arg_expr = e }) = text "**" <> pretty e
    pretty (ArgKeyword { arg_keyword = ident, arg_expr = e }) 
       = pretty ident <> equals <> pretty e
-   -- pretty x = text "Argument"
 
 instance Pretty a => Pretty (Comprehension a) where
-   pretty x = text "Comprehension"
+   pretty (Comprehension { comprehension_expr = e, comprehension_for = for }) 
+      = pretty e <+> pretty for 
 
 instance Pretty CompFor where
-   pretty x = text "CompFor"
+   pretty (CompFor { comp_for_exprs = es, comp_in_expr = e, comp_for_iter = iter }) 
+      = text "for" <+> commaList es <+> text "in" <+> pretty e <+> pretty iter
 
 instance Pretty CompIf where
-   pretty x = text "CompIf"
+   pretty (CompIf { comp_if = e, comp_if_iter = iter }) 
+      = text "if" <+> pretty e <+> pretty iter 
 
 instance Pretty CompIter where
-   pretty x = text "CompIter"
+   pretty (IterFor compFor) = pretty compFor 
+   pretty (IterIf compIf) = pretty compIf
 
 instance Pretty Expr where
    pretty (Var i) = pretty i
@@ -248,13 +249,11 @@ instance Pretty Expr where
    pretty (Dictionary { dict_mappings = mappings })
       = braces (hsep (punctuate comma $ map (\ (e1,e2) -> pretty e1 <> colon <> pretty e2) mappings))
    pretty (Set { set_exprs = es }) = braces $ commaList es
-   -- pretty x = text "Expr"
 
 instance Pretty Slice where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })
       = pretty lower <> colon <> pretty upper <> (maybe empty (\s -> colon <> pretty s) stride)
    pretty (SliceExpr { slice_expr = e }) = pretty e
-   -- pretty x = text "Slice"
 
 instance Pretty Op where
    pretty And = text "and"

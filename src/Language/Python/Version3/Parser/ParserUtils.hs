@@ -15,7 +15,7 @@ module Language.Python.Version3.Parser.ParserUtils where
 
 import Language.Python.Version3.Syntax.AST as AST
 import Language.Python.Version3.Parser.Token hiding (True, False)
-import Language.Python.Version3.Parser.ParserMonad
+import Language.Python.Version3.Parser.ParserMonad hiding (location)
 import Language.Python.Data.SrcLocation 
 import Data.List (foldl')
 
