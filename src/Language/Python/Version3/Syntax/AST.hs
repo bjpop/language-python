@@ -12,9 +12,9 @@
 --
 -- See: 
 --
--- * <http://docs.python.org/dev/3.0/reference/index.html> for an overview of the language. 
+-- * <http://www.python.org/doc/3.0/reference/index.html> for an overview of the language. 
 --
--- * <http://docs.python.org/dev/3.0/reference/grammar.html> for the full grammar.
+-- * <http://www.python.org/doc/3.0/reference/grammar.html> for the full grammar.
 --
 -- Note: there are cases where the AST is more liberal than the formal grammar
 -- of the language. Therefore some care must be taken when constructing
@@ -60,19 +60,19 @@ import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------
 
--- | A module (Python source file). See <http://docs.python.org/dev/3.0/reference/toplevel_components.html>.
+-- | A module (Python source file). See <http://www.python.org/doc/3.0/reference/toplevel_components.html>.
 newtype Module = Module [Statement] -- ^ A module is just a sequence of top-level statements.
    deriving Show
 
 -- | A block of statements. A suite is a group of statements controlled by a clause, 
--- for example, the body of a loop. See <http://docs.python.org/dev/3.0/reference/compound_stmts.html>.
+-- for example, the body of a loop. See <http://www.python.org/doc/3.0/reference/compound_stmts.html>.
 type Suite = [Statement] 
 
 -- | A compound name constructed with the dot operator.
 type DottedName = [Ident]
 
 -- | An entity imported using the \'import\' keyword.
--- See <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-import-statement>.
+-- See <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-import-statement>.
 data ImportItem = 
    ImportItem 
    { import_item_name :: DottedName -- ^ The name of module to import.
@@ -81,7 +81,7 @@ data ImportItem =
    deriving Show
 
 -- | An entity imported using the \'from ... import\' construct.
--- See <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-import-statement>
+-- See <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-import-statement>
 data FromItem = 
    FromItem 
    { from_item_name :: Ident -- ^ The name of the entity imported. 
@@ -106,9 +106,9 @@ data ImportModule
 --
 --  See:
 --
--- * <http://docs.python.org/dev/3.0/reference/simple_stmts.html>
+-- * <http://www.python.org/doc/3.0/reference/simple_stmts.html>
 --
--- * <http://docs.python.org/dev/3.0/reference/compound_stmts.html>
+-- * <http://www.python.org/doc/3.0/reference/compound_stmts.html>
 data Statement 
    -- | Import statement.
    = Import { import_items :: [ImportItem] -- ^ Items to import.
@@ -118,43 +118,43 @@ data Statement
      { from_module :: ImportModule -- ^ Module to import from.
      , from_items :: FromItems  -- ^ Items to import.
      }
-   -- | While loop. See <http://docs.python.org/dev/3.0/reference/compound_stmts.html#the-while-statement>.
+   -- | While loop. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-while-statement>.
    | While 
      { while_cond :: Expr -- ^ Loop condition.
      , while_body :: Suite -- ^ Loop body.
      , while_else :: Suite -- ^ Else clause.
      }
-   -- | For loop. See <http://docs.python.org/dev/3.0/reference/compound_stmts.html#the-for-statement>.
+   -- | For loop. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-for-statement>.
    | For 
      { for_targets :: [Expr] -- ^ Loop variables.
      , for_generator :: Expr -- ^ Loop generator. 
      , for_body :: Suite -- ^ Loop body
      , for_else :: Suite  -- ^ Else clause.
      }
-   -- | Function definition. See <http://docs.python.org/dev/3.0/reference/compound_stmts.html#function-definitions>.
+   -- | Function definition. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#function-definitions>.
    | Fun 
      { fun_name :: Ident -- ^ Function name.
      , fun_args :: [Parameter] -- ^ Function parameter list.
      , fun_result_annotation :: Maybe Expr -- ^ Optional result annotation.
      , fun_body :: Suite -- ^ Function body.
      }
-   -- | Class definition. See <http://docs.python.org/dev/3.0/reference/compound_stmts.html#class-definitions>.
+   -- | Class definition. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#class-definitions>.
    | Class 
      { class_name :: Ident -- ^ Class name.
      , class_args :: [Argument] -- ^ Class argument list.
      , class_body :: Suite -- ^ Class body.
      }
-   -- | Conditional statement (if-elif-else). See <http://docs.python.org/dev/3.0/reference/compound_stmts.html#the-if-statement>.  
+   -- | Conditional statement (if-elif-else). See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-if-statement>.  
    | Conditional 
      { cond_guards :: [(Expr, Suite)] -- ^ Sequence of if-elif conditional clauses.
      , cond_else :: Suite -- ^ Possibly empty unconditional else clause.
      }
-   -- | Assignment statement. See <http://docs.python.org/dev/3.0/reference/simple_stmts.html#assignment-statements>.
+   -- | Assignment statement. See <http://www.python.org/doc/3.0/reference/simple_stmts.html#assignment-statements>.
    | Assign 
      { assign_to :: [Expr] -- ^ Entity to assign to. XXX perhaps this should not be a list.
      , assign_expr :: Expr -- ^ Expression to evaluate.
      }
-   -- | Augmented assignment statement. See <http://docs.python.org/dev/3.0/reference/simple_stmts.html#augmented-assignment-statements>.
+   -- | Augmented assignment statement. See <http://www.python.org/doc/3.0/reference/simple_stmts.html#augmented-assignment-statements>.
    | AugmentedAssign 
      { aug_assign_to :: Expr -- ^ Entity to assign to.
      , aug_assign_op :: AssignOp -- ^ Assignment operator (for example \'+=\').
@@ -165,48 +165,48 @@ data Statement
      { decorated_decorators :: [Decorator] -- ^ Decorators.
      , decorated_def :: Statement -- ^ Function or class definition to be decorated.
      }
-   -- | Return statement (may only occur syntactically nested in a function definition). See <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-return-statement>.
+   -- | Return statement (may only occur syntactically nested in a function definition). See <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-return-statement>.
    | Return 
      { return_expr :: Maybe Expr -- ^ Optional expression to evaluate and return to caller.
      }
-   -- | Try statement (exception handling). See <http://docs.python.org/dev/3.0/reference/compound_stmts.html#the-try-statement>.
+   -- | Try statement (exception handling). See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-try-statement>.
    | Try 
      { try_body :: Suite -- ^ Try clause.
      , try_excepts :: [Handler] -- ^ Exception handlers.
      , try_else :: Suite -- ^ Possibly empty else clause, executed if and when control flows off the end of the try clause.
      , try_finally :: Suite -- ^ Possibly empty finally clause.
      }
-   -- | Raise statement (exception throwing). See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-raise-statement>
+   -- | Raise statement (exception throwing). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-raise-statement>
    | Raise 
     { raise_expr :: Maybe (Expr, Maybe Expr) -- ^ Optional expression to evaluate, and optional \'from\' clause.
     }
-   -- | With statement (context management). See <http://docs.python.org/dev/3.0/reference/compound_stmts.html#the-with-statement>. And also see: <http://www.python.org/dev/peps/pep-0343/>.
+   -- | With statement (context management). See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-with-statement>. And also see: <http://www.python.org/dev/peps/pep-0343/>.
    | With 
      { with_context :: Expr -- ^ Context expression (yields a context manager).
      , with_as :: Maybe Expr -- ^ Optional target.
      , with_body :: Suite -- ^ Suite to be managed.
      }
-   -- | Pass statement (null operation). See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-pass-statement>
+   -- | Pass statement (null operation). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-pass-statement>
    | Pass
-   -- | Break statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition within that loop). See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-break-statement>.
+   -- | Break statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition within that loop). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-break-statement>.
    | Break
-   -- | Continue statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition or finally clause within that loop). See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-continue-statement>.
+   -- | Continue statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition or finally clause within that loop). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-continue-statement>.
    | Continue
-   -- | Del statement (delete). See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-del-statement>. 
+   -- | Del statement (delete). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-del-statement>. 
    | Delete 
      { del_exprs :: [Expr] -- ^ Items to delete.
      }
-   -- | Expression statement. See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#expression-statements>. 
+   -- | Expression statement. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#expression-statements>. 
    | StmtExpr { stmt_expr :: Expr }
-   -- | Global declaration. See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-global-statement>. 
+   -- | Global declaration. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-global-statement>. 
    | Global 
      { global_vars :: [Ident] -- ^ Variables declared global in the current block.
      }
-   -- | Nonlocal declaration. See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-nonlocal-statement>.
+   -- | Nonlocal declaration. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-nonlocal-statement>.
    | NonLocal 
      { nonLocal_vars :: [Ident] -- ^ Variables declared nonlocal in the current block (their binding comes from bound the nearest enclosing scope).
      }
-   -- | Assertion. See: <http://docs.python.org/dev/3.0/reference/simple_stmts.html#the-assert-statement>.
+   -- | Assertion. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-assert-statement>.
    | Assert 
      { assert_exprs :: [Expr] -- ^ Expressions being asserted.
      }
@@ -224,9 +224,9 @@ data Decorator =
 -- 
 -- See:
 --
--- * <http://docs.python.org/dev/3.0/reference/compound_stmts.html#function-definitions>
+-- * <http://www.python.org/doc/3.0/reference/compound_stmts.html#function-definitions>
 --
--- * <http://docs.python.org/dev/3.0/reference/expressions.html#calls>
+-- * <http://www.python.org/doc/3.0/reference/expressions.html#calls>
 data Parameter
    -- | Ordinary named parameter.
    = Param 
@@ -263,31 +263,31 @@ data Argument
      }
    deriving Show 
 
--- | Exception handler. See: <http://docs.python.org/dev/3.0/reference/compound_stmts.html#the-try-statement>.
+-- | Exception handler. See: <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-try-statement>.
 type Handler = (ExceptClause, Suite)
--- | Exception clause. See: <http://docs.python.org/dev/3.0/reference/compound_stmts.html#the-try-statement>.
+-- | Exception clause. See: <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-try-statement>.
 type ExceptClause = Maybe (Expr, Maybe Ident)
 
--- | Comprehension. See: <http://docs.python.org/dev/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries> 
+-- | Comprehension. See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries> 
 data Comprehension e
    = Comprehension { comprehension_expr :: e, comprehension_for :: CompFor }
    deriving Show
 
--- | Comprehension \'for\' component. See: <http://docs.python.org/dev/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>
+-- | Comprehension \'for\' component. See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>
 data CompFor = CompFor { comp_for_exprs :: [Expr], comp_in_expr :: Expr, comp_for_iter :: Maybe CompIter }
    deriving Show
 
--- | Comprehension guard. See: <http://docs.python.org/dev/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>.
+-- | Comprehension guard. See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>.
 data CompIf = CompIf { comp_if :: Expr, comp_if_iter :: Maybe CompIter }
    deriving Show
 
--- | Comprehension iterator (either a \'for\' or an \'if\'). See: <http://docs.python.org/dev/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>.
+-- | Comprehension iterator (either a \'for\' or an \'if\'). See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>.
 data CompIter = IterFor CompFor | IterIf CompIf
    deriving Show
 
 -- | Expression.
 -- 
--- See: <http://docs.python.org/dev/3.0/reference/expressions.html>.
+-- See: <http://www.python.org/doc/3.0/reference/expressions.html>.
 data Expr
    -- | Variable.
    = Var Ident
@@ -307,16 +307,16 @@ data Expr
    | ByteStrings [BS.ByteString]
    -- | Literal strings (to be concatentated together).
    | Strings [String]
-   -- | Function call. See: <http://docs.python.org/dev/3.0/reference/expressions.html#calls>.
+   -- | Function call. See: <http://www.python.org/doc/3.0/reference/expressions.html#calls>.
    | Call 
      { call_fun :: Expr -- ^ Expression yielding a callable object (such as a function).
      , call_args :: [Argument] -- ^ Call arguments.
      }
-   -- | Subscription, for example \'x [y]\'. See: <http://docs.python.org/dev/3.0/reference/expressions.html#id5>.
+   -- | Subscription, for example \'x [y]\'. See: <http://www.python.org/doc/3.0/reference/expressions.html#id5>.
    | Subscript { subscriptee :: Expr, subscript_exprs :: [Expr] }
-   -- | Slicing, for example \'w [x:y:z]\'. See: <http://docs.python.org/dev/3.0/reference/expressions.html#id6>.
+   -- | Slicing, for example \'w [x:y:z]\'. See: <http://www.python.org/doc/3.0/reference/expressions.html#id6>.
    | SlicedExpr { slicee :: Expr, slices :: [Slice] } 
-   -- | Conditional expresison. See: <http://docs.python.org/dev/3.0/reference/expressions.html#boolean-operations>. 
+   -- | Conditional expresison. See: <http://www.python.org/doc/3.0/reference/expressions.html#boolean-operations>. 
    | CondExpr 
      { ce_true_branch :: Expr -- ^ Expression to evaluate if condition is True.
      , ce_condition :: Expr -- ^ Boolean condition.
@@ -326,27 +326,27 @@ data Expr
    | BinaryOp { operator :: Op, left_op_arg :: Expr, right_op_arg :: Expr }
    -- | Unary operator application.
    | UnaryOp { operator :: Op, op_arg :: Expr }
-   -- | Anonymous function definition (lambda). See: <http://docs.python.org/dev/3.0/reference/expressions.html#id15>.
+   -- | Anonymous function definition (lambda). See: <http://www.python.org/doc/3.0/reference/expressions.html#id15>.
    | Lambda { lambda_args :: [Parameter], lambda_body :: Expr }
    -- | N-ary tuple of arity greater than 0. The list should not be empty.
    | Tuple { tuple_exprs :: [Expr] }
-   -- | Generator yield. See: <http://docs.python.org/dev/3.0/reference/expressions.html#yield-expressions>.
+   -- | Generator yield. See: <http://www.python.org/doc/3.0/reference/expressions.html#yield-expressions>.
    | Yield 
      { yield_expr :: Maybe Expr -- ^ Optional expression to yield.
      }
-   -- | Generator. See: <http://docs.python.org/dev/3.0/reference/expressions.html#generator-expressions>.
+   -- | Generator. See: <http://www.python.org/doc/3.0/reference/expressions.html#generator-expressions>.
    | Generator { gen_comprehension :: Comprehension Expr }
-   -- | List comprehension. See: <http://docs.python.org/dev/3.0/reference/expressions.html#list-displays>.
+   -- | List comprehension. See: <http://www.python.org/doc/3.0/reference/expressions.html#list-displays>.
    | ListComp { list_comprehension :: Comprehension Expr }
-   -- | List. See: <http://docs.python.org/dev/3.0/reference/expressions.html#list-displays>.
+   -- | List. See: <http://www.python.org/doc/3.0/reference/expressions.html#list-displays>.
    | List { list_exprs :: [Expr] }
-   -- | Dictionary. See: <http://docs.python.org/dev/3.0/reference/expressions.html#dictionary-displays>.
+   -- | Dictionary. See: <http://www.python.org/doc/3.0/reference/expressions.html#dictionary-displays>.
    | Dictionary { dict_mappings :: [(Expr, Expr)] }
-   -- | Dictionary comprehension. See: <http://docs.python.org/dev/3.0/reference/expressions.html#dictionary-displays>.
+   -- | Dictionary comprehension. See: <http://www.python.org/doc/3.0/reference/expressions.html#dictionary-displays>.
    | DictComp { dict_comprehension :: Comprehension (Expr, Expr) }
-   -- | Set. See: <http://docs.python.org/dev/3.0/reference/expressions.html#set-displays>.
+   -- | Set. See: <http://www.python.org/doc/3.0/reference/expressions.html#set-displays>.
    | Set { set_exprs :: [Expr] } 
-   -- | Set comprehension. <http://docs.python.org/dev/3.0/reference/expressions.html#set-displays>.
+   -- | Set comprehension. <http://www.python.org/doc/3.0/reference/expressions.html#set-displays>.
    | SetComp { set_comprehension :: Comprehension Expr }
    -- | Starred expression. 
    | Starred { starred_expr :: Expr }

@@ -13,11 +13,11 @@
 --
 -- See: 
 --
--- * <http://docs.python.org/dev/3.0/reference/index.html> for an overview of the language. 
+-- * <http://www.python.org/doc/3.0/reference/index.html> for an overview of the language. 
 --
--- * <http://docs.python.org/dev/3.0/reference/grammar.html> for the full grammar.
+-- * <http://www.python.org/doc/3.0/reference/grammar.html> for the full grammar.
 -- 
--- * <http://docs.python.org/dev/3.0/reference/toplevel_components.html> for a description of 
+-- * <http://www.python.org/doc/3.0/reference/toplevel_components.html> for a description of 
 -- the various Python top-levels, which correspond to the parsers provided here.
 -----------------------------------------------------------------------------
 

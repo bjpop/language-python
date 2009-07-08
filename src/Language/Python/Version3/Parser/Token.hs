@@ -9,7 +9,7 @@
 -- Portability : ghc
 --
 -- Lexical tokens for the Python version 3 lexer. 
--- See: <http://docs.python.org/dev/3.0/reference/lexical_analysis.html>
+-- See: <http://www.python.org/doc/3.0/reference/lexical_analysis.html>
 -----------------------------------------------------------------------------
 
 module Language.Python.Version3.Parser.Token 
