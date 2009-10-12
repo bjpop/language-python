@@ -32,6 +32,10 @@ prettyText = render . pretty
 parensIf :: Pretty a => (a -> Bool) -> a -> Doc
 parensIf test x = if test x then parens $ pretty x else pretty x 
 
+perhaps :: Pretty a => Maybe a -> Doc -> Doc
+perhaps Nothing doc = empty
+perhaps (Just {}) doc = doc 
+
 -- | A list of things separated by commas.
 commaList :: Pretty a => [a] -> Doc
 commaList = hsep . punctuate comma . map pretty 
@@ -135,6 +139,7 @@ instance Pretty Statement where
         indent (prettySuite (for_body stmt)) $+$ optionalKeywordSuite "else" (for_else stmt)
    pretty stmt@(Fun {})
       = text "def" <+> pretty (fun_name stmt) <> parens (commaList (fun_args stmt)) <+> 
+        perhaps (fun_result_annotation stmt) (text "->") <+>
         pretty (fun_result_annotation stmt) <> colon $+$ indent (prettySuite (fun_body stmt)) 
    pretty stmt@(Class {})
       = text "class" <+> pretty (class_name stmt) <> prettyOptionalArgList (class_args stmt) <> 
@@ -249,6 +254,8 @@ instance Pretty Expr where
    pretty (Dictionary { dict_mappings = mappings })
       = braces (hsep (punctuate comma $ map (\ (e1,e2) -> pretty e1 <> colon <> pretty e2) mappings))
    pretty (Set { set_exprs = es }) = braces $ commaList es
+   -- XXX fixme: Generator not supported
+   pretty other = error $ "not supported: " ++ show other
 
 instance Pretty Slice where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })
