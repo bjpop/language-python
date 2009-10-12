@@ -23,6 +23,7 @@ Library
    build-tools:      happy, alex
    exposed-modules:
       Language.Python.Data.SrcLocation
+      Language.Python.Version3
       Language.Python.Version3.Parser
       Language.Python.Version3.Lexer
       Language.Python.Version3.Syntax.AST
@@ -33,4 +34,3 @@ Library
       Language.Python.Version3.Parser.ParserMonad
       Language.Python.Version3.Parser.ParserUtils
       Language.Python.Version3.Parser.Token
-
