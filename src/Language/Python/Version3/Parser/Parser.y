@@ -13,7 +13,7 @@
 
 module Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput, parseEval) where
 
-import Data.Char (isSpace, isAlpha, isDigit)
+
 import Language.Python.Version3.Parser.Lexer
 import Language.Python.Version3.Parser.Token hiding (True, False)
 import qualified Language.Python.Version3.Parser.Token as Token
@@ -21,13 +21,15 @@ import Language.Python.Version3.Syntax.AST as AST
 import Language.Python.Version3.Parser.ParserUtils
 import Language.Python.Version3.Parser.ParserMonad
 import Language.Python.Data.SrcLocation
-import Data.List (foldl')
 import qualified Data.ByteString.Char8 as BS (ByteString)
+import Data.Either (rights, either)
+import Data.Maybe (maybeToList)
+
 }
 
-%name parseFileInput FileInput 
-%name parseSingleInput SingleInput
-%name parseEval EvalInput  
+%name parseFileInput file_input 
+%name parseSingleInput single_input 
+%name parseEval eval_input
 
 %tokentype { Token } 
 %error { parseError } 
@@ -52,7 +54,7 @@ import qualified Data.ByteString.Char8 as BS (ByteString)
    ','             { Token.Comma _ }
    ';'             { Token.SemiColon _ }
    ':'             { Token.Colon _ }
-   def             { Token.Def _ }
+   'def'             { Token.Def _ }
    class           { Token.Class _ }
    while           { Token.While _ }
    for             { Token.For _ }
@@ -66,7 +68,7 @@ import qualified Data.ByteString.Char8 as BS (ByteString)
    yield           { Token.Yield _ }
    indent          { Token.Indent _ }
    dedent          { Token.Dedent _ }
-   newline         { Token.Newline _ }
+   'NEWLINE'       { Token.Newline _ }
    try             { Token.Try _ }
    except          { Token.Except _ }
    finally         { Token.Finally _ }
@@ -122,9 +124,49 @@ import qualified Data.ByteString.Char8 as BS (ByteString)
    global          { Token.Global _ }
    nonlocal        { Token.NonLocal _ }
    assert          { Token.Assert _ }
-   eof             { Token.EOF }
 
 %%
+
+{-
+foo :: { [Ident] }
+foo 
+   : foobar ',' { $1 }
+   | foobar { $1 }
+
+foobar :: { [Ident] }
+foobar
+   : NAME { [$1] }
+   | foobar ',' NAME { $3: $1 }
+-}
+
+or(p,q)
+   : p  { Left $1 }
+   | q  { Right $1 }
+
+opt(p)
+   :    { Nothing }
+   | p  { Just $1 }
+
+rev_list1(p)
+   : p               { [$1] }
+   | rev_list1(p) p  { $2 : $1 }
+
+many1(p)
+   : rev_list1(p) { reverse $1 }
+
+many0(p)
+   : many1(p) { $1 }
+   |         { [] }
+
+sepBy0(p,sep)
+   : sepBy0Rev(p,sep) { reverse $1 }
+
+sepBy0Rev(p,sep)
+   : p       { [$1] }
+   | sepBy0Rev(p,sep) sep p { $3 : $1 } 
+
+NAME :: { Ident }
+NAME : ident { Ident $1 }
 
 {- 
    Note: newline tokens in the grammar:
@@ -136,100 +178,72 @@ import qualified Data.ByteString.Char8 as BS (ByteString)
    suggests that such tokens may exist. 
 -}
 
-
 -- single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE 
 
 {- 
-   Complete: but we don't support the newline at the end of a compound stmt 
+   We don't support the newline at the end of a compound stmt 
    because the lexer would not produce a newline there. It seems like a weirdness
    in the way the interactive input works. 
 -}
 
-SingleInput :: { [Statement] }
-SingleInput 
-   : newline { [] }
-   | SimpleStmt { $1 } 
-   | CompoundStmt {- No newline here! -} { [$1] } 
+single_input :: { [Statement] }
+single_input
+   : 'NEWLINE' { [] }
+   | simple_stmt { $1 } 
+   | compound_stmt {- No newline here! -} { [$1] } 
 
 -- file_input: (NEWLINE | stmt)* ENDMARKER
 
--- Complete: there is no need to mention the ENDMARKER, happy takes care of that.
-
-FileInput :: { Module }
-FileInput : ManyStmtOrNewline {- No ENDMARKER here! -} { Module $1 }
-
-ManyStmtOrNewline :: { [Statement] }
-ManyStmtOrNewline : ManyStmtOrNewlineRec { concat (reverse $1) }
-
-ManyStmtOrNewlineRec :: { [[Statement]] }
-ManyStmtOrNewlineRec 
-   : {- empty -} { [] } 
-   | ManyStmtOrNewlineRec NewLineOrStmt { $2 : $1 }
-
-NewLineOrStmt :: { [Statement] }
-NewLineOrStmt 
-   : newline { [] }
-   | Stmt    { $1 }
+file_input :: { Module }
+file_input : many0(or('NEWLINE',stmt)) {- No need to mention ENDMARKER -} 
+             { Module (concat (rights $1)) }
 
 -- eval_input: testlist NEWLINE* ENDMARKER
 
--- Complete.
+eval_input :: { Expr }
+eval_input : TestList many0('NEWLINE') {- No need to mention ENDMARKER -} { $1 }
 
-EvalInput :: { Expr }
-EvalInput : TestList ZeroOrMoreNewline { $1 }
-
-ZeroOrMoreNewline :: { () }
-ZeroOrMoreNewline 
-   : {- empty -} { () }
-   | ZeroOrMoreNewline newline { () }
- 
-{-
-  decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
-  decorators: decorator+
-  decorated: decorators (classdef | funcdef)
--}
+--  decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
 
 -- Complete
 
-Decorator :: { Decorator }
-Decorator 
-   : '@' DottedName OptionalArgList newline { Decorator { decorator_name = $2, decorator_args = $3 } }
+opt_paren_arg_list :: { [Argument] }
+opt_paren_arg_list: opt(paren_arg_list) { concat (maybeToList $1) }
 
-Decorators :: { [Decorator] }
-Decorators : DecoratorsRev { reverse $1 }
+paren_arg_list :: { [Argument] }
+paren_arg_list : '(' optional_arg_list ')' { $2 }
 
-DecoratorsRev :: { [Decorator] }
-DecoratorsRev 
-   : Decorator { [$1] }
-   | DecoratorsRev Decorator { $2 : $1 }
+decorator :: { Decorator }
+decorator 
+   : '@' dotted_name opt_paren_arg_list 'NEWLINE' 
+     { Decorator { decorator_name = $2, decorator_args = $3 } }
 
-Decorated :: { Statement }
-Decorated 
-   : Decorators ClassOrFunction { Decorated { decorated_decorators = $1, decorated_def = $2 } } 
+--  decorators: decorator+
 
-ClassOrFunction :: { Statement }
-ClassOrFunction 
-   : ClassDef { $1 }
-   | FuncDef { $1 }
+decorators :: { [Decorator] }
+decorators : many1(decorator) { $1 }
+
+--  decorated: decorators (classdef | funcdef)
+
+decorated :: { Statement }
+decorated 
+   : decorators or(classdef,funcdef) 
+     { Decorated { decorated_decorators = $1, decorated_def = fromEither $2 } } 
 
 -- funcdef: 'def' NAME parameters ['->' test] ':' suite 
 
--- Complete
-
-FuncDef :: { Statement }
-FuncDef 
-   : def Name Parameters OptionalResultAnnotation ':' Suite
+funcdef :: { Statement }
+funcdef 
+   : 'def' NAME parameters opt(result_annotation) ':' suite
      { Fun { fun_name = $2 , fun_args = $3, fun_result_annotation = $4, fun_body = $6 } }
 
-OptionalResultAnnotation :: { Maybe Expr }
-OptionalResultAnnotation
-   : {- empty -} { Nothing }
-   | '->' Test { Just $2 }
+result_annotation :: { Expr }
+result_annotation: '->' test { $2 } 
 
 -- parameters: '(' [typedargslist] ')'
 
-Parameters :: { [Parameter] }
-Parameters : '(' TypedArgsList ')' { $2 }
+parameters :: { [Parameter] }
+parameters : '(' opt(typedargslist) ')' { concat (maybeToList $2) }
 
 {- 
    typedargslist: ((tfpdef ['=' test] ',')*
@@ -237,13 +251,7 @@ Parameters : '(' TypedArgsList ')' { $2 }
        | tfpdef ['=' test] (',' tfpdef ['=' test])* [',']) 
 -} 
 
--- Complete. 
-
-{- Note the grammar allows an optional trailing comma, but only after the
-   positional arguments. If varargs are used (the star forms) then the
-   optional comma is not allowed. Why is this so? I don't know.
-
-   The code below uses right recursion extensively. The Happy docs say that
+{- The code below uses right recursion extensively. The Happy docs say that
    there can be problems with this:
 
    http://www.haskell.org/happy/doc/html/sec-sequences.html#sec-separators
@@ -254,68 +262,60 @@ Parameters : '(' TypedArgsList ')' { $2 }
 
    At the moment it seems easier to write using right recursion, but
    we may want to re-visit the use of right recursion at some point.
+
+   Same pattern as argslist and varargslist
 -} 
 
-TypedArgsList :: { [Parameter] }
-TypedArgsList : Params { $1 }
+typedargslist :: { [Parameter] }
+typedargslist
+   : tfpdef_opt_test typedargslist_rest { $1 : $2 }
+   | '*' opt(tfpdef) typedargslist_star_rest { makeStarParam $2 : $3  }
+   | typedargslist_starstar { $1 }
 
-Params :: { [Parameter] }
-Params
+typedargslist_rest :: { [Parameter] }
+typedargslist_rest
+   : ',' typedargslist { $2 }
+   | ',' { [] }
+   | {- empty -} { [] }
+
+typedargslist_star_rest :: { [Parameter] }
+typedargslist_star_rest 
    : {- empty -} { [] }
-   | Star { [$1] }
-   | StarStar { [$1] }
-   | Param { [$1] }
-   | Param ',' Params { $1 : $3 }
-   | Star ',' StarParams { $1 : $3 }
+   | ',' typedargslist_star_comma_rest { $2 }
 
-StarParams :: { [Parameter] }
-StarParams 
-   : Param { [$1] }
-   | Param ',' StarParams { $1 : $3 }
-   | StarStar { [$1] }
-  
--- tfpdef: NAME [':' test]
--- Complete
+typedargslist_star_comma_rest :: { [Parameter] }
+typedargslist_star_comma_rest
+   : tfpdef_opt_test typedargslist_star_rest { $1 : $2 }
+   | typedargslist_starstar { $1 }
 
-TfpDef :: { (Ident, Maybe Expr) }
-TfpDef : Name OptionalColonTest { ($1, $2) }
+typedargslist_starstar :: { [Parameter] }
+typedargslist_starstar: '**' tfpdef { [makeStarStarParam $2] } 
 
-OptionalColonTest :: { Maybe Expr }
-OptionalColonTest 
-   : {- empty -} { Nothing }
-   | ':' Test { Just $2 }
+tfpdef_opt_test :: { Parameter }
+tfpdef_opt_test: tfpdef optional_default { makeParam $1 $2 }
 
-OptionalDefault :: { Maybe Expr }
-OptionalDefault 
-   : {- empty -} { Nothing }
-   | '=' Test { Just $2 }
+optional_default :: { Maybe Expr }
+optional_default: opt(equals_test) { $1 }
 
-Param :: { Parameter }
-Param 
-   : TfpDef OptionalDefault { makeParam $1 $2 }
+equals_test :: { Expr }
+equals_test: '=' test { $2 }
 
-Star :: { Parameter }
-Star : '*' OptionalTfpDef { makeStarParam $2 }
+tfpdef :: { (Ident, Maybe Expr) }
+tfpdef : NAME opt(colon_test) { ($1, $2) }
 
-OptionalTfpDef :: { Maybe (Ident, Maybe Expr) }
-OptionalTfpDef 
-   : {- empty -} { Nothing }
-   | TfpDef { Just $1 }
-
-StarStar :: { Parameter }
-StarStar : '**' TfpDef { makeStarStarParam $2 }
+colon_test :: { Expr }
+colon_test: ':' test { $2 }
 
 {- 
    varargslist: ((vfpdef ['=' test] ',')* ('*' [vfpdef] (',' vfpdef ['=' test])*  [',' '**' vfpdef] | '**' vfpdef) | vfpdef ['=' test] (',' vfpdef ['=' test])* [','])  
 
-   vfpdef: NAME
 -}
 
 -- Complete
 
 {- 
    There is some tedious similarity in these rules to the ones for
-   TypedArgsList. VarArgsList is used for lambda functions, and they
+   TypedArgsList. varargslist is used for lambda functions, and they
    do not have parentheses around them (unlike function definitions).
    Therefore lambda parameters cannot have the optional annotations
    that normal functions can, because the annotations are introduced
@@ -326,93 +326,80 @@ StarStar : '**' TfpDef { makeStarStarParam $2 }
    TypedArgsList.
 -}
 
-VarArgsList :: { [Parameter] }
-VarArgsList : VParams { $1 }
+varargslist :: { [Parameter] }
+varargslist
+   : vfpdef_opt_test varargslist_rest { $1 : $2 }
+   | '*' optvfpdef varargslist_star_rest { makeStarParam $2 : $3  }
+   | varargslist_starstar { $1 }
 
-VParams :: { [Parameter] }
-VParams
+varargslist_rest :: { [Parameter] }
+varargslist_rest
+   : ',' varargslist { $2 }
+   | ',' { [] }
+   | {- empty -} { [] }
+
+varargslist_star_rest :: { [Parameter] }
+varargslist_star_rest 
    : {- empty -} { [] }
-   | VStar { [$1] }
-   | VStarStar { [$1] }
-   | VParam { [$1] }
-   | VParam ',' VParams { $1 : $3 }
-   | VStar ',' VStarParams { $1 : $3 }
+   | ',' varargslist_star_comma_rest { $2 }
 
-VStarParams :: { [Parameter] }
-VStarParams 
-   : VParam { [$1] }
-   | VParam ',' VStarParams { $1 : $3 }
-   | VStarStar { [$1] }
+varargslist_star_comma_rest :: { [Parameter] }
+varargslist_star_comma_rest
+   : vfpdef_opt_test varargslist_star_rest { $1 : $2 }
+   | varargslist_starstar { $1 }
 
-VParam :: { Parameter }
-VParam : VfpDef OptionalDefault { makeParam ($1, Nothing) $2 }
+varargslist_starstar :: { [Parameter] }
+varargslist_starstar: '**' vfpdef { [makeStarStarParam ($2, Nothing)] }
 
-VStar :: { Parameter }
-VStar : '*' OptionalVfpDef { makeStarParam $2 }
+vfpdef_opt_test :: { Parameter }
+vfpdef_opt_test: vfpdef optional_default { makeParam ($1, Nothing) $2 }
 
-OptionalVfpDef :: { Maybe (Ident, Maybe Expr) }
-OptionalVfpDef 
+-- vfpdef: NAME
+vfpdef :: { Ident }
+vfpdef : NAME { $1 }
+
+optvfpdef :: { Maybe (Ident, Maybe Expr) }
+optvfpdef
    : {- empty -} { Nothing }
-   | VfpDef { Just ($1, Nothing) }
-
-VStarStar :: { Parameter }
-VStarStar : '**' VfpDef { makeStarStarParam ($2, Nothing) }
-
-VfpDef :: { Ident }
-VfpDef : ident { Ident $1 }
-
-Name :: { Ident }
-Name : ident { Ident $1 }
+   | vfpdef { Just ($1, Nothing) }
 
 -- stmt: simple_stmt | compound_stmt 
 
--- Complete
-
-Stmt :: { [Statement] }
-Stmt 
-   : SimpleStmt { $1 }
-   | CompoundStmt { [$1] } 
+stmt :: { [Statement] }
+stmt 
+   : simple_stmt { $1 }
+   | compound_stmt { [$1] }
 
 -- simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE 
 
--- Complete
+simple_stmt :: { [Statement] }
+simple_stmt : small_stmts opt(';') 'NEWLINE' { reverse $1 }
 
-SimpleStmt :: { [Statement] }
-SimpleStmt : SmallStmts OptionalSemiColon newline { reverse $1 }
-
-OptionalSemiColon :: { () }
-OptionalSemiColon 
-   : {- empty -} { () }
-   | ';' { () }
-
-SmallStmts :: { [Statement] }
-SmallStmts : SmallStmt              { [$1] }
-           | SmallStmts ';' SmallStmt { $3 : $1 }
+small_stmts :: { [Statement] }
+small_stmts 
+   : small_stmt                 { [$1] }
+   | small_stmts ';' small_stmt { $3 : $1 }
 
 {-
 small_stmt: (expr_stmt | del_stmt | pass_stmt | flow_stmt |
              import_stmt | global_stmt | nonlocal_stmt | assert_stmt)
 -}
 
--- Complete
-
-SmallStmt :: { Statement }
-SmallStmt 
-   : ExprStmt              { $1 }
-   | DelStmt               { $1 }
-   | PassStmt              { $1 }
-   | FlowStmt              { $1 }
-   | ImportStmt            { $1 }
-   | GlobalStmt            { $1 }
-   | NonLocalStmt          { $1 }
-   | AssertStmt            { $1 }
+small_stmt :: { Statement }
+small_stmt 
+   : expr_stmt     { $1 }
+   | del_stmt      { $1 }
+   | pass_stmt     { $1 }
+   | flow_stmt     { $1 }
+   | import_stmt   { $1 }
+   | global_stmt   { $1 }
+   | nonlocal_stmt { $1 }
+   | assert_stmt   { $1 }
 
 -- expr_stmt: testlist (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist))*)
 
--- Complete
-
-ExprStmt :: { Statement }
-ExprStmt : TestList Assignment { makeAssignmentOrExpr $1 $2 }
+expr_stmt :: { Statement }
+expr_stmt : TestList Assignment { makeAssignmentOrExpr $1 $2 }
 
 Assignment :: { Either [Expr] (AssignOp, Expr) }
 Assignment 
@@ -460,20 +447,20 @@ AugAssignOp
 -- del_stmt: 'del' exprlist
 -- Complete
 
-DelStmt :: { Statement }
-DelStmt : del ExprList { AST.Delete { del_exprs = $2 } }
+del_stmt :: { Statement }
+del_stmt : del ExprList { AST.Delete { del_exprs = $2 } }
 
 -- pass_stmt: 'pass'
 -- Complete
 
-PassStmt :: { Statement }
-PassStmt : pass { AST.Pass }
+pass_stmt :: { Statement }
+pass_stmt : pass { AST.Pass }
 
 -- flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
 -- Complete
 
-FlowStmt :: { Statement }
-FlowStmt 
+flow_stmt :: { Statement }
+flow_stmt 
    : BreakStmt { $1 }
    | ContinueStmt { $1 }
    | ReturnStmt { $1 }
@@ -513,18 +500,18 @@ RaiseStmt : raise OptionalTestFrom { AST.Raise { raise_expr = $2 }}
 OptionalTestFrom :: { Maybe (Expr, Maybe Expr) }
 OptionalTestFrom 
    : {- empty -} { Nothing }
-   | Test OptionalFrom { Just ($1, $2) }
+   | test OptionalFrom { Just ($1, $2) }
 
 OptionalFrom :: { Maybe Expr }
 OptionalFrom 
    : {- empty -} { Nothing }
-   | from Test { Just $2 }
+   | from test { Just $2 }
 
 -- import_stmt: import_name | import_from
 -- Complete
 
-ImportStmt :: { Statement }
-ImportStmt 
+import_stmt :: { Statement }
+import_stmt 
    : ImportName { $1 }
    | ImportFrom { $1 }
 
@@ -547,14 +534,14 @@ ImportModule :: { ImportModule }
 ImportModule 
    : '.' { ImportDot }
    | '...' { ImportRelative (ImportRelative ImportDot) }
-   | DottedName { ImportName $1 }
+   | dotted_name { ImportName $1 }
    | '.' ImportModule { ImportRelative $2 }
    | '...' ImportModule { ImportRelative (ImportRelative (ImportRelative $2)) }
 
 -- import_as_name: NAME ['as' NAME]
 ImportAsName :: { FromItem }
 ImportAsName 
-   : Name OptionalAsName { FromItem { from_item_name = $1, from_as_name = $2 }}
+   : NAME OptionalAsName { FromItem { from_item_name = $1, from_as_name = $2 }}
 
 -- import_as_names: import_as_name (',' import_as_name)* [',']
 ImportAsNames :: { FromItems }
@@ -584,57 +571,57 @@ OneOrMoreDottedAsNamesRev
 
 DottedAsName :: { ImportItem }
 DottedAsName 
-   : DottedName OptionalAsName  
+   : dotted_name OptionalAsName  
         { ImportItem { import_item_name = $1, import_as_name = $2 }}
 
 -- dotted_name: NAME ('.' NAME)* 
 -- Complete
 
-DottedName :: { DottedName }
-DottedName : Name DotNames { $1 : reverse $2 }
+dotted_name :: { DottedName }
+dotted_name : NAME DotNames { $1 : reverse $2 }
 
 DotNames :: { DottedName }
 DotNames 
    : {- empty -} { [] }
-   | DotNames '.' Name { $3 : $1 }
+   | DotNames '.' NAME { $3 : $1 }
 
 -- global_stmt: 'global' NAME (',' NAME)*
 -- Complete
 
-GlobalStmt :: { Statement }
-GlobalStmt : global OneOrMoreNames { AST.Global { global_vars = $2 }}
+global_stmt :: { Statement }
+global_stmt : global OneOrMoreNames { AST.Global { global_vars = $2 }}
 
 OneOrMoreNames :: { [Ident] }
 OneOrMoreNames : OneOrMoreNamesRev { reverse $1 }
 
 OneOrMoreNamesRev :: { [Ident] }
 OneOrMoreNamesRev
-   : Name { [$1] }
-   | OneOrMoreNamesRev ',' Name { $3 : $1 }
+   : NAME { [$1] }
+   | OneOrMoreNamesRev ',' NAME { $3 : $1 }
 
 -- nonlocal_stmt: 'nonlocal' NAME (',' NAME)*
 
-NonLocalStmt :: { Statement }
-NonLocalStmt : nonlocal OneOrMoreNames { AST.NonLocal { nonLocal_vars = $2 }}
+nonlocal_stmt :: { Statement }
+nonlocal_stmt : nonlocal OneOrMoreNames { AST.NonLocal { nonLocal_vars = $2 }}
 
 -- assert_stmt: 'assert' test [',' test]
 
-AssertStmt :: { Statement }
-AssertStmt : assert TestListRev { AST.Assert { assert_exprs = reverse $2 }}
+assert_stmt :: { Statement }
+assert_stmt : assert TestListRev { AST.Assert { assert_exprs = reverse $2 }}
 
 -- compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated 
 -- Complete
 
-CompoundStmt :: { Statement }
-CompoundStmt 
+compound_stmt :: { Statement }
+compound_stmt 
    : IfStmt { $1 } 
    | WhileStmt { $1 }
    | ForStmt { $1 }
    | TryStmt { $1 }
    | WithStmt { $1 }
-   | FuncDef { $1 } 
-   | ClassDef { $1 }
-   | Decorated { $1 }
+   | funcdef { $1 } 
+   | classdef { $1 }
+   | decorated { $1 }
 
 -- if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 -- Complete
@@ -646,7 +633,7 @@ IfConditionals :: { [(Expr,[Statement])] }
 IfConditionals : If ZeroOrMoreElifs { $1 : $2 }
 
 If :: { (Expr, [Statement]) }
-If : if Test ':' Suite { ($2, $4) }
+If : if test ':' suite { ($2, $4) }
 
 ZeroOrMoreElifs :: { [(Expr, [Statement])]}
 ZeroOrMoreElifs : ZeroOrMoreElifsRev { reverse $1 }
@@ -654,25 +641,25 @@ ZeroOrMoreElifs : ZeroOrMoreElifsRev { reverse $1 }
 ZeroOrMoreElifsRev :: { [(Expr, [Statement])]}
 ZeroOrMoreElifsRev 
    : {- empty -} { [] }
-   | ZeroOrMoreElifsRev elif Test ':' Suite { ($3, $5) : $1 }
+   | ZeroOrMoreElifsRev elif test ':' suite { ($3, $5) : $1 }
 
 OptionalElse :: { [Statement] }
 OptionalElse 
    : {- empty -} { [] }
-   | else ':' Suite { $3 }
+   | else ':' suite { $3 }
 
 -- while_stmt: 'while' test ':' suite ['else' ':' suite] 
 -- Complete
 
 WhileStmt :: { Statement }
-WhileStmt : while Test ':' Suite OptionalElse { AST.While { while_cond = $2 , while_body = $4, while_else = $5 } }
+WhileStmt : while test ':' suite OptionalElse { AST.While { while_cond = $2 , while_body = $4, while_else = $5 } }
 
 -- for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite] 
 -- Complete
 
 ForStmt :: { Statement }
 ForStmt 
-   : for ExprList in TestList ':' Suite OptionalElse 
+   : for ExprList in TestList ':' suite OptionalElse 
      { AST.For { for_targets = $2, for_generator = $4, for_body = $6, for_else = $7 } }
 
 {- 
@@ -682,17 +669,17 @@ ForStmt
 -- Complete
 
 TryStmt :: { Statement }
-TryStmt : try ':' Suite Handlers { makeTry $3 $4 }
+TryStmt : try ':' suite Handlers { makeTry $3 $4 }
 
 Handlers :: { ([Handler], [Statement], [Statement]) }
 Handlers 
    : OneOrMoreExceptClauses OptionalElse OptionalFinally { ($1, $2, $3) }
-   | finally ':' Suite { ([], [], $3) }
+   | finally ':' suite { ([], [], $3) }
 
 OptionalFinally :: { [Statement] }
 OptionalFinally 
    : {- empty -} { [] }
-   | finally ':' Suite { $3 }
+   | finally ':' suite { $3 }
 
 OneOrMoreExceptClauses :: { [Handler] }
 OneOrMoreExceptClauses : OneOrMoreExceptClausesRev { reverse $1 }
@@ -703,7 +690,7 @@ OneOrMoreExceptClausesRev
    | OneOrMoreExceptClausesRev Handler { $2 : $1 }
 
 Handler :: { Handler }
-Handler : ExceptClause ':' Suite { ($1, $3) }
+Handler : ExceptClause ':' suite { ($1, $3) }
 
 {- 
    with_stmt: 'with' test [ with_var ] ':' suite
@@ -712,7 +699,7 @@ Handler : ExceptClause ':' Suite { ($1, $3) }
 -- Complete
 
 WithStmt :: { Statement }
-WithStmt : with Test OptionalAs ':' Suite 
+WithStmt : with test OptionalAs ':' suite 
            { AST.With { with_context = $2, with_as = $3, with_body = $5 } }
 
 OptionalAs :: { Maybe Expr }
@@ -729,19 +716,19 @@ ExceptClause : except ExceptExpr { $2 }
 ExceptExpr :: { ExceptClause }
 ExceptExpr 
    : {- empty -} { Nothing }
-   | Test OptionalAsName { Just ($1, $2) }
+   | test OptionalAsName { Just ($1, $2) }
 
 OptionalAsName :: { Maybe Ident }
 OptionalAsName 
    : {- empty -} { Nothing }
-   | as Name     { Just $2 }
+   | as NAME     { Just $2 }
 
 -- suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT 
 -- Complete, but we don't have a newline before indent b/c it is redundant
 
-Suite :: { [Statement] }
-Suite 
-   : SimpleStmt { $1 }
+suite :: { [Statement] }
+suite 
+   : simple_stmt { $1 }
    | {- no newline here! -} indent OneOrMoreStmts dedent { $2 } 
 
 OneOrMoreStmts :: { [Statement] }
@@ -749,21 +736,21 @@ OneOrMoreStmts : OneOrMoreStmtsRec { reverse (concat $1) }
 
 OneOrMoreStmtsRec :: { [[Statement]] }
 OneOrMoreStmtsRec 
-   : Stmt { [$1] }
-   | OneOrMoreStmtsRec Stmt { $2 : $1 }
+   : stmt { [$1] }
+   | OneOrMoreStmtsRec stmt { $2 : $1 }
 
 -- test: or_test ['if' or_test 'else' test] | lambdef
 -- Complete
 
-Test :: { Expr }
-Test 
+test :: { Expr }
+test 
    : OrTest TestCond { makeConditionalExpr $1 $2 }
    | LambDef { $1 }
 
 TestCond :: { Maybe (Expr, Expr) }
 TestCond 
    : {- empty -} { Nothing }
-   | if OrTest else Test { Just ($2, $4) }
+   | if OrTest else test { Just ($2, $4) }
 
 -- test_nocond: or_test | lambdef_nocond
 -- Complete 
@@ -774,16 +761,17 @@ TestNoCond
    | LambDefNoCond { $1 }
 
 -- lambdef: 'lambda' [varargslist] ':' test
--- Complete
 
 LambDef :: { Expr }
-LambDef : lambda VarArgsList ':' Test { AST.Lambda $2 $4 }
+LambDef : lambda optvarargslist ':' test { AST.Lambda $2 $4 }
 
 -- lambdef_nocond: 'lambda' [varargslist] ':' test_nocond
--- Complete
 
 LambDefNoCond :: { Expr }
-LambDefNoCond : lambda VarArgsList ':' TestNoCond { AST.Lambda $2 $4 }
+LambDefNoCond : lambda optvarargslist ':' TestNoCond { AST.Lambda $2 $4 }
+
+optvarargslist :: { [Parameter] }
+optvarargslist: opt(varargslist) { concat (maybeToList $1) }
 
 -- or_test: and_test ('or' and_test)* 
 -- Complete
@@ -987,7 +975,7 @@ Atom :: { Expr }
 Atom : ParenForm { $1 } 
      | ListForm { $1 }
      | DictOrSetForm { $1 }
-     | Name { AST.Var $1 }
+     | NAME { AST.Var $1 }
      | integer { AST.Int $1 }
      | float { AST.Float $1 }
      | imaginary { AST.Imaginary { imaginary_value = $1 }}
@@ -1033,16 +1021,17 @@ OneOrMoreByteStrings
 TestListComp :: { Either Expr (Comprehension Expr) }
 TestListComp
    : TestList { Left $1 }
-   | Test CompFor { Right (makeComprehension $1 $2) }
+   | test CompFor { Right (makeComprehension $1 $2) }
 
 -- trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME 
 -- Complete 
 
 Trailer :: { Trailer }
 Trailer 
-   : '(' ArgList ')' { TrailerCall $2 }
+   -- : '(' optional_arg_list ')' { TrailerCall $2 }
+   : paren_arg_list { TrailerCall $1 }
    | '[' SubscriptList ']' { TrailerSubscript $2 } 
-   | '.' Name { TrailerDot $2 }
+   | '.' NAME { TrailerDot $2 }
 
 -- subscriptlist: subscript (',' subscript)* [',']
 
@@ -1058,13 +1047,13 @@ OneOrMoreSubsRev
 
 Subscript :: { Subscript }
 Subscript
-   : Test { SubscriptExpr $1 }
+   : test { SubscriptExpr $1 }
    | OptionalTest ':' OptionalTest OptionalSliceOp { SubscriptSlice $1 $3 $4 }
 
 OptionalTest :: { Maybe Expr }
 OptionalTest
    : {- empty -} { Nothing }
-   | Test { Just $1 }
+   | test { Just $1 }
 
 OptionalSliceOp :: { Maybe (Maybe Expr) }
 OptionalSliceOp 
@@ -1110,8 +1099,8 @@ TestList : TestListRev OptionalComma { makeTupleOrExpr (reverse $1) $2 }
        
 TestListRev :: { [Expr] }
 TestListRev 
-   : Test { [$1] }
-   | TestListRev ',' Test { $3 : $1 }
+   : test { [$1] }
+   | TestListRev ',' test { $3 : $1 }
 
 {- 
    dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
@@ -1120,8 +1109,8 @@ TestListRev
 
 DictOrSetMaker :: { Expr }
 DictOrSetMaker
-   : Test ':' Test DictRest { makeDictionary ($1, $3) $4 } 
-   | Test SetRest { makeSet $1 $2 } 
+   : test ':' test DictRest { makeDictionary ($1, $3) $4 } 
+   | test SetRest { makeSet $1 $2 } 
 
 DictRest :: { Either CompFor [(Expr, Expr)] }
 DictRest
@@ -1131,7 +1120,7 @@ DictRest
 ZeroOrMoreDictMappings :: { [(Expr, Expr)] }
 ZeroOrMoreDictMappings
    : {- empty -} { [] }
-   | ZeroOrMoreDictMappings ',' Test ':' Test { ($3,$5) : $1 }
+   | ZeroOrMoreDictMappings ',' test ':' test { ($3,$5) : $1 }
 
 SetRest :: { Either CompFor [Expr] }
 SetRest
@@ -1141,20 +1130,25 @@ SetRest
 ZeroOrMoreCommaTest :: { [Expr] }
 ZeroOrMoreCommaTest 
    : {- empty -} { [] }
-   | ZeroOrMoreCommaTest ',' Test { $3 : $1 }
+   | ZeroOrMoreCommaTest ',' test { $3 : $1 }
 
 -- classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
 -- Complete
 
-ClassDef :: { Statement }
-ClassDef 
-   : class Name OptionalArgList ':' Suite 
+classdef :: { Statement }
+classdef 
+   : class NAME opt_paren_arg_list ':' suite 
      { AST.Class { class_name = $2, class_args = $3, class_body = $5 }}
 
+optional_arg_list :: { [Argument] }
+optional_arg_list: opt(arglist) { concat (maybeToList $1) } 
+
+{-
 OptionalArgList :: { [Argument] }
 OptionalArgList 
    : {- empty -} { [] }
-   | '(' ArgList ')' { $2 }
+   | '(' arglist ')' { $2 }
+-}
 
 {- 
    arglist: (argument ',')* (argument [',']
@@ -1163,33 +1157,68 @@ OptionalArgList
 -}
 
 {-
-   Deviates slightly from the grammar because we allow empty arg lists.
-   The grammar allows for this by making arg lists non-empty but optional.
-   Works out the same in the end.
+   We don't follow the grammar rules directly (though we do implement
+   something equivalent). The reason is that there is ambiguity over
+   the optional comma.
+
+   It is probably okay to allow the optional comma even after the *, and
+   ** forms. It seems more consistent to me.
 -}
 
-ArgList :: { [Argument] }
-ArgList 
-   : {- empty -} { [] }
-   | '*' Test { [ArgVarArgsPos { arg_expr = $2 }] }
-   | '**' Test { [ArgVarArgsKeyword { arg_expr = $2 }] }
-   | Argument { [$1] }
-   | Argument ',' ArgList { $1 : $3 }
-   | '*' Test ',' StarArgs { ArgVarArgsPos { arg_expr = $2 } : $4 }
+-- XXX should perform a check on the arguments here for correct ordering.
 
-StarArgs :: { [Argument] }
-StarArgs
-   : Argument { [$1] }
-   | Argument ',' StarArgs { $1 : $3 }
-   | '**' Test { [ArgVarArgsKeyword { arg_expr = $2 }] }
+arglist :: { [Argument] }
+arglist: arglist_rev {% checkArguments (reverse $1) }
+
+arglist_rev :: { [Argument] }
+arglist_rev
+   : arguments ',' { $1 }
+   | arguments { $1 }
+
+arguments :: { [Argument] }
+arguments
+   : oneArgument { [$1] }
+   | arguments ',' oneArgument { $3 : $1 }
+
+oneArgument
+   : '*' test { ArgVarArgsPos { arg_expr = $2 } }
+   | '**' test { ArgVarArgsKeyword { arg_expr = $2 } }
+   | argument { $1 }
+
+{-
+arglist :: { [Argument] }
+arglist 
+   : argument arglist_rest { $1 : $2 }
+   | '*' test arglist_star_rest { ArgVarArgsPos { arg_expr = $2 } : $3 }
+   | arglist_starstar { $1 }
+
+arglist_rest :: { [Argument] }
+arglist_rest
+   : ',' arglist { $2 }
+   | ',' { [] }
+   | {- empty -} { [] }
+
+arg_list_star_comma_rest :: { [Argument] }
+arg_list_star_comma_rest
+   : argument arglist_star_rest { $1 : $2 }
+   | arglist_starstar { $1 }
+
+arglist_star_rest :: { [Argument] }
+arglist_star_rest
+   : {- empty -} { [] }
+   | ',' arg_list_star_comma_rest { $2 }
+
+arglist_starstar :: { [Argument] }
+arglist_starstar : '**' test { [ArgVarArgsKeyword { arg_expr = $2 }] }
+-}
 
 -- argument: test [comp_for] | test '=' test  # Really [keyword '='] test
 
-Argument :: { Argument }
-Argument
-   : Name '=' Test { ArgKeyword { arg_keyword = $1, arg_expr = $3 }}
-   | Test { ArgExpr { arg_expr = $1 }} 
-   | Test CompFor { ArgExpr { arg_expr = Generator { gen_comprehension = makeComprehension $1 $2 }}}
+argument :: { Argument }
+argument
+   : NAME '=' test { ArgKeyword { arg_keyword = $1, arg_expr = $3 }}
+   | test { ArgExpr { arg_expr = $1 }} 
+   | test CompFor { ArgExpr { arg_expr = Generator { gen_comprehension = makeComprehension $1 $2 }}}
 
 -- comp_iter: comp_for | comp_if
 -- Complete

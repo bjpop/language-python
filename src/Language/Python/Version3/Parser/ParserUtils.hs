@@ -134,3 +134,46 @@ makeDictionary :: (Expr, Expr) -> Either CompFor [(Expr,Expr)] -> Expr
 makeDictionary e (Left compFor)
    = DictComp { dict_comprehension = Comprehension { comprehension_expr = e, comprehension_for = compFor }}
 makeDictionary e (Right es) = Dictionary { dict_mappings = e:es }
+
+fromEither :: Either a a -> a
+fromEither (Left x) = x
+fromEither (Right x) = x
+
+{-
+   See: http://www.python.org/doc/3.0/reference/expressions.html#calls
+
+   arglist: (argument ',')* (argument [',']
+                         |'*' test (',' argument)* [',' '**' test]
+                         |'**' test)
+
+   (state 1) Positional arguments come first.
+   (state 2) Then keyword arguments.
+   (state 3) Then the single star form.
+   (state 4) Then more keyword arguments (but no positional arguments).
+   (state 5) Then the double star form.
+
+XXX fixme: we need to include SrcLocations for the errors.
+-}
+
+checkArguments :: [Argument] -> P [Argument]
+checkArguments args = do
+   check 1 args
+   return args
+   where
+   check :: Int -> [Argument] -> P ()
+   check state [] = return ()
+   check 5 (_:_) = failP NoLocation ["an **argument must not be followed by any arguments"]
+   check state (arg:rest) = do
+      case arg of
+         ArgExpr {}
+            | state == 1 -> check state rest
+            | state == 2 -> failP NoLocation ["a positional argument must not follow a keyword argument"]
+            | otherwise -> failP NoLocation ["a positional argument must not follow a *argument"]
+         ArgKeyword {}
+            | state `elem` [1,2] -> check 2 rest
+            | state `elem` [3,4] -> check 4 rest
+         ArgVarArgsPos {}
+            | state `elem` [1,2] -> check 3 rest
+            | state `elem` [3,4] -> failP NoLocation ["there must not be two *arguments in an argument list"]
+         ArgVarArgsKeyword {} -> check 5 rest
+
