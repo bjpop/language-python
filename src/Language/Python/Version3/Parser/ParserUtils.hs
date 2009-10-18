@@ -30,8 +30,11 @@ makeConditionalExpr e (Just (cond, false_branch))
 
 makeBinOp :: Expr -> [(Op, Expr)] -> Expr
 makeBinOp e es
-   = foldl' (\e1 (op, e2) -> BinaryOp { operator = op, left_op_arg = e1, right_op_arg = e2 } )
-     e (reverse es)
+   -- = foldl' mkOp e (reverse es)
+   = foldl' mkOp e es
+   where
+   mkOp e1 (op, e2) = 
+      BinaryOp { operator = op, left_op_arg = e1, right_op_arg = e2 }
 
 parseError :: Token -> P a 
 parseError token 
@@ -162,7 +165,7 @@ checkArguments args = do
    where
    check :: Int -> [Argument] -> P ()
    check state [] = return ()
-   check 5 (_:_) = failP NoLocation ["an **argument must not be followed by any arguments"]
+   check 5 (_:_) = failP NoLocation ["an **argument must not be followed by any other arguments"]
    check state (arg:rest) = do
       case arg of
          ArgExpr {}
@@ -177,3 +180,40 @@ checkArguments args = do
             | state `elem` [3,4] -> failP NoLocation ["there must not be two *arguments in an argument list"]
          ArgVarArgsKeyword {} -> check 5 rest
 
+{-
+   See: http://docs.python.org/3.1/reference/compound_stmts.html#grammar-token-parameter_list
+
+   parameter_list ::=  (defparameter ",")*
+                    (  "*" [parameter] ("," defparameter)*
+                    [, "**" parameter]
+                    | "**" parameter
+                    | defparameter [","] )
+
+   (state 1) Parameters first.
+   (state 2) Then the single star (on its own or with parameter)
+   (state 3) Then more parameters. 
+   (state 4) Then the double star form.
+
+XXX fixme: we need to include SrcLocations for the errors.
+-}
+
+checkParameters :: [Parameter] -> P [Parameter]
+checkParameters params = do
+   check 1 params 
+   return params
+   where
+   check :: Int -> [Parameter] -> P ()
+   check state [] = return ()
+   check 4 (_:_) = failP NoLocation ["a **parameter must not be followed by any other parameters"]
+   check state (param:rest) = do
+      case param of
+         Param {}
+            | state `elem` [1,3] -> check state rest
+            | state == 2 -> check 3 rest 
+         EndPositional {}
+            | state == 1 -> check 2 rest
+            | otherwise -> failP NoLocation ["there must not be two *parameters in a parameter list"]
+         VarArgsPos {}
+            | state == 1 -> check 2 rest
+            | otherwise -> failP NoLocation ["there must not be two *parameters in a parameter list"]
+         VarArgsKeyword {} -> check 4 rest

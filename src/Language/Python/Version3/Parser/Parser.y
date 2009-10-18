@@ -13,7 +13,6 @@
 
 module Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput, parseEval) where
 
-
 import Language.Python.Version3.Parser.Lexer
 import Language.Python.Version3.Parser.Token hiding (True, False)
 import qualified Language.Python.Version3.Parser.Token as Token
@@ -24,7 +23,6 @@ import Language.Python.Data.SrcLocation
 import qualified Data.ByteString.Char8 as BS (ByteString)
 import Data.Either (rights, either)
 import Data.Maybe (maybeToList)
-
 }
 
 %name parseFileInput file_input 
@@ -37,13 +35,6 @@ import Data.Maybe (maybeToList)
 %lexer { lexCont } { Token.EOF }
 
 %token 
-   import          { Token.Import _ }
-   ident           { Token.Identifier _ $$ }
-   string          { Token.String _ $$ }
-   bytestring      { Token.ByteString _ $$ }
-   integer         { Token.Integer _ $$ }
-   float           { Token.Float _ $$ }
-   imaginary       { Token.Imaginary _ $$ }
    '='             { Token.Assign _ }
    '('             { Token.LeftRoundBracket _ }
    ')'             { Token.RightRoundBracket _ }
@@ -54,56 +45,25 @@ import Data.Maybe (maybeToList)
    ','             { Token.Comma _ }
    ';'             { Token.SemiColon _ }
    ':'             { Token.Colon _ }
-   'def'             { Token.Def _ }
-   class           { Token.Class _ }
-   while           { Token.While _ }
-   for             { Token.For _ }
-   if              { Token.If _ }
-   with            { Token.With _ }
-   as              { Token.As _ }
-   true            { Token.True _ }
-   false           { Token.False _ }
-   none            { Token.None _ }
-   return          { Token.Return _ }
-   yield           { Token.Yield _ }
-   indent          { Token.Indent _ }
-   dedent          { Token.Dedent _ }
-   'NEWLINE'       { Token.Newline _ }
-   try             { Token.Try _ }
-   except          { Token.Except _ }
-   finally         { Token.Finally _ }
-   raise           { Token.Raise _ }
    '+'             { Token.Plus _ }
    '-'             { Token.Minus _ }
    '*'             { Token.Mult _ }
+   '**'            { Token.Exponent _ }
    '/'             { Token.Div _ }
+   '//'            { Token.FloorDiv _ }
    '>'             { Token.GreaterThan _ }
    '<'             { Token.LessThan _ }
    '=='            { Token.Equality _ }
    '>='            { Token.GreaterThanEquals _ }
    '<='            { Token.LessThanEquals _ }
-   and             { Token.And _ }
-   or              { Token.Or _ }
-   '**'            { Token.Exponent _ }
-   pass            { Token.Pass _ }
-   break           { Token.Break _ }
-   continue        { Token.Continue _ }
-   del             { Token.Delete _ }
-   else            { Token.Else _ }
-   elif            { Token.Elif _ }
-   not             { Token.Not _ }
    '|'             { Token.BinaryOr _ }
    '^'             { Token.Xor _ }      
    '&'             { Token.BinaryAnd _ }      
    '>>'            { Token.ShiftLeft _ }
    '<<'            { Token.ShiftRight _ }
    '%'             { Token.Modulo _ }
-   floordiv        { Token.FloorDiv _ }
    '~'             { Token.Tilde _ }
    '!='            { Token.NotEquals _ }
-   in              { Token.In _ }
-   is              { Token.Is _ }
-   lambda          { Token.Lambda _ }
    '.'             { Token.Dot _ }
    '...'           { Token.Ellipsis _ }
    '+='            { Token.PlusAssign _ }
@@ -120,28 +80,63 @@ import Data.Maybe (maybeToList)
    '//='           { Token.FloorDivAssign _ } 
    '@'             { Token.At _ }
    '->'            { Token.RightArrow _ }
-   from            { Token.From _ }
-   global          { Token.Global _ }
-   nonlocal        { Token.NonLocal _ }
-   assert          { Token.Assert _ }
+   'and'           { Token.And _ }
+   'as'            { Token.As _ }
+   'assert'        { Token.Assert _ }
+   'break'         { Token.Break _ }
+   'bytestring'    { Token.ByteString _ $$ }
+   'class'         { Token.Class _ }
+   'continue'      { Token.Continue _ }
+   'dedent'        { Token.Dedent _ }
+   'def'           { Token.Def _ }
+   'del'           { Token.Delete _ }
+   'elif'          { Token.Elif _ }
+   'else'          { Token.Else _ }
+   'except'        { Token.Except _ }
+   'False'         { Token.False _ }
+   'finally'       { Token.Finally _ }
+   'float'         { Token.Float _ $$ }
+   'for'           { Token.For _ }
+   'from'          { Token.From _ }
+   'global'        { Token.Global _ }
+   'ident'         { Token.Identifier _ $$ }
+   'if'            { Token.If _ }
+   'imaginary'     { Token.Imaginary _ $$ }
+   'import'        { Token.Import _ }
+   'indent'        { Token.Indent _ }
+   'in'            { Token.In _ }
+   'integer'       { Token.Integer _ $$ }
+   'is'            { Token.Is _ }
+   'lambda'        { Token.Lambda _ }
+   'NEWLINE'       { Token.Newline _ }
+   'None'          { Token.None _ }
+   'nonlocal'      { Token.NonLocal _ }
+   'not'           { Token.Not _ }
+   'or'            { Token.Or _ }
+   'pass'          { Token.Pass _ }
+   'raise'         { Token.Raise _ }
+   'return'        { Token.Return _ }
+   'string'        { Token.String _ $$ }
+   'True'          { Token.True _ }
+   'try'           { Token.Try _ }
+   'while'         { Token.While _ }
+   'with'          { Token.With _ }
+   'yield'         { Token.Yield _ }
 
 %%
 
-{-
-foo :: { [Ident] }
-foo 
-   : foobar ',' { $1 }
-   | foobar { $1 }
+pair(p,q): p q { ($1, $2) }
 
-foobar :: { [Ident] }
-foobar
-   : NAME { [$1] }
-   | foobar ',' NAME { $3: $1 }
--}
+left(p,q): p q { $1 }
+right(p,q): p q { $2 }
 
 or(p,q)
-   : p  { Left $1 }
-   | q  { Right $1 }
+   : p  { $1 }
+   | q  { $1 }
+
+either(p,q)
+   : p { Left $1 }
+   | q { Right $1 }
 
 opt(p)
    :    { Nothing }
@@ -158,15 +153,18 @@ many0(p)
    : many1(p) { $1 }
    |         { [] }
 
-sepBy0(p,sep)
-   : sepBy0Rev(p,sep) { reverse $1 }
+sepOptEndBy(p,sep) 
+   : sepByRev(p,sep) ',' { reverse $1 }
+   | sepByRev(p,sep) { reverse $1 }
 
-sepBy0Rev(p,sep)
-   : p       { [$1] }
-   | sepBy0Rev(p,sep) sep p { $3 : $1 } 
+sepBy(p,sep): sepByRev(p,sep) { reverse $1 }
+
+sepByRev(p,sep)
+   : p { [$1] }
+   | sepByRev(p,sep) sep p { $3 : $1 }
 
 NAME :: { Ident }
-NAME : ident { Ident $1 }
+NAME : 'ident' { Ident $1 }
 
 {- 
    Note: newline tokens in the grammar:
@@ -195,17 +193,16 @@ single_input
 -- file_input: (NEWLINE | stmt)* ENDMARKER
 
 file_input :: { Module }
-file_input : many0(or('NEWLINE',stmt)) {- No need to mention ENDMARKER -} 
-             { Module (concat (rights $1)) }
+file_input 
+   : many0(either('NEWLINE',stmt)) {- No need to mention ENDMARKER -} 
+     { Module (concat (rights $1)) }
 
 -- eval_input: testlist NEWLINE* ENDMARKER
 
 eval_input :: { Expr }
-eval_input : TestList many0('NEWLINE') {- No need to mention ENDMARKER -} { $1 }
+eval_input : testlist many0('NEWLINE') {- No need to mention ENDMARKER -} { $1 }
 
 --  decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
-
--- Complete
 
 opt_paren_arg_list :: { [Argument] }
 opt_paren_arg_list: opt(paren_arg_list) { concat (maybeToList $1) }
@@ -228,17 +225,14 @@ decorators : many1(decorator) { $1 }
 decorated :: { Statement }
 decorated 
    : decorators or(classdef,funcdef) 
-     { Decorated { decorated_decorators = $1, decorated_def = fromEither $2 } } 
+     { Decorated { decorated_decorators = $1, decorated_def = $2 } } 
 
 -- funcdef: 'def' NAME parameters ['->' test] ':' suite 
 
 funcdef :: { Statement }
 funcdef 
-   : 'def' NAME parameters opt(result_annotation) ':' suite
+   : 'def' NAME parameters opt(right('->',test)) ':' suite
      { Fun { fun_name = $2 , fun_args = $3, fun_result_annotation = $4, fun_body = $6 } }
-
-result_annotation :: { Expr }
-result_annotation: '->' test { $2 } 
 
 -- parameters: '(' [typedargslist] ')'
 
@@ -251,54 +245,24 @@ parameters : '(' opt(typedargslist) ')' { concat (maybeToList $2) }
        | tfpdef ['=' test] (',' tfpdef ['=' test])* [',']) 
 -} 
 
-{- The code below uses right recursion extensively. The Happy docs say that
-   there can be problems with this:
-
-   http://www.haskell.org/happy/doc/html/sec-sequences.html#sec-separators
-
-   "right-recursive rules require stack space proportional to the length 
-   of the list being parsed. This can be extremely important where long sequences 
-   are involved, for instance in automatically generated output."
-
-   At the moment it seems easier to write using right recursion, but
-   we may want to re-visit the use of right recursion at some point.
-
-   Same pattern as argslist and varargslist
--} 
+{- Same pattern as argslist and varargslist -}
 
 typedargslist :: { [Parameter] }
-typedargslist
-   : tfpdef_opt_test typedargslist_rest { $1 : $2 }
-   | '*' opt(tfpdef) typedargslist_star_rest { makeStarParam $2 : $3  }
-   | typedargslist_starstar { $1 }
+typedargslist: sepOptEndBy(one_typedargs_param,',') {% checkParameters $1 }
 
-typedargslist_rest :: { [Parameter] }
-typedargslist_rest
-   : ',' typedargslist { $2 }
-   | ',' { [] }
-   | {- empty -} { [] }
-
-typedargslist_star_rest :: { [Parameter] }
-typedargslist_star_rest 
-   : {- empty -} { [] }
-   | ',' typedargslist_star_comma_rest { $2 }
-
-typedargslist_star_comma_rest :: { [Parameter] }
-typedargslist_star_comma_rest
-   : tfpdef_opt_test typedargslist_star_rest { $1 : $2 }
-   | typedargslist_starstar { $1 }
-
-typedargslist_starstar :: { [Parameter] }
-typedargslist_starstar: '**' tfpdef { [makeStarStarParam $2] } 
-
-tfpdef_opt_test :: { Parameter }
-tfpdef_opt_test: tfpdef optional_default { makeParam $1 $2 }
+one_typedargs_param :: { Parameter }
+one_typedargs_param
+   : tfpdef optional_default { makeParam $1 $2 }
+   | '*' opt(tfpdef) { makeStarParam $2 }
+   | '**' tfpdef { makeStarStarParam $2 }
 
 optional_default :: { Maybe Expr }
 optional_default: opt(equals_test) { $1 }
 
 equals_test :: { Expr }
 equals_test: '=' test { $2 }
+
+{- tfpdef: NAME [':' test] -}
 
 tfpdef :: { (Ident, Maybe Expr) }
 tfpdef : NAME opt(colon_test) { ($1, $2) }
@@ -311,8 +275,6 @@ colon_test: ':' test { $2 }
 
 -}
 
--- Complete
-
 {- 
    There is some tedious similarity in these rules to the ones for
    TypedArgsList. varargslist is used for lambda functions, and they
@@ -321,38 +283,16 @@ colon_test: ':' test { $2 }
    that normal functions can, because the annotations are introduced
    using a colon. This would cause ambibguity with the colon
    that marks the end of the lambda parameter list!
-
-   See the remarks about right recursion in the comments for
-   TypedArgsList.
 -}
 
 varargslist :: { [Parameter] }
-varargslist
-   : vfpdef_opt_test varargslist_rest { $1 : $2 }
-   | '*' optvfpdef varargslist_star_rest { makeStarParam $2 : $3  }
-   | varargslist_starstar { $1 }
+varargslist : sepOptEndBy(one_varargs_param,',') {% checkParameters $1 }
 
-varargslist_rest :: { [Parameter] }
-varargslist_rest
-   : ',' varargslist { $2 }
-   | ',' { [] }
-   | {- empty -} { [] }
-
-varargslist_star_rest :: { [Parameter] }
-varargslist_star_rest 
-   : {- empty -} { [] }
-   | ',' varargslist_star_comma_rest { $2 }
-
-varargslist_star_comma_rest :: { [Parameter] }
-varargslist_star_comma_rest
-   : vfpdef_opt_test varargslist_star_rest { $1 : $2 }
-   | varargslist_starstar { $1 }
-
-varargslist_starstar :: { [Parameter] }
-varargslist_starstar: '**' vfpdef { [makeStarStarParam ($2, Nothing)] }
-
-vfpdef_opt_test :: { Parameter }
-vfpdef_opt_test: vfpdef optional_default { makeParam ($1, Nothing) $2 }
+one_varargs_param :: { Parameter }
+one_varargs_param
+   : '*' optvfpdef { makeStarParam $2 }
+   | '**' vfpdef { makeStarStarParam ($2, Nothing) } 
+   | vfpdef optional_default { makeParam ($1, Nothing) $2 }
 
 -- vfpdef: NAME
 vfpdef :: { Ident }
@@ -397,123 +337,123 @@ small_stmt
    | assert_stmt   { $1 }
 
 -- expr_stmt: testlist (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist))*)
+{-
+   expr_stmt: testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
+-}
 
 expr_stmt :: { Statement }
-expr_stmt : TestList Assignment { makeAssignmentOrExpr $1 $2 }
+expr_stmt : testlist_star_expr either(many_assign, augassign_yield_or_test_list) { makeAssignmentOrExpr $1 $2 }
 
-Assignment :: { Either [Expr] (AssignOp, Expr) }
-Assignment 
-   : NormalAssign { Left $1 }
-   | AugAssign { Right $1 }
+many_assign :: { [Expr] }
+many_assign : many0(right('=', yield_or_test_list_star)) { $1 }
 
-NormalAssign :: { [Expr] }
-NormalAssign : ZeroOrMoreAssignRev { reverse $1 }
+yield_or_test_list :: { Expr }
+yield_or_test_list : or(yield_expr,testlist) { $1 }
 
-ZeroOrMoreAssignRev :: { [Expr] }
-ZeroOrMoreAssignRev 
-   : {- empty -} { [] }
-   | ZeroOrMoreAssignRev '=' YieldOrTestList { $3 : $1 }
+yield_or_test_list_star :: { Expr }
+yield_or_test_list_star : or(yield_expr,testlist_star_expr) { $1 }
 
-YieldOrTestList :: { Expr }
-YieldOrTestList 
-   : YieldExpr { $1 }
-   | TestList { $1 }
+augassign_yield_or_test_list :: { (AssignOp, Expr) }
+augassign_yield_or_test_list : augassign yield_or_test_list { ($1, $2) }
+
+--   testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
+
+testlist_star_expr :: { Expr }
+testlist_star_expr: test_list_star_rev opt_comma { makeTupleOrExpr (reverse $1) $2 } 
+
+test_list_star_rev :: { [Expr] }
+test_list_star_rev
+   : or(test,star_expr) { [$1] }
+   | test_list_star_rev ',' or(test,star_expr) { $3 : $1 }
+
+{-
+expr_stmt :: { Statement }
+expr_stmt : testlist either(many_assign, augassign_yield_or_test_list) { makeAssignmentOrExpr $1 $2 }
+
+many_assign :: { [Expr] }
+many_assign : many0(right('=', yield_or_test_list)) { $1 }
+
+yield_or_test_list :: { Expr }
+yield_or_test_list : or(yield_expr,testlist) { $1 }
+
+augassign_yield_or_test_list :: { (AssignOp, Expr) }
+augassign_yield_or_test_list : augassign yield_or_test_list { ($1, $2) }
+-}
 
 {- 
    augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
             '<<=' | '>>=' | '**=' | '//=') 
 -}
 
--- Complete
-
-AugAssign :: { (AssignOp, Expr) }
-AugAssign : AugAssignOp YieldOrTestList { ($1, $2) }
-
-AugAssignOp :: { AssignOp }
-AugAssignOp 
-   : '+=' { AST.PlusAssign }
-   | '-=' { AST.MinusAssign } 
-   | '*=' { AST.MultAssign }
-   | '/=' { AST.DivAssign }
-   | '%=' { AST.ModAssign } 
+augassign :: { AssignOp }
+augassign
+   : '+='  { AST.PlusAssign }
+   | '-='  { AST.MinusAssign } 
+   | '*='  { AST.MultAssign }
+   | '/='  { AST.DivAssign }
+   | '%='  { AST.ModAssign } 
    | '**=' { AST.PowAssign }
-   | '&=' { AST.BinAndAssign } 
-   | '|=' { AST.BinOrAssign }
-   | '^=' { AST.BinXorAssign }
+   | '&='  { AST.BinAndAssign } 
+   | '|='  { AST.BinOrAssign }
+   | '^='  { AST.BinXorAssign }
    | '<<=' { AST.LeftShiftAssign }
    | '>>=' { AST.RightShiftAssign }
    | '//=' { AST.FloorDivAssign } 
 
 -- del_stmt: 'del' exprlist
--- Complete
 
 del_stmt :: { Statement }
-del_stmt : del ExprList { AST.Delete { del_exprs = $2 } }
+del_stmt : 'del' exprlist { AST.Delete { del_exprs = $2 } }
 
 -- pass_stmt: 'pass'
--- Complete
 
 pass_stmt :: { Statement }
-pass_stmt : pass { AST.Pass }
+pass_stmt : 'pass' { AST.Pass }
 
 -- flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
--- Complete
 
 flow_stmt :: { Statement }
 flow_stmt 
-   : BreakStmt { $1 }
-   | ContinueStmt { $1 }
-   | ReturnStmt { $1 }
-   | RaiseStmt { $1 }
-   | YieldStmt { $1 }
+   : break_stmt    { $1 }
+   | continue_stmt { $1 }
+   | return_stmt   { $1 }
+   | raise_stmt    { $1 }
+   | yield_stmt    { $1 }
 
 -- break_stmt: 'break'
--- Complete
 
-BreakStmt :: { Statement }
-BreakStmt : break { AST.Break }  
+break_stmt :: { Statement }
+break_stmt : 'break' { AST.Break }  
 
 -- continue_stmt: 'continue'
--- Complete
 
-ContinueStmt :: { Statement }
-ContinueStmt : continue { AST.Continue }  
+continue_stmt :: { Statement }
+continue_stmt : 'continue' { AST.Continue }  
 
 -- return_stmt: 'return' [testlist]
--- Complete 
 
-ReturnStmt :: { Statement }
-ReturnStmt : return OptionalTestList { AST.Return { return_expr = $2 }}
+return_stmt :: { Statement }
+return_stmt : 'return' optional_testlist { AST.Return { return_expr = $2 }}
 
 -- yield_stmt: yield_expr
--- Complete
 
-YieldStmt :: { Statement }
-YieldStmt : YieldExpr { StmtExpr { stmt_expr = $1 } } 
+yield_stmt :: { Statement }
+yield_stmt : yield_expr { StmtExpr { stmt_expr = $1 } } 
 
 -- raise_stmt: 'raise' [test ['from' test]]
--- Complete 
 
-RaiseStmt :: { Statement }
-RaiseStmt : raise OptionalTestFrom { AST.Raise { raise_expr = $2 }}
-
-OptionalTestFrom :: { Maybe (Expr, Maybe Expr) }
-OptionalTestFrom 
-   : {- empty -} { Nothing }
-   | test OptionalFrom { Just ($1, $2) }
-
-OptionalFrom :: { Maybe Expr }
-OptionalFrom 
-   : {- empty -} { Nothing }
-   | from test { Just $2 }
+raise_stmt :: { Statement }
+raise_stmt : 'raise' opt(pair(test, opt(right('from', test)))) { AST.Raise { raise_expr = $2 }}
 
 -- import_stmt: import_name | import_from
--- Complete
 
 import_stmt :: { Statement }
-import_stmt 
-   : ImportName { $1 }
-   | ImportFrom { $1 }
+import_stmt: or(import_name, import_from) { $1 }
+
+-- import_name: 'import' dotted_as_names
+
+import_name :: { Statement }
+import_name : 'import' dotted_as_names { AST.Import { import_items = $2 }}
 
 {-
    # note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
@@ -521,323 +461,241 @@ import_stmt
                  'import' ('*' | '(' import_as_names ')' | import_as_names))
 -}
 
-ImportFrom :: { Statement }
-ImportFrom : from ImportModule import StarOrAsNames { FromImport { from_module = $2, from_items = $4 }}
+import_from :: { Statement }
+import_from : 'from' import_module 'import' star_or_as_names 
+              { FromImport { from_module = $2, from_items = $4 }}
 
-StarOrAsNames :: { FromItems }
-StarOrAsNames
-   : '*' { ImportEverything }
-   | '(' ImportAsNames ')' { $2 }
-   | ImportAsNames { $1 } 
+import_module :: { ImportModule }
+import_module
+   : '.'                 { ImportDot }
+   | '...'               { ImportRelative (ImportRelative ImportDot) }
+   | dotted_name         { ImportName $1 }
+   | '.' import_module   { ImportRelative $2 }
+   | '...' import_module { ImportRelative (ImportRelative (ImportRelative $2)) }
 
-ImportModule :: { ImportModule }
-ImportModule 
-   : '.' { ImportDot }
-   | '...' { ImportRelative (ImportRelative ImportDot) }
-   | dotted_name { ImportName $1 }
-   | '.' ImportModule { ImportRelative $2 }
-   | '...' ImportModule { ImportRelative (ImportRelative (ImportRelative $2)) }
+star_or_as_names :: { FromItems }
+star_or_as_names
+   : '*'                     { ImportEverything }
+   | '(' import_as_names ')' { $2 }
+   | import_as_names         { $1 } 
 
 -- import_as_name: NAME ['as' NAME]
-ImportAsName :: { FromItem }
-ImportAsName 
-   : NAME OptionalAsName { FromItem { from_item_name = $1, from_as_name = $2 }}
-
--- import_as_names: import_as_name (',' import_as_name)* [',']
-ImportAsNames :: { FromItems }
-ImportAsNames : ImportAsNamesRev OptionalComma { FromItems (reverse $1) }
-
-ImportAsNamesRev :: { [FromItem] }
-ImportAsNamesRev
-   : ImportAsName { [$1] }
-   | ImportAsNamesRev ',' ImportAsName { $3 : $1 }
-
--- import_name: 'import' dotted_as_names
-
-ImportName :: { Statement }
-ImportName : import DottedAsNames { AST.Import { import_items = $2 }}
-
--- dotted_as_names: dotted_as_name (',' dotted_as_name)*
-
-DottedAsNames :: { [ImportItem] }
-DottedAsNames : OneOrMoreDottedAsNamesRev { reverse $1 }
-
-OneOrMoreDottedAsNamesRev :: { [ImportItem] }
-OneOrMoreDottedAsNamesRev
-   : DottedAsName { [$1] }
-   | OneOrMoreDottedAsNamesRev ',' DottedAsName { $3 : $1 }
+import_as_name :: { FromItem }
+import_as_name 
+   : NAME optional_as_name { FromItem { from_item_name = $1, from_as_name = $2 }}
 
 -- dotted_as_name: dotted_name ['as' NAME]
 
-DottedAsName :: { ImportItem }
-DottedAsName 
-   : dotted_name OptionalAsName  
-        { ImportItem { import_item_name = $1, import_as_name = $2 }}
+dotted_as_name :: { ImportItem }
+dotted_as_name 
+   : dotted_name optional_as_name  
+     { ImportItem { import_item_name = $1, import_as_name = $2 }}
+
+-- import_as_names: import_as_name (',' import_as_name)* [',']
+
+import_as_names :: { FromItems }
+import_as_names : sepOptEndBy(import_as_name, ',') { FromItems $1 }
+
+-- dotted_as_names: dotted_as_name (',' dotted_as_name)*
+
+dotted_as_names :: { [ImportItem] }
+dotted_as_names : sepBy(dotted_as_name,',') { $1 }
 
 -- dotted_name: NAME ('.' NAME)* 
--- Complete
 
 dotted_name :: { DottedName }
-dotted_name : NAME DotNames { $1 : reverse $2 }
-
-DotNames :: { DottedName }
-DotNames 
-   : {- empty -} { [] }
-   | DotNames '.' NAME { $3 : $1 }
+dotted_name : NAME many0(right('.', NAME)) { $1 : $2 }
 
 -- global_stmt: 'global' NAME (',' NAME)*
--- Complete
 
 global_stmt :: { Statement }
-global_stmt : global OneOrMoreNames { AST.Global { global_vars = $2 }}
+global_stmt : 'global' one_or_more_names { AST.Global { global_vars = $2 }}
 
-OneOrMoreNames :: { [Ident] }
-OneOrMoreNames : OneOrMoreNamesRev { reverse $1 }
-
-OneOrMoreNamesRev :: { [Ident] }
-OneOrMoreNamesRev
-   : NAME { [$1] }
-   | OneOrMoreNamesRev ',' NAME { $3 : $1 }
+one_or_more_names :: { [Ident] }
+one_or_more_names: sepBy(NAME, ',') { $1 }
 
 -- nonlocal_stmt: 'nonlocal' NAME (',' NAME)*
 
 nonlocal_stmt :: { Statement }
-nonlocal_stmt : nonlocal OneOrMoreNames { AST.NonLocal { nonLocal_vars = $2 }}
+nonlocal_stmt : 'nonlocal' one_or_more_names { AST.NonLocal { nonLocal_vars = $2 }}
 
 -- assert_stmt: 'assert' test [',' test]
 
 assert_stmt :: { Statement }
-assert_stmt : assert TestListRev { AST.Assert { assert_exprs = reverse $2 }}
+assert_stmt : 'assert' sepBy(test,',') { AST.Assert { assert_exprs = $2 }}
 
 -- compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated 
--- Complete
 
 compound_stmt :: { Statement }
 compound_stmt 
-   : IfStmt { $1 } 
-   | WhileStmt { $1 }
-   | ForStmt { $1 }
-   | TryStmt { $1 }
-   | WithStmt { $1 }
-   | funcdef { $1 } 
-   | classdef { $1 }
-   | decorated { $1 }
+   : if_stmt    { $1 } 
+   | while_stmt { $1 }
+   | for_stmt   { $1 }
+   | try_stmt   { $1 }
+   | with_stmt  { $1 }
+   | funcdef    { $1 } 
+   | classdef   { $1 }
+   | decorated  { $1 }
 
 -- if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
--- Complete
 
-IfStmt :: { Statement }
-IfStmt : IfConditionals OptionalElse { Conditional { cond_guards = $1, cond_else = $2 } }
+if_stmt :: { Statement }
+if_stmt : 'if' test ':' suite many0(elif) optional_else 
+          { Conditional { cond_guards = ($2, $4):$5, cond_else = $6 } }
 
-IfConditionals :: { [(Expr,[Statement])] }
-IfConditionals : If ZeroOrMoreElifs { $1 : $2 }
+elif :: { (Expr, [Statement]) }
+elif : 'elif' test ':' suite { ($2, $4) }
 
-If :: { (Expr, [Statement]) }
-If : if test ':' suite { ($2, $4) }
-
-ZeroOrMoreElifs :: { [(Expr, [Statement])]}
-ZeroOrMoreElifs : ZeroOrMoreElifsRev { reverse $1 }
-
-ZeroOrMoreElifsRev :: { [(Expr, [Statement])]}
-ZeroOrMoreElifsRev 
+optional_else :: { [Statement] }
+optional_else 
    : {- empty -} { [] }
-   | ZeroOrMoreElifsRev elif test ':' suite { ($3, $5) : $1 }
-
-OptionalElse :: { [Statement] }
-OptionalElse 
-   : {- empty -} { [] }
-   | else ':' suite { $3 }
+   | 'else' ':' suite { $3 }
 
 -- while_stmt: 'while' test ':' suite ['else' ':' suite] 
--- Complete
 
-WhileStmt :: { Statement }
-WhileStmt : while test ':' suite OptionalElse { AST.While { while_cond = $2 , while_body = $4, while_else = $5 } }
+while_stmt :: { Statement }
+while_stmt 
+   : 'while' test ':' suite optional_else 
+     { AST.While { while_cond = $2 , while_body = $4, while_else = $5 } }
 
 -- for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite] 
--- Complete
 
-ForStmt :: { Statement }
-ForStmt 
-   : for ExprList in TestList ':' suite OptionalElse 
+for_stmt :: { Statement }
+for_stmt 
+   : 'for' exprlist 'in' testlist ':' suite optional_else 
      { AST.For { for_targets = $2, for_generator = $4, for_body = $6, for_else = $7 } }
 
 {- 
    try_stmt: ('try' ':' suite 
                ((except_clause ':' suite)+ ['else' ':' suite] ['finally' ':' suite] | 'finally' ':' suite))
 -}
--- Complete
 
-TryStmt :: { Statement }
-TryStmt : try ':' suite Handlers { makeTry $3 $4 }
+try_stmt :: { Statement }
+try_stmt : 'try' ':' suite handlers { makeTry $3 $4 }
 
-Handlers :: { ([Handler], [Statement], [Statement]) }
-Handlers 
-   : OneOrMoreExceptClauses OptionalElse OptionalFinally { ($1, $2, $3) }
-   | finally ':' suite { ([], [], $3) }
+handlers :: { ([Handler], [Statement], [Statement]) }
+handlers 
+   : one_or_more_except_clauses optional_else optional_finally { ($1, $2, $3) }
+   | 'finally' ':' suite { ([], [], $3) }
 
-OptionalFinally :: { [Statement] }
-OptionalFinally 
+optional_finally :: { [Statement] }
+optional_finally 
    : {- empty -} { [] }
-   | finally ':' suite { $3 }
+   | 'finally' ':' suite { $3 }
 
-OneOrMoreExceptClauses :: { [Handler] }
-OneOrMoreExceptClauses : OneOrMoreExceptClausesRev { reverse $1 }
+one_or_more_except_clauses :: { [Handler] }
+one_or_more_except_clauses : many1(handler) { $1 }
 
-OneOrMoreExceptClausesRev :: { [Handler] }
-OneOrMoreExceptClausesRev 
-   : Handler { [$1] }
-   | OneOrMoreExceptClausesRev Handler { $2 : $1 }
-
-Handler :: { Handler }
-Handler : ExceptClause ':' suite { ($1, $3) }
+handler :: { Handler }
+handler : except_clause ':' suite { ($1, $3) }
 
 {- 
    with_stmt: 'with' test [ with_var ] ':' suite
    with_var: 'as' expr
--}
--- Complete
 
-WithStmt :: { Statement }
-WithStmt : with test OptionalAs ':' suite 
+XXX
+with_stmt: 'with' with_item (',' with_item)*  ':' suite
+with_item: test ['as' expr]
+
+-}
+
+with_stmt :: { Statement }
+with_stmt : 'with' test opt(right('as', expr)) ':' suite 
            { AST.With { with_context = $2, with_as = $3, with_body = $5 } }
 
-OptionalAs :: { Maybe Expr }
-OptionalAs 
-   : {- empty -} { Nothing }
-   | as Expr { Just $2 }
-
 -- except_clause: 'except' [test ['as' NAME]] 
--- Complete
 
-ExceptClause :: { ExceptClause }
-ExceptClause : except ExceptExpr { $2 }
+except_clause :: { ExceptClause }
+except_clause : right('except', opt(pair(test, optional_as_name))) { $1 }
 
-ExceptExpr :: { ExceptClause }
-ExceptExpr 
-   : {- empty -} { Nothing }
-   | test OptionalAsName { Just ($1, $2) }
-
-OptionalAsName :: { Maybe Ident }
-OptionalAsName 
-   : {- empty -} { Nothing }
-   | as NAME     { Just $2 }
+optional_as_name :: { Maybe Ident }
+optional_as_name: opt(right('as', NAME)) { $1 }
 
 -- suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT 
--- Complete, but we don't have a newline before indent b/c it is redundant
+-- Note: we don't have a newline before indent b/c it is redundant
 
 suite :: { [Statement] }
 suite 
    : simple_stmt { $1 }
-   | {- no newline here! -} indent OneOrMoreStmts dedent { $2 } 
-
-OneOrMoreStmts :: { [Statement] }
-OneOrMoreStmts : OneOrMoreStmtsRec { reverse (concat $1) }
-
-OneOrMoreStmtsRec :: { [[Statement]] }
-OneOrMoreStmtsRec 
-   : stmt { [$1] }
-   | OneOrMoreStmtsRec stmt { $2 : $1 }
+   | {- no newline here! -} 'indent' many1(stmt) 'dedent' { concat $2 } 
 
 -- test: or_test ['if' or_test 'else' test] | lambdef
--- Complete
 
 test :: { Expr }
 test 
-   : OrTest TestCond { makeConditionalExpr $1 $2 }
-   | LambDef { $1 }
+   : or_test opt(test_if_cond) { makeConditionalExpr $1 $2 }
+   | lambdef { $1 }
 
-TestCond :: { Maybe (Expr, Expr) }
-TestCond 
-   : {- empty -} { Nothing }
-   | if OrTest else test { Just ($2, $4) }
+test_if_cond :: { (Expr, Expr) }
+test_if_cond: 'if' or_test 'else' test { ($2, $4) }
 
 -- test_nocond: or_test | lambdef_nocond
--- Complete 
 
-TestNoCond :: { Expr }
-TestNoCond
-   : OrTest { $1 }
-   | LambDefNoCond { $1 }
+test_no_cond :: { Expr }
+test_no_cond: or(or_test, lambdef_nocond) { $1 }
 
 -- lambdef: 'lambda' [varargslist] ':' test
 
-LambDef :: { Expr }
-LambDef : lambda optvarargslist ':' test { AST.Lambda $2 $4 }
+lambdef :: { Expr }
+lambdef : 'lambda' opt_varargslist ':' test { AST.Lambda $2 $4 }
 
 -- lambdef_nocond: 'lambda' [varargslist] ':' test_nocond
 
-LambDefNoCond :: { Expr }
-LambDefNoCond : lambda optvarargslist ':' TestNoCond { AST.Lambda $2 $4 }
+lambdef_nocond :: { Expr }
+lambdef_nocond : 'lambda' opt_varargslist ':' test_no_cond { AST.Lambda $2 $4 }
 
-optvarargslist :: { [Parameter] }
-optvarargslist: opt(varargslist) { concat (maybeToList $1) }
+opt_varargslist :: { [Parameter] }
+opt_varargslist: opt(varargslist) { concat (maybeToList $1) }
 
 -- or_test: and_test ('or' and_test)* 
--- Complete
 
-OrTest :: { Expr }
-OrTest : AndTest OrSequence { makeBinOp $1 $2 }
+or_test :: { Expr }
+or_test : and_test many0(pair(or_op,and_test)) { makeBinOp $1 $2 }
 
-OrSequence :: { [(Op, Expr)] }
-OrSequence 
-   : {- empty -} { [] }
-   | OrSequence or AndTest { (AST.Or, $3) : $1 }
+or_op :: { Op }
+or_op: 'or' { AST.Or }
 
 -- and_test: not_test ('and' not_test)* 
--- Complete 
 
-AndTest :: { Expr }
-AndTest : NotTest AndSequence { makeBinOp $1 $2 }
+and_test :: { Expr }
+and_test : not_test many0(pair(and_op, not_test)) { makeBinOp $1 $2 }
 
-AndSequence :: { [(Op, Expr)] }
-AndSequence 
-   : {- empty -} { [] }
-   | AndSequence and NotTest { (AST.And, $3) : $1 }
+and_op :: { Op }
+and_op: 'and' { AST.And }
 
 -- not_test: 'not' not_test | comparison 
--- Complete
 
-NotTest :: { Expr }
-NotTest 
-   : not NotTest { UnaryOp {operator = AST.Not, op_arg = $2} }
-   | Comparison { $1 }
+not_test :: { Expr }
+not_test
+   : 'not' not_test { UnaryOp {operator = AST.Not, op_arg = $2} }
+   | comparison { $1 }
 
 -- comparison: star_expr (comp_op star_expr)*
--- Complete
+{- XXX
+comparison: expr (comp_op expr)*
+-}
 
-Comparison :: { Expr }
-Comparison : StarExpr CompSequence { makeBinOp $1 $2 }
-
-CompSequence :: { [(Op, Expr)] }
-CompSequence 
-   : {- empty -} { [] }
-   | CompSequence CompOp StarExpr { ($2, $3) : $1 }
+comparison :: { Expr }
+-- comparison : star_expr many0(pair(comp_op, star_expr)) { makeBinOp $1 $2 }
+comparison : expr many0(pair(comp_op, expr)) { makeBinOp $1 $2 }
 
 -- comp_op: '<'|'>'|'=='|'>='|'<='|'!='|'in'|'not' 'in'|'is'|'is' 'not' 
--- Complete
 
-CompOp :: { Op }
-CompOp 
-   : '<'    { AST.LessThan }
-   | '>'    { AST.GreaterThan }
-   | '=='   { AST.Equality }
-   | '>='   { AST.GreaterThanEquals }
-   | '<='   { AST.LessThanEquals }
-   | '!='   { AST.NotEquals }
-   | in     { AST.In }
-   | not in { AST.NotIn }
-   | IsOp   { $1 }
-
-IsOp :: { Op }
-IsOp : is NotPart { $2 }
-
-NotPart :: { Op }
-NotPart 
-   : {- empty -} { AST.Is }
-   | not { AST.IsNot } 
+comp_op :: { Op }
+comp_op
+   : '<'        { AST.LessThan }
+   | '>'        { AST.GreaterThan }
+   | '=='       { AST.Equality }
+   | '>='       { AST.GreaterThanEquals }
+   | '<='       { AST.LessThanEquals }
+   | '!='       { AST.NotEquals }
+   | 'in'       { AST.In }
+   | 'not' 'in' { AST.NotIn }
+   | 'is'       { AST.Is }
+   | 'is' 'not' { AST.IsNot }
 
 -- star_expr: ['*'] expr 
+{- XXX star_expr: '*' expr -}
 -- Incomplete
 {- 
    XXX The grammar grossly over-states the places where a starred expression can occur.
@@ -847,121 +705,88 @@ NotPart
    it can be fixed.
 -}
 
-StarExpr :: { Expr }
-StarExpr : Expr { $1 }
+star_expr :: { Expr }
+star_expr : '*' expr { $2 }
 {-
-   : '*' Expr { Starred { starred_expr = $2 }} 
-   | Expr { $1 }
+star_expr 
+   : '*' expr { Starred { starred_expr = $2 }} 
+   | expr { $1 }
 -}
 
 -- expr: xor_expr ('|' xor_expr)* 
--- Complete
 
-Expr :: { Expr }
-Expr : XorExpr BinaryOrSequence { makeBinOp $1 $2 }
+expr :: { Expr }
+expr : xor_expr many0(pair(bar_op, xor_expr)) { makeBinOp $1 $2 }
 
-BinaryOrSequence :: { [(Op, Expr)] }
-BinaryOrSequence 
-   : {- empty -} { [] }
-   | BinaryOrSequence '|' XorExpr { (AST.BinaryOr, $3) : $1 }
+bar_op :: { Op }
+bar_op: '|' { AST.BinaryOr }
 
 -- xor_expr: and_expr ('^' and_expr)* 
--- Complete
 
-XorExpr :: { Expr }
-XorExpr : AndExpr XorSequence { makeBinOp $1 $2 }
+xor_expr :: { Expr }
+xor_expr : and_expr many0(pair(hat_op, and_expr)) { makeBinOp $1 $2 }
 
-XorSequence :: { [(Op, Expr)] }
-XorSequence 
-   : {- empty -} { [] }
-   | XorSequence '^' AndExpr { (AST.Xor, $3) : $1 }
+hat_op :: { Op }
+hat_op: '^' { AST.Xor }
 
 -- and_expr: shift_expr ('&' shift_expr)* 
--- Complete
 
-AndExpr :: { Expr }
-AndExpr : ShiftExpr BinaryAndSequence { makeBinOp $1 $2 }
+and_expr :: { Expr }
+and_expr : shift_expr many0(pair(ampersand, shift_expr)) { makeBinOp $1 $2 }
 
-BinaryAndSequence :: { [(Op, Expr)] }
-BinaryAndSequence 
-   : {- empty -} { [] }
-   | BinaryAndSequence '&' ShiftExpr { (AST.BinaryAnd, $3) : $1 }
+ampersand :: { Op }
+ampersand: '&' { AST.BinaryAnd }
 
 -- shift_expr: arith_expr (('<<'|'>>') arith_expr)* 
--- Complete
 
-ShiftExpr :: { Expr }
-ShiftExpr : ArithExpr ShiftSequence { makeBinOp $1 $2 }
+shift_expr :: { Expr }
+shift_expr: arith_expr many0(pair(shift_op, arith_expr)) { makeBinOp $1 $2 }
 
-ShiftSequence :: { [(Op, Expr)] }
-ShiftSequence 
-   : {- empty -} { [] }
-   | ShiftSequence ShiftOp ArithExpr { ($2, $3) : $1 }
-
-ShiftOp :: { Op }
-ShiftOp 
+shift_op :: { Op }
+shift_op 
    : '<<' { AST.ShiftLeft }
    | '>>' { AST.ShiftRight }
 
 -- arith_expr: term (('+'|'-') term)*
--- Complete
 
-ArithExpr :: { Expr }
-ArithExpr : Term TermSequence { makeBinOp $1 $2 }
+arith_expr :: { Expr }
+arith_expr: term many0(pair(arith_op, term)) { makeBinOp $1 $2 }
 
-TermSequence :: { [(Op, Expr)] }
-TermSequence 
-   : {- empty -} { [] }
-   | TermSequence ArithOp Term { ($2, $3) : $1 }
-
-ArithOp :: { Op }
-ArithOp 
+arith_op :: { Op }
+arith_op
    : '+' { AST.Plus }
    | '-' { AST.Minus }
 
 -- term: factor (('*'|'/'|'%'|'//') factor)* 
--- Complete
 
-Term :: { Expr }
-Term : Factor FactorSequence { makeBinOp $1 $2 }
+term :: { Expr }
+term : factor many0(pair(mult_div_mod_op, factor)) { makeBinOp $1 $2 }
 
-FactorSequence :: { [(Op, Expr)] }
-FactorSequence 
-   : {- empty -} { [] }
-   | FactorSequence MultDivOp Factor { ($2, $3) : $1 }
-
-MultDivOp :: { Op }
-MultDivOP 
-   : '*' { AST.Multiply } 
-   | '/' { AST.Divide }
-   | '%' { AST.Modulo }
-   | floordiv { AST.FloorDivide }
+mult_div_mod_op :: { Op }
+mult_div_mod_op
+   : '*'  { AST.Multiply } 
+   | '/'  { AST.Divide }
+   | '%'  { AST.Modulo }
+   | '//' { AST.FloorDivide }
 
 -- factor: ('+'|'-'|'~') factor | power 
--- Complete
 
-Factor :: { Expr }
-Factor 
-   : '+' Factor { UnaryOp { operator = AST.Plus, op_arg = $2 } } 
-   | '-' Factor { UnaryOp { operator = AST.Minus, op_arg = $2 } } 
-   | '~' Factor { UnaryOp { operator = AST.Invert, op_arg = $2 } } 
-   | Power { $1 }
+factor :: { Expr }
+factor 
+   : or(arith_op, tilde_op) factor { UnaryOp { operator = $1, op_arg = $2 } } 
+   | power { $1 }
+
+tilde_op :: { Op }
+tilde_op: '~' { AST.Invert }
 
 -- power: atom trailer* ['**' factor]
--- Complete, but maybe we should factor out the common prefix?
 
-Power :: { Expr }
-Power : Atom ZeroOrMoreTrailer { addTrailer $1 $2 }
-      | Atom ZeroOrMoreTrailer '**' Factor 
-        { makeBinOp (addTrailer $1 $2) [(AST.Exponent, $4)] } 
+power :: { Expr }
+power : atom many0(trailer) opt(pair(exponent_op, factor)) 
+        { makeBinOp (addTrailer $1 $2) (maybeToList $3) } 
 
-ZeroOrMoreTrailer :: { [Trailer] }
-ZeroOrMoreTrailer : ZeroOrMoreTrailerRev { reverse $1 }
-
-ZeroOrMoreTrailerRev :: { [Trailer] }
-ZeroOrMoreTrailerRev 
-   : {- empty -} { [] }
-   | ZeroOrMoreTrailerRev Trailer { $2 : $1 }
+exponent_op :: { Op }
+exponent_op: '**' { AST.Exponent }
 
 {- 
    atom: ('(' [yield_expr|testlist_comp] ')' |
@@ -969,124 +794,95 @@ ZeroOrMoreTrailerRev
           '{' [dictorsetmaker] '}' |
            NAME | NUMBER | STRING+ | '...' | 'None' | 'True' | 'False')
 -}
--- Incomplete
 
-Atom :: { Expr }
-Atom : ParenForm { $1 } 
-     | ListForm { $1 }
-     | DictOrSetForm { $1 }
-     | NAME { AST.Var $1 }
-     | integer { AST.Int $1 }
-     | float { AST.Float $1 }
-     | imaginary { AST.Imaginary { imaginary_value = $1 }}
-     | OneOrMoreStrings { AST.Strings (reverse $1) }
-     | OneOrMoreByteStrings { AST.ByteStrings (reverse $1) }
-     | '...' { AST.Ellipsis }
-     | none { AST.None }
-     | true { AST.Bool Prelude.True }
-     | false { AST.Bool Prelude.False }
+atom :: { Expr }
+atom : '(' yield_or_testlist_comp ')' { $2 } 
+     | list_atom                      { $1 }
+     | dict_or_set_atom               { $1 }
+     | NAME                           { AST.Var $1 }
+     | 'integer'                      { AST.Int $1 }
+     | 'float'                        { AST.Float $1 }
+     | 'imaginary'                    { AST.Imaginary { imaginary_value = $1 }}
+     | many1('string')                { AST.Strings (reverse $1) }
+     | many1('bytestring')            { AST.ByteStrings (reverse $1) }
+     | '...'                          { AST.Ellipsis }
+     | 'None'                         { AST.None }
+     | 'True'                         { AST.Bool Prelude.True }
+     | 'False'                        { AST.Bool Prelude.False }
 
-ParenForm :: { Expr }
-ParenForm : '(' YieldOrTestListComp ')' { $2 }
-
-ListForm :: { Expr }
-ListForm 
+list_atom :: { Expr }
+list_atom
    : '[' ']' { List { list_exprs = [] } }
-   | '[' TestListComp ']' { makeListForm $2 }
+   | '[' testlist_comp ']' { makeListForm $2 }
 
-DictOrSetForm :: { Expr }
-DictOrSetForm
+dict_or_set_atom :: { Expr }
+dict_or_set_atom
    : '{' '}' { Dictionary { dict_mappings = [] }}
-   | '{' DictOrSetMaker '}' { $2 }
+   | '{' dictorsetmaker '}' { $2 }
 
-YieldOrTestListComp :: { Expr }
-YieldOrTestListComp 
+yield_or_testlist_comp :: { Expr }
+yield_or_testlist_comp 
    : {- empty -} { Tuple { tuple_exprs = [] } }
-   | YieldExpr { $1 }
-   | TestListComp { either id (\c -> Generator { gen_comprehension = c }) $1 } 
-
-OneOrMoreStrings :: { [String] }
-OneOrMoreStrings
-   : string { [$1] }
-   | OneOrMoreStrings string { $2 : $1 }
-
-OneOrMoreByteStrings :: { [BS.ByteString] }
-OneOrMoreByteStrings
-   : bytestring { [$1] }
-   | OneOrMoreByteStrings bytestring { $2 : $1 }
+   | yield_expr { $1 }
+   | testlist_comp { either id (\c -> Generator { gen_comprehension = c }) $1 } 
 
 -- testlist_comp: test ( comp_for | (',' test)* [','] )
--- Complete 
+{- XXX testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] ) -}
 
-TestListComp :: { Either Expr (Comprehension Expr) }
-TestListComp
-   : TestList { Left $1 }
-   | test CompFor { Right (makeComprehension $1 $2) }
+{-
+testlist_comp :: { Either Expr (Comprehension Expr) }
+testlist_comp
+   : testlist { Left $1 }
+   | test comp_for { Right (makeComprehension $1 $2) }
+-}
+
+testlist_comp :: { Either Expr (Comprehension Expr) }
+testlist_comp
+   : testlist_star_expr { Left $1 }
+   | or(test,star_expr) comp_for { Right (makeComprehension $1 $2) }
 
 -- trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME 
--- Complete 
 
-Trailer :: { Trailer }
-Trailer 
-   -- : '(' optional_arg_list ')' { TrailerCall $2 }
+trailer :: { Trailer }
+trailer 
    : paren_arg_list { TrailerCall $1 }
-   | '[' SubscriptList ']' { TrailerSubscript $2 } 
+   | '[' subscriptlist ']' { TrailerSubscript $2 } 
    | '.' NAME { TrailerDot $2 }
 
 -- subscriptlist: subscript (',' subscript)* [',']
 
-SubscriptList :: { [Subscript] }
-SubscriptList : OneOrMoreSubsRev OptionalComma { reverse $1 }
-
-OneOrMoreSubsRev :: { [Subscript] }
-OneOrMoreSubsRev
-   : Subscript { [$1] }
-   | OneOrMoreSubsRev ',' Subscript { $3 : $1 }
+subscriptlist :: { [Subscript] }
+subscriptlist : sepOptEndBy(subscript, ',') { $1 }
 
 -- subscript: test | [test] ':' [test] [sliceop]
 
-Subscript :: { Subscript }
-Subscript
+subscript :: { Subscript }
+subscript
    : test { SubscriptExpr $1 }
-   | OptionalTest ':' OptionalTest OptionalSliceOp { SubscriptSlice $1 $3 $4 }
-
-OptionalTest :: { Maybe Expr }
-OptionalTest
-   : {- empty -} { Nothing }
-   | test { Just $1 }
-
-OptionalSliceOp :: { Maybe (Maybe Expr) }
-OptionalSliceOp 
-   : {- empty -} { Nothing }
-   | SliceOp { Just $1 }
+   | opt(test) ':' opt(test) opt(sliceop) { SubscriptSlice $1 $3 $4 }
 
 -- sliceop: ':' [test]
 
-SliceOp :: { Maybe Expr }
-SliceOp : ':' OptionalTest { $2 }
+sliceop :: { Maybe Expr }
+sliceop : ':' opt(test) { $2 }
 
 -- exprlist: star_expr (',' star_expr)* [',']
--- Complete
+{- XXX exprlist: (expr|star_expr) (',' (expr|star_expr))* [','] -}
 
-ExprList :: { [Expr] }
-ExprList : ExprListRev OptionalComma { reverse $1 }
-       
-OptionalComma :: { Bool }
-OptionalComma 
+exprlist :: { [Expr] }
+-- exprlist: sepOptEndBy(star_expr, ',') { $1 }
+exprlist: sepOptEndBy(or(expr,star_expr), ',') { $1 }
+
+opt_comma :: { Bool }
+opt_comma 
    : {- empty -} { False }
-   | ',' { True }  
-
-ExprListRev :: { [Expr] }
-ExprListRev 
-   : StarExpr { [$1] }
-   | ExprListRev ',' StarExpr { $3 : $1 }
+   | ','         { True }  
 
 -- testlist: test (',' test)* [',']
--- Complete
 
 -- Some trickery here because the of the optional trailing comma, which
 -- could turn a normal expression into a tuple.
--- Very occasionally, TestList is used to generate something which is not
+-- Very occasionally, testlist is used to generate something which is not
 -- a tuple (such as the square bracket notation in list literals). Therefore
 -- it would seem like a good idea to not return a tuple in this case, but
 -- a list of expressions. However this would complicate a lot of code
@@ -1094,61 +890,53 @@ ExprListRev
 -- I've decided to leave it as a tuple, and in special cases, unpack the
 -- tuple and pull out the list of expressions.
 
-TestList :: { Expr }
-TestList : TestListRev OptionalComma { makeTupleOrExpr (reverse $1) $2 }
-       
-TestListRev :: { [Expr] }
-TestListRev 
+testlist :: { Expr }
+testlist : testlistrev opt_comma { makeTupleOrExpr (reverse $1) $2 }
+
+testlistrev :: { [Expr] }
+testlistrev 
    : test { [$1] }
-   | TestListRev ',' test { $3 : $1 }
+   | testlistrev ',' test { $3 : $1 }
 
 {- 
    dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
                    (test (comp_for | (',' test)* [','])) )
 -}
 
-DictOrSetMaker :: { Expr }
-DictOrSetMaker
-   : test ':' test DictRest { makeDictionary ($1, $3) $4 } 
-   | test SetRest { makeSet $1 $2 } 
+dictorsetmaker :: { Expr }
+dictorsetmaker
+   : test ':' test dict_rest { makeDictionary ($1, $3) $4 } 
+   | test set_rest { makeSet $1 $2 } 
 
-DictRest :: { Either CompFor [(Expr, Expr)] }
-DictRest
-   : CompFor { Left $1 }
-   | ZeroOrMoreDictMappings OptionalComma { Right (reverse $1) }
+dict_rest :: { Either CompFor [(Expr, Expr)] }
+dict_rest 
+   : comp_for { Left $1 }
+   | zero_or_more_dict_mappings_rev opt_comma { Right (reverse $1) }
 
-ZeroOrMoreDictMappings :: { [(Expr, Expr)] }
-ZeroOrMoreDictMappings
+zero_or_more_dict_mappings_rev :: { [(Expr, Expr)] }
+zero_or_more_dict_mappings_rev
    : {- empty -} { [] }
-   | ZeroOrMoreDictMappings ',' test ':' test { ($3,$5) : $1 }
+   | zero_or_more_dict_mappings_rev ',' test ':' test { ($3,$5) : $1 }
 
-SetRest :: { Either CompFor [Expr] }
-SetRest
-   : CompFor { Left $1 }
-   | ZeroOrMoreCommaTest OptionalComma { Right (reverse $1) }
+set_rest :: { Either CompFor [Expr] }
+set_rest
+   : comp_for { Left $1 }
+   | zero_or_more_comma_test_rev opt_comma { Right (reverse $1) }
 
-ZeroOrMoreCommaTest :: { [Expr] }
-ZeroOrMoreCommaTest 
+zero_or_more_comma_test_rev :: { [Expr] }
+zero_or_more_comma_test_rev
    : {- empty -} { [] }
-   | ZeroOrMoreCommaTest ',' test { $3 : $1 }
+   | zero_or_more_comma_test_rev ',' test { $3 : $1 }
 
 -- classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
--- Complete
 
 classdef :: { Statement }
 classdef 
-   : class NAME opt_paren_arg_list ':' suite 
+   : 'class' NAME opt_paren_arg_list ':' suite 
      { AST.Class { class_name = $2, class_args = $3, class_body = $5 }}
 
 optional_arg_list :: { [Argument] }
 optional_arg_list: opt(arglist) { concat (maybeToList $1) } 
-
-{-
-OptionalArgList :: { [Argument] }
-OptionalArgList 
-   : {- empty -} { [] }
-   | '(' arglist ')' { $2 }
--}
 
 {- 
    arglist: (argument ',')* (argument [',']
@@ -1165,52 +953,13 @@ OptionalArgList
    ** forms. It seems more consistent to me.
 -}
 
--- XXX should perform a check on the arguments here for correct ordering.
-
 arglist :: { [Argument] }
-arglist: arglist_rev {% checkArguments (reverse $1) }
-
-arglist_rev :: { [Argument] }
-arglist_rev
-   : arguments ',' { $1 }
-   | arguments { $1 }
-
-arguments :: { [Argument] }
-arguments
-   : oneArgument { [$1] }
-   | arguments ',' oneArgument { $3 : $1 }
+arglist: sepOptEndBy(oneArgument,',') {% checkArguments $1 }
 
 oneArgument
    : '*' test { ArgVarArgsPos { arg_expr = $2 } }
    | '**' test { ArgVarArgsKeyword { arg_expr = $2 } }
    | argument { $1 }
-
-{-
-arglist :: { [Argument] }
-arglist 
-   : argument arglist_rest { $1 : $2 }
-   | '*' test arglist_star_rest { ArgVarArgsPos { arg_expr = $2 } : $3 }
-   | arglist_starstar { $1 }
-
-arglist_rest :: { [Argument] }
-arglist_rest
-   : ',' arglist { $2 }
-   | ',' { [] }
-   | {- empty -} { [] }
-
-arg_list_star_comma_rest :: { [Argument] }
-arg_list_star_comma_rest
-   : argument arglist_star_rest { $1 : $2 }
-   | arglist_starstar { $1 }
-
-arglist_star_rest :: { [Argument] }
-arglist_star_rest
-   : {- empty -} { [] }
-   | ',' arg_list_star_comma_rest { $2 }
-
-arglist_starstar :: { [Argument] }
-arglist_starstar : '**' test { [ArgVarArgsKeyword { arg_expr = $2 }] }
--}
 
 -- argument: test [comp_for] | test '=' test  # Really [keyword '='] test
 
@@ -1218,50 +967,39 @@ argument :: { Argument }
 argument
    : NAME '=' test { ArgKeyword { arg_keyword = $1, arg_expr = $3 }}
    | test { ArgExpr { arg_expr = $1 }} 
-   | test CompFor { ArgExpr { arg_expr = Generator { gen_comprehension = makeComprehension $1 $2 }}}
+   | test comp_for { ArgExpr { arg_expr = Generator { gen_comprehension = makeComprehension $1 $2 }}}
 
 -- comp_iter: comp_for | comp_if
--- Complete
 
-CompIter :: { CompIter }
-CompIter
-   : CompFor { IterFor $1 }
-   | CompIf { IterIf $1 } 
+comp_iter :: { CompIter }
+comp_iter
+   : comp_for { IterFor $1 }
+   | comp_if  { IterIf $1 } 
 
 -- comp_for: 'for' exprlist 'in' or_test [comp_iter]
 
-CompFor :: { CompFor }
-CompFor : for ExprList in OrTest OptionalCompIter 
-          { CompFor { comp_for_exprs = $2, comp_in_expr = $4, comp_for_iter = $5 }}
-
-OptionalCompIter :: { Maybe CompIter }
-OptionalCompIter
-   : {- empty -} { Nothing }
-   | CompIter { Just $1 }
+comp_for :: { CompFor }
+comp_for 
+   : 'for' exprlist 'in' or_test opt(comp_iter) 
+     { CompFor { comp_for_exprs = $2, comp_in_expr = $4, comp_for_iter = $5 }}
 
 -- comp_if: 'if' test_nocond [comp_iter]
 
-CompIf :: { CompIf }
-CompIf : if TestNoCond OptionalCompIter { CompIf { comp_if = $2, comp_if_iter = $3 } }
-
--- testlist1: test (',' test)*
--- Not used in the rest of the grammar!
+comp_if :: { CompIf }
+comp_if 
+   : 'if' test_no_cond opt(comp_iter) { CompIf { comp_if = $2, comp_if_iter = $3 } }
 
 -- encoding_decl: NAME
 -- Not used in the rest of the grammqr!
 
 -- yield_expr: 'yield' [testlist] 
--- Complete
 
-YieldExpr :: { Expr }
-YieldExpr : yield OptionalTestList { AST.Yield { yield_expr = $2 } }
+yield_expr :: { Expr }
+yield_expr : 'yield' optional_testlist { AST.Yield { yield_expr = $2 } }
 
-OptionalTestList :: { Maybe Expr }
-OptionalTestList 
-   : {- empty -} { Nothing }
-   | TestList    { Just $1 }
+optional_testlist :: { Maybe Expr }
+optional_testlist: opt(testlist) { $1 }
 
 {
 -- Put additional Haskell code in here if needed.
-
 }
