@@ -215,12 +215,12 @@ decorator
    : '@' dotted_name opt_paren_arg_list 'NEWLINE' 
      { Decorator { decorator_name = $2, decorator_args = $3 } }
 
---  decorators: decorator+
+-- decorators: decorator+
 
 decorators :: { [Decorator] }
 decorators : many1(decorator) { $1 }
 
---  decorated: decorators (classdef | funcdef)
+-- decorated: decorators (classdef | funcdef)
 
 decorated :: { Statement }
 decorated 
@@ -336,10 +336,7 @@ small_stmt
    | nonlocal_stmt { $1 }
    | assert_stmt   { $1 }
 
--- expr_stmt: testlist (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist))*)
-{-
-   expr_stmt: testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
--}
+-- expr_stmt: testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
 
 expr_stmt :: { Statement }
 expr_stmt : testlist_star_expr either(many_assign, augassign_yield_or_test_list) { makeAssignmentOrExpr $1 $2 }
@@ -356,7 +353,7 @@ yield_or_test_list_star : or(yield_expr,testlist_star_expr) { $1 }
 augassign_yield_or_test_list :: { (AssignOp, Expr) }
 augassign_yield_or_test_list : augassign yield_or_test_list { ($1, $2) }
 
---   testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
+-- testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
 
 testlist_star_expr :: { Expr }
 testlist_star_expr: test_list_star_rev opt_comma { makeTupleOrExpr (reverse $1) $2 } 
@@ -365,20 +362,6 @@ test_list_star_rev :: { [Expr] }
 test_list_star_rev
    : or(test,star_expr) { [$1] }
    | test_list_star_rev ',' or(test,star_expr) { $3 : $1 }
-
-{-
-expr_stmt :: { Statement }
-expr_stmt : testlist either(many_assign, augassign_yield_or_test_list) { makeAssignmentOrExpr $1 $2 }
-
-many_assign :: { [Expr] }
-many_assign : many0(right('=', yield_or_test_list)) { $1 }
-
-yield_or_test_list :: { Expr }
-yield_or_test_list : or(yield_expr,testlist) { $1 }
-
-augassign_yield_or_test_list :: { (AssignOp, Expr) }
-augassign_yield_or_test_list : augassign yield_or_test_list { ($1, $2) }
--}
 
 {- 
    augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
@@ -589,27 +572,16 @@ one_or_more_except_clauses : many1(handler) { $1 }
 handler :: { Handler }
 handler : except_clause ':' suite { ($1, $3) }
 
-{- 
-   with_stmt: 'with' test [ with_var ] ':' suite
-   with_var: 'as' expr
-
-XXX
-with_stmt: 'with' with_item (',' with_item)*  ':' suite
-with_item: test ['as' expr]
-
--}
+-- with_stmt: 'with' with_item (',' with_item)*  ':' suite
 
 with_stmt :: { Statement }
 with_stmt : 'with' sepOptEndBy(with_item, ',') ':' suite 
            { AST.With { with_context = $2, with_body = $4 } }
 
+-- with_item: test ['as' expr]
+
 with_item :: { (Expr, Maybe Expr) }
 with_item: pair(test,opt(right('as',expr))) { $1 }
-{-
-with_stmt :: { Statement }
-with_stmt : 'with' test opt(right('as', expr)) ':' suite 
-           { AST.With { with_context = $2, with_as = $3, with_body = $5 } }
--}
 
 -- except_clause: 'except' [test ['as' NAME]] 
 
@@ -678,13 +650,9 @@ not_test
    : 'not' not_test { UnaryOp {operator = AST.Not, op_arg = $2} }
    | comparison { $1 }
 
--- comparison: star_expr (comp_op star_expr)*
-{- XXX
-comparison: expr (comp_op expr)*
--}
+-- comparison: expr (comp_op expr)*
 
 comparison :: { Expr }
--- comparison : star_expr many0(pair(comp_op, star_expr)) { makeBinOp $1 $2 }
 comparison : expr many0(pair(comp_op, expr)) { makeBinOp $1 $2 }
 
 -- comp_op: '<'|'>'|'=='|'>='|'<='|'!='|'in'|'not' 'in'|'is'|'is' 'not' 
@@ -702,24 +670,10 @@ comp_op
    | 'is'       { AST.Is }
    | 'is' 'not' { AST.IsNot }
 
--- star_expr: ['*'] expr 
-{- XXX star_expr: '*' expr -}
--- Incomplete
-{- 
-   XXX The grammar grossly over-states the places where a starred expression can occur.
-   It leads to an ambiguity because of the starred argument lists. 
-
-   I think this is a bug in the grammar, and it will need more investigation to see if
-   it can be fixed.
--}
+-- star_expr: '*' expr
 
 star_expr :: { Expr }
 star_expr : '*' expr { $2 }
-{-
-star_expr 
-   : '*' expr { Starred { starred_expr = $2 }} 
-   | expr { $1 }
--}
 
 -- expr: xor_expr ('|' xor_expr)* 
 
@@ -834,15 +788,7 @@ yield_or_testlist_comp
    | yield_expr { $1 }
    | testlist_comp { either id (\c -> Generator { gen_comprehension = c }) $1 } 
 
--- testlist_comp: test ( comp_for | (',' test)* [','] )
-{- XXX testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] ) -}
-
-{-
-testlist_comp :: { Either Expr (Comprehension Expr) }
-testlist_comp
-   : testlist { Left $1 }
-   | test comp_for { Right (makeComprehension $1 $2) }
--}
+-- testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
 
 testlist_comp :: { Either Expr (Comprehension Expr) }
 testlist_comp
@@ -874,11 +820,9 @@ subscript
 sliceop :: { Maybe Expr }
 sliceop : ':' opt(test) { $2 }
 
--- exprlist: star_expr (',' star_expr)* [',']
-{- XXX exprlist: (expr|star_expr) (',' (expr|star_expr))* [','] -}
+-- exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']
 
 exprlist :: { [Expr] }
--- exprlist: sepOptEndBy(star_expr, ',') { $1 }
 exprlist: sepOptEndBy(or(expr,star_expr), ',') { $1 }
 
 opt_comma :: { Bool }
@@ -998,7 +942,7 @@ comp_if
    : 'if' test_no_cond opt(comp_iter) { CompIf { comp_if = $2, comp_if_iter = $3 } }
 
 -- encoding_decl: NAME
--- Not used in the rest of the grammqr!
+-- Not used in the rest of the grammar!
 
 -- yield_expr: 'yield' [testlist] 
 
