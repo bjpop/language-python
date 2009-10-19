@@ -165,8 +165,8 @@ instance Pretty Statement where
    pretty (Raise { raise_expr = e })
       = text "raise" <+> 
         maybe empty (\ (x, fromE) -> pretty x <+> (maybe empty (\f -> text "from" <+> pretty f) fromE)) e
-   pretty (With { with_context = context, with_as = asExpr, with_body = body })
-      = text "with" <+> maybe empty (\e -> text "as" <+> pretty e) asExpr <> colon $+$
+   pretty (With { with_context = context, with_body = body })
+      = text "with" <+> hcat (punctuate comma (map prettyWithContext context)) <+> colon $+$
         indent (prettySuite body)
    pretty Pass = text "pass"
    pretty Break = text "break"
@@ -176,6 +176,10 @@ instance Pretty Statement where
    pretty (Global { global_vars = idents }) = text "global" <+> commaList idents
    pretty (NonLocal { nonLocal_vars = idents }) = text "nonlocal" <+> commaList idents
    pretty (Assert { assert_exprs = es }) = text "assert" <+> commaList es
+
+prettyWithContext :: (Expr, Maybe Expr) -> Doc
+prettyWithContext (e, Nothing) = pretty e
+prettyWithContext (e, Just as) = pretty e <+> text "as" <+> pretty as
 
 prettyHandlers :: [Handler] -> Doc
 prettyHandlers = foldr (\next rec -> prettyHandler next $+$ rec) empty
@@ -254,8 +258,8 @@ instance Pretty Expr where
    pretty (Dictionary { dict_mappings = mappings })
       = braces (hsep (punctuate comma $ map (\ (e1,e2) -> pretty e1 <> colon <> pretty e2) mappings))
    pretty (Set { set_exprs = es }) = braces $ commaList es
-   -- XXX fixme: Generator not supported
-   pretty other = error $ "not supported: " ++ show other
+   pretty (ListComp { list_comprehension = lc }) = brackets $ pretty lc
+   pretty (Generator { gen_comprehension = gc }) = parens $ pretty gc
 
 instance Pretty Slice where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })

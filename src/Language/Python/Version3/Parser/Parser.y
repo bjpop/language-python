@@ -600,8 +600,16 @@ with_item: test ['as' expr]
 -}
 
 with_stmt :: { Statement }
+with_stmt : 'with' sepOptEndBy(with_item, ',') ':' suite 
+           { AST.With { with_context = $2, with_body = $4 } }
+
+with_item :: { (Expr, Maybe Expr) }
+with_item: pair(test,opt(right('as',expr))) { $1 }
+{-
+with_stmt :: { Statement }
 with_stmt : 'with' test opt(right('as', expr)) ':' suite 
            { AST.With { with_context = $2, with_as = $3, with_body = $5 } }
+-}
 
 -- except_clause: 'except' [test ['as' NAME]] 
 

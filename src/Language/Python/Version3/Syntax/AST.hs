@@ -182,8 +182,7 @@ data Statement
     }
    -- | With statement (context management). See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-with-statement>. And also see: <http://www.python.org/dev/peps/pep-0343/>.
    | With 
-     { with_context :: Expr -- ^ Context expression (yields a context manager).
-     , with_as :: Maybe Expr -- ^ Optional target.
+     { with_context :: [(Expr, Maybe Expr)] -- ^ Context expression(s) (yields a context manager).
      , with_body :: Suite -- ^ Suite to be managed.
      }
    -- | Pass statement (null operation). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-pass-statement>
