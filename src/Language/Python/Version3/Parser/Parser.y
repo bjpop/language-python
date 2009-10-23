@@ -32,7 +32,7 @@ import Data.Maybe (maybeToList)
 %tokentype { Token } 
 %error { parseError } 
 %monad { P } { thenP } { returnP }
-%lexer { lexCont } { Token.EOF }
+%lexer { lexCont } { Token.EOF _ }
 
 %token 
    '='             { Token.Assign _ }
@@ -84,7 +84,7 @@ import Data.Maybe (maybeToList)
    'as'            { Token.As _ }
    'assert'        { Token.Assert _ }
    'break'         { Token.Break _ }
-   'bytestring'    { Token.ByteString _ $$ }
+   'bytestring'    { Token.ByteString _ _ }
    'class'         { Token.Class _ }
    'continue'      { Token.Continue _ }
    'dedent'        { Token.Dedent _ }
@@ -95,17 +95,17 @@ import Data.Maybe (maybeToList)
    'except'        { Token.Except _ }
    'False'         { Token.False _ }
    'finally'       { Token.Finally _ }
-   'float'         { Token.Float _ $$ }
+   'float'         { Token.Float _ _ }
    'for'           { Token.For _ }
    'from'          { Token.From _ }
    'global'        { Token.Global _ }
-   'ident'         { Token.Identifier _ $$ }
+   'ident'         { Token.Identifier _ _ }
    'if'            { Token.If _ }
-   'imaginary'     { Token.Imaginary _ $$ }
+   'imaginary'     { Token.Imaginary _ _ }
    'import'        { Token.Import _ }
    'indent'        { Token.Indent _ }
    'in'            { Token.In _ }
-   'integer'       { Token.Integer _ $$ }
+   'integer'       { Token.Integer _ _ }
    'is'            { Token.Is _ }
    'lambda'        { Token.Lambda _ }
    'NEWLINE'       { Token.Newline _ }
@@ -116,7 +116,7 @@ import Data.Maybe (maybeToList)
    'pass'          { Token.Pass _ }
    'raise'         { Token.Raise _ }
    'return'        { Token.Return _ }
-   'string'        { Token.String _ $$ }
+   'string'        { Token.String _ _ }
    'True'          { Token.True _ }
    'try'           { Token.Try _ }
    'while'         { Token.While _ }
@@ -163,8 +163,8 @@ sepByRev(p,sep)
    : p { [$1] }
    | sepByRev(p,sep) sep p { $3 : $1 }
 
-NAME :: { Ident }
-NAME : 'ident' { Ident $1 }
+NAME :: { IdentSpan }
+NAME : 'ident' { Ident (token_identifier $1) (getSpan $1) }
 
 {- 
    Note: newline tokens in the grammar:
@@ -184,7 +184,7 @@ NAME : 'ident' { Ident $1 }
    in the way the interactive input works. 
 -}
 
-single_input :: { [Statement] }
+single_input :: { [StatementSpan] }
 single_input
    : 'NEWLINE' { [] }
    | simple_stmt { $1 } 
@@ -192,51 +192,51 @@ single_input
 
 -- file_input: (NEWLINE | stmt)* ENDMARKER
 
-file_input :: { Module }
+file_input :: { ModuleSpan }
 file_input 
    : many0(either('NEWLINE',stmt)) {- No need to mention ENDMARKER -} 
      { Module (concat (rights $1)) }
 
 -- eval_input: testlist NEWLINE* ENDMARKER
 
-eval_input :: { Expr }
+eval_input :: { ExprSpan }
 eval_input : testlist many0('NEWLINE') {- No need to mention ENDMARKER -} { $1 }
 
 --  decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
 
-opt_paren_arg_list :: { [Argument] }
+opt_paren_arg_list :: { [ArgumentSpan] }
 opt_paren_arg_list: opt(paren_arg_list) { concat (maybeToList $1) }
 
-paren_arg_list :: { [Argument] }
+paren_arg_list :: { [ArgumentSpan] }
 paren_arg_list : '(' optional_arg_list ')' { $2 }
 
-decorator :: { Decorator }
+decorator :: { DecoratorSpan }
 decorator 
    : '@' dotted_name opt_paren_arg_list 'NEWLINE' 
-     { Decorator { decorator_name = $2, decorator_args = $3 } }
+     { makeDecorator $1 $2 $3 }
 
 -- decorators: decorator+
 
-decorators :: { [Decorator] }
+decorators :: { [DecoratorSpan] }
 decorators : many1(decorator) { $1 }
 
 -- decorated: decorators (classdef | funcdef)
 
-decorated :: { Statement }
+decorated :: { StatementSpan }
 decorated 
    : decorators or(classdef,funcdef) 
-     { Decorated { decorated_decorators = $1, decorated_def = $2 } } 
+     { makeDecorated $1 $2 } 
 
 -- funcdef: 'def' NAME parameters ['->' test] ':' suite 
 
-funcdef :: { Statement }
+funcdef :: { StatementSpan }
 funcdef 
    : 'def' NAME parameters opt(right('->',test)) ':' suite
-     { Fun { fun_name = $2 , fun_args = $3, fun_result_annotation = $4, fun_body = $6 } }
+     { makeFun $1 $2 $3 $4 $6 }
 
 -- parameters: '(' [typedargslist] ')'
 
-parameters :: { [Parameter] }
+parameters :: { [ParameterSpan] }
 parameters : '(' opt(typedargslist) ')' { concat (maybeToList $2) }
 
 {- 
@@ -247,27 +247,27 @@ parameters : '(' opt(typedargslist) ')' { concat (maybeToList $2) }
 
 {- Same pattern as argslist and varargslist -}
 
-typedargslist :: { [Parameter] }
+typedargslist :: { [ParameterSpan] }
 typedargslist: sepOptEndBy(one_typedargs_param,',') {% checkParameters $1 }
 
-one_typedargs_param :: { Parameter }
+one_typedargs_param :: { ParameterSpan }
 one_typedargs_param
    : tfpdef optional_default { makeParam $1 $2 }
-   | '*' opt(tfpdef) { makeStarParam $2 }
-   | '**' tfpdef { makeStarStarParam $2 }
+   | '*' opt(tfpdef) { makeStarParam $1 $2 }
+   | '**' tfpdef { makeStarStarParam $1 $2 }
 
-optional_default :: { Maybe Expr }
+optional_default :: { Maybe ExprSpan }
 optional_default: opt(equals_test) { $1 }
 
-equals_test :: { Expr }
+equals_test :: { ExprSpan }
 equals_test: '=' test { $2 }
 
 {- tfpdef: NAME [':' test] -}
 
-tfpdef :: { (Ident, Maybe Expr) }
+tfpdef :: { (IdentSpan, Maybe ExprSpan) }
 tfpdef : NAME opt(colon_test) { ($1, $2) }
 
-colon_test :: { Expr }
+colon_test :: { ExprSpan }
 colon_test: ':' test { $2 }
 
 {- 
@@ -285,37 +285,37 @@ colon_test: ':' test { $2 }
    that marks the end of the lambda parameter list!
 -}
 
-varargslist :: { [Parameter] }
+varargslist :: { [ParameterSpan] }
 varargslist : sepOptEndBy(one_varargs_param,',') {% checkParameters $1 }
 
-one_varargs_param :: { Parameter }
+one_varargs_param :: { ParameterSpan }
 one_varargs_param
-   : '*' optvfpdef { makeStarParam $2 }
-   | '**' vfpdef { makeStarStarParam ($2, Nothing) } 
+   : '*' optvfpdef { makeStarParam $1 $2 }
+   | '**' vfpdef { makeStarStarParam $1 ($2, Nothing) } 
    | vfpdef optional_default { makeParam ($1, Nothing) $2 }
 
 -- vfpdef: NAME
-vfpdef :: { Ident }
+vfpdef :: { IdentSpan }
 vfpdef : NAME { $1 }
 
-optvfpdef :: { Maybe (Ident, Maybe Expr) }
+optvfpdef :: { Maybe (IdentSpan, Maybe ExprSpan) }
 optvfpdef
    : {- empty -} { Nothing }
    | vfpdef { Just ($1, Nothing) }
 
 -- stmt: simple_stmt | compound_stmt 
 
-stmt :: { [Statement] }
+stmt :: { [StatementSpan] }
 stmt 
    : simple_stmt { $1 }
    | compound_stmt { [$1] }
 
 -- simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE 
 
-simple_stmt :: { [Statement] }
+simple_stmt :: { [StatementSpan] }
 simple_stmt : small_stmts opt(';') 'NEWLINE' { reverse $1 }
 
-small_stmts :: { [Statement] }
+small_stmts :: { [StatementSpan] }
 small_stmts 
    : small_stmt                 { [$1] }
    | small_stmts ';' small_stmt { $3 : $1 }
@@ -325,7 +325,7 @@ small_stmt: (expr_stmt | del_stmt | pass_stmt | flow_stmt |
              import_stmt | global_stmt | nonlocal_stmt | assert_stmt)
 -}
 
-small_stmt :: { Statement }
+small_stmt :: { StatementSpan }
 small_stmt 
    : expr_stmt     { $1 }
    | del_stmt      { $1 }
@@ -338,27 +338,31 @@ small_stmt
 
 -- expr_stmt: testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
 
-expr_stmt :: { Statement }
-expr_stmt : testlist_star_expr either(many_assign, augassign_yield_or_test_list) { makeAssignmentOrExpr $1 $2 }
+expr_stmt :: { StatementSpan }
+expr_stmt 
+   : testlist_star_expr either(many_assign, augassign_yield_or_test_list) 
+   { makeAssignmentOrExpr $1 $2 }
 
-many_assign :: { [Expr] }
+many_assign :: { [ExprSpan] }
 many_assign : many0(right('=', yield_or_test_list_star)) { $1 }
 
-yield_or_test_list :: { Expr }
+yield_or_test_list :: { ExprSpan }
 yield_or_test_list : or(yield_expr,testlist) { $1 }
 
-yield_or_test_list_star :: { Expr }
+yield_or_test_list_star :: { ExprSpan }
 yield_or_test_list_star : or(yield_expr,testlist_star_expr) { $1 }
 
-augassign_yield_or_test_list :: { (AssignOp, Expr) }
+augassign_yield_or_test_list :: { (AssignOpSpan, ExprSpan) }
 augassign_yield_or_test_list : augassign yield_or_test_list { ($1, $2) }
 
 -- testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
 
-testlist_star_expr :: { Expr }
-testlist_star_expr: test_list_star_rev opt_comma { makeTupleOrExpr (reverse $1) $2 } 
+testlist_star_expr :: { ExprSpan }
+testlist_star_expr
+   : test_list_star_rev opt_comma 
+     { makeTupleOrExpr (reverse $1) $2 } 
 
-test_list_star_rev :: { [Expr] }
+test_list_star_rev :: { [ExprSpan] }
 test_list_star_rev
    : or(test,star_expr) { [$1] }
    | test_list_star_rev ',' or(test,star_expr) { $3 : $1 }
@@ -368,34 +372,34 @@ test_list_star_rev
             '<<=' | '>>=' | '**=' | '//=') 
 -}
 
-augassign :: { AssignOp }
+augassign :: { AssignOpSpan }
 augassign
-   : '+='  { AST.PlusAssign }
-   | '-='  { AST.MinusAssign } 
-   | '*='  { AST.MultAssign }
-   | '/='  { AST.DivAssign }
-   | '%='  { AST.ModAssign } 
-   | '**=' { AST.PowAssign }
-   | '&='  { AST.BinAndAssign } 
-   | '|='  { AST.BinOrAssign }
-   | '^='  { AST.BinXorAssign }
-   | '<<=' { AST.LeftShiftAssign }
-   | '>>=' { AST.RightShiftAssign }
-   | '//=' { AST.FloorDivAssign } 
+   : '+='  { AST.PlusAssign (getSpan $1) }
+   | '-='  { AST.MinusAssign (getSpan $1) } 
+   | '*='  { AST.MultAssign (getSpan $1) }
+   | '/='  { AST.DivAssign (getSpan $1) }
+   | '%='  { AST.ModAssign (getSpan $1) } 
+   | '**=' { AST.PowAssign (getSpan $1) }
+   | '&='  { AST.BinAndAssign (getSpan $1) } 
+   | '|='  { AST.BinOrAssign (getSpan $1) }
+   | '^='  { AST.BinXorAssign (getSpan $1) }
+   | '<<=' { AST.LeftShiftAssign (getSpan $1) }
+   | '>>=' { AST.RightShiftAssign (getSpan $1) }
+   | '//=' { AST.FloorDivAssign (getSpan $1) } 
 
 -- del_stmt: 'del' exprlist
 
-del_stmt :: { Statement }
-del_stmt : 'del' exprlist { AST.Delete { del_exprs = $2 } }
+del_stmt :: { StatementSpan }
+del_stmt : 'del' exprlist { AST.Delete $2 (spanning $1 $2) }
 
 -- pass_stmt: 'pass'
 
-pass_stmt :: { Statement }
-pass_stmt : 'pass' { AST.Pass }
+pass_stmt :: { StatementSpan }
+pass_stmt : 'pass' { AST.Pass (getSpan $1) } 
 
 -- flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
 
-flow_stmt :: { Statement }
+flow_stmt :: { StatementSpan }
 flow_stmt 
    : break_stmt    { $1 }
    | continue_stmt { $1 }
@@ -405,38 +409,39 @@ flow_stmt
 
 -- break_stmt: 'break'
 
-break_stmt :: { Statement }
-break_stmt : 'break' { AST.Break }  
+break_stmt :: { StatementSpan }
+break_stmt : 'break' { AST.Break (getSpan $1) }
 
 -- continue_stmt: 'continue'
 
-continue_stmt :: { Statement }
-continue_stmt : 'continue' { AST.Continue }  
+continue_stmt :: { StatementSpan }
+continue_stmt : 'continue' { AST.Continue (getSpan $1) }
 
 -- return_stmt: 'return' [testlist]
 
-return_stmt :: { Statement }
-return_stmt : 'return' optional_testlist { AST.Return { return_expr = $2 }}
+return_stmt :: { StatementSpan }
+return_stmt : 'return' optional_testlist { makeReturn $1 $2 }
 
 -- yield_stmt: yield_expr
 
-yield_stmt :: { Statement }
-yield_stmt : yield_expr { StmtExpr { stmt_expr = $1 } } 
+yield_stmt :: { StatementSpan }
+yield_stmt : yield_expr { StmtExpr $1 (getSpan $1) } 
 
 -- raise_stmt: 'raise' [test ['from' test]]
 
-raise_stmt :: { Statement }
-raise_stmt : 'raise' opt(pair(test, opt(right('from', test)))) { AST.Raise { raise_expr = $2 }}
+raise_stmt :: { StatementSpan }
+raise_stmt : 'raise' opt(pair(test, opt(right('from', test)))) 
+             { AST.Raise $2 (spanning $1 $2) }
 
 -- import_stmt: import_name | import_from
 
-import_stmt :: { Statement }
+import_stmt :: { StatementSpan }
 import_stmt: or(import_name, import_from) { $1 }
 
 -- import_name: 'import' dotted_as_names
 
-import_name :: { Statement }
-import_name : 'import' dotted_as_names { AST.Import { import_items = $2 }}
+import_name :: { StatementSpan }
+import_name : 'import' dotted_as_names { AST.Import $2 (spanning $1 $2) }
 
 {-
    # note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
@@ -444,72 +449,76 @@ import_name : 'import' dotted_as_names { AST.Import { import_items = $2 }}
                  'import' ('*' | '(' import_as_names ')' | import_as_names))
 -}
 
-import_from :: { Statement }
+import_from :: { StatementSpan }
 import_from : 'from' import_module 'import' star_or_as_names 
-              { FromImport { from_module = $2, from_items = $4 }}
+              { FromImport $2 $4 (spanning $1 $4) }
 
-import_module :: { ImportModule }
-import_module
-   : '.'                 { ImportDot }
-   | '...'               { ImportRelative (ImportRelative ImportDot) }
-   | dotted_name         { ImportName $1 }
-   | '.' import_module   { ImportRelative $2 }
-   | '...' import_module { ImportRelative (ImportRelative (ImportRelative $2)) }
+import_module :: { ImportRelativeSpan }
+import_module: import_module_dots { makeRelative $1 }
 
-star_or_as_names :: { FromItems }
+import_module_dots :: { [Either Token DottedNameSpan] }
+import_module_dots
+   : '.'                      { [ Left $1 ] } 
+   | '...'                    { [ Left $1 ] } 
+   | dotted_name              { [ Right $1 ] } 
+   | '.' import_module_dots   { Left $1 : $2 } 
+   | '...' import_module_dots { Left $1 : $2 }
+
+star_or_as_names :: { FromItemsSpan }
 star_or_as_names
-   : '*'                     { ImportEverything }
+   : '*'                     { ImportEverything (getSpan $1) }
    | '(' import_as_names ')' { $2 }
    | import_as_names         { $1 } 
 
 -- import_as_name: NAME ['as' NAME]
-import_as_name :: { FromItem }
+import_as_name :: { FromItemSpan }
 import_as_name 
-   : NAME optional_as_name { FromItem { from_item_name = $1, from_as_name = $2 }}
+   : NAME optional_as_name { FromItem $1 $2 (spanning $1 $2) }
 
 -- dotted_as_name: dotted_name ['as' NAME]
 
-dotted_as_name :: { ImportItem }
+dotted_as_name :: { ImportItemSpan }
 dotted_as_name 
    : dotted_name optional_as_name  
-     { ImportItem { import_item_name = $1, import_as_name = $2 }}
+     { ImportItem $1 $2 (spanning $1 $2) }
 
 -- import_as_names: import_as_name (',' import_as_name)* [',']
 
-import_as_names :: { FromItems }
-import_as_names : sepOptEndBy(import_as_name, ',') { FromItems $1 }
+import_as_names :: { FromItemsSpan }
+import_as_names : sepOptEndBy(import_as_name, ',') { FromItems $1 (getSpan $1) }
 
 -- dotted_as_names: dotted_as_name (',' dotted_as_name)*
 
-dotted_as_names :: { [ImportItem] }
+dotted_as_names :: { [ImportItemSpan] }
 dotted_as_names : sepBy(dotted_as_name,',') { $1 }
 
 -- dotted_name: NAME ('.' NAME)* 
 
-dotted_name :: { DottedName }
+dotted_name :: { DottedNameSpan }
 dotted_name : NAME many0(right('.', NAME)) { $1 : $2 }
 
 -- global_stmt: 'global' NAME (',' NAME)*
 
-global_stmt :: { Statement }
-global_stmt : 'global' one_or_more_names { AST.Global { global_vars = $2 }}
+global_stmt :: { StatementSpan }
+global_stmt : 'global' one_or_more_names { AST.Global $2 (spanning $1 $2) }
 
-one_or_more_names :: { [Ident] }
+one_or_more_names :: { [IdentSpan] }
 one_or_more_names: sepBy(NAME, ',') { $1 }
 
 -- nonlocal_stmt: 'nonlocal' NAME (',' NAME)*
 
-nonlocal_stmt :: { Statement }
-nonlocal_stmt : 'nonlocal' one_or_more_names { AST.NonLocal { nonLocal_vars = $2 }}
+nonlocal_stmt :: { StatementSpan }
+nonlocal_stmt : 'nonlocal' one_or_more_names { AST.NonLocal $2 (spanning $1 $2) }
 
 -- assert_stmt: 'assert' test [',' test]
 
-assert_stmt :: { Statement }
-assert_stmt : 'assert' sepBy(test,',') { AST.Assert { assert_exprs = $2 }}
+assert_stmt :: { StatementSpan }
+assert_stmt : 'assert' sepBy(test,',') 
+              { AST.Assert $2 (spanning $1 $2) }
 
 -- compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated 
 
-compound_stmt :: { Statement }
+compound_stmt :: { StatementSpan }
 compound_stmt 
    : if_stmt    { $1 } 
    | while_stmt { $1 }
@@ -522,233 +531,234 @@ compound_stmt
 
 -- if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 
-if_stmt :: { Statement }
+if_stmt :: { StatementSpan }
 if_stmt : 'if' test ':' suite many0(elif) optional_else 
-          { Conditional { cond_guards = ($2, $4):$5, cond_else = $6 } }
+          { Conditional (($2, $4):$5) $6 (spanning (spanning (spanning $1 $4) $5) $6) }
 
-elif :: { (Expr, [Statement]) }
+elif :: { (ExprSpan, [StatementSpan]) }
 elif : 'elif' test ':' suite { ($2, $4) }
 
-optional_else :: { [Statement] }
+optional_else :: { [StatementSpan] }
 optional_else 
    : {- empty -} { [] }
    | 'else' ':' suite { $3 }
 
 -- while_stmt: 'while' test ':' suite ['else' ':' suite] 
 
-while_stmt :: { Statement }
+while_stmt :: { StatementSpan }
 while_stmt 
    : 'while' test ':' suite optional_else 
-     { AST.While { while_cond = $2 , while_body = $4, while_else = $5 } }
+     { AST.While $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite] 
 
-for_stmt :: { Statement }
+for_stmt :: { StatementSpan }
 for_stmt 
    : 'for' exprlist 'in' testlist ':' suite optional_else 
-     { AST.For { for_targets = $2, for_generator = $4, for_body = $6, for_else = $7 } }
+     { AST.For $2 $4 $6 $7 (spanning (spanning $1 $6) $7) }
 
 {- 
    try_stmt: ('try' ':' suite 
                ((except_clause ':' suite)+ ['else' ':' suite] ['finally' ':' suite] | 'finally' ':' suite))
 -}
 
-try_stmt :: { Statement }
-try_stmt : 'try' ':' suite handlers { makeTry $3 $4 }
+try_stmt :: { StatementSpan }
+try_stmt : 'try' ':' suite handlers { makeTry $1 $3 $4 }
 
-handlers :: { ([Handler], [Statement], [Statement]) }
+handlers :: { ([HandlerSpan], [StatementSpan], [StatementSpan]) }
 handlers 
    : one_or_more_except_clauses optional_else optional_finally { ($1, $2, $3) }
    | 'finally' ':' suite { ([], [], $3) }
 
-optional_finally :: { [Statement] }
+optional_finally :: { [StatementSpan] }
 optional_finally 
    : {- empty -} { [] }
    | 'finally' ':' suite { $3 }
 
-one_or_more_except_clauses :: { [Handler] }
+one_or_more_except_clauses :: { [HandlerSpan] }
 one_or_more_except_clauses : many1(handler) { $1 }
 
-handler :: { Handler }
-handler : except_clause ':' suite { ($1, $3) }
+handler :: { HandlerSpan }
+handler : except_clause ':' suite { Handler $1 $3 (spanning $1 $3) }
 
 -- with_stmt: 'with' with_item (',' with_item)*  ':' suite
 
-with_stmt :: { Statement }
+with_stmt :: { StatementSpan }
 with_stmt : 'with' sepOptEndBy(with_item, ',') ':' suite 
-           { AST.With { with_context = $2, with_body = $4 } }
+           { AST.With  $2 $4 (spanning $1 $4) }
 
 -- with_item: test ['as' expr]
 
-with_item :: { (Expr, Maybe Expr) }
+with_item :: { (ExprSpan, Maybe ExprSpan) }
 with_item: pair(test,opt(right('as',expr))) { $1 }
 
 -- except_clause: 'except' [test ['as' NAME]] 
 
-except_clause :: { ExceptClause }
-except_clause : right('except', opt(pair(test, optional_as_name))) { $1 }
+except_clause :: { ExceptClauseSpan }
+-- except_clause : right('except', opt(pair(test, optional_as_name))) { ExceptClause $1 (spanning $1) }
+except_clause : 'except' opt(pair(test, optional_as_name)) { ExceptClause $2 (spanning $1 $2) }
 
-optional_as_name :: { Maybe Ident }
+optional_as_name :: { Maybe IdentSpan }
 optional_as_name: opt(right('as', NAME)) { $1 }
 
 -- suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT 
 -- Note: we don't have a newline before indent b/c it is redundant
 
-suite :: { [Statement] }
+suite :: { [StatementSpan] }
 suite 
    : simple_stmt { $1 }
    | {- no newline here! -} 'indent' many1(stmt) 'dedent' { concat $2 } 
 
 -- test: or_test ['if' or_test 'else' test] | lambdef
 
-test :: { Expr }
+test :: { ExprSpan }
 test 
-   : or_test opt(test_if_cond) { makeConditionalExpr $1 $2 }
+   : or_test opt(test_if_cond) { makeConditionalExpr $1 $2 } 
    | lambdef { $1 }
 
-test_if_cond :: { (Expr, Expr) }
+test_if_cond :: { (ExprSpan, ExprSpan) }
 test_if_cond: 'if' or_test 'else' test { ($2, $4) }
 
 -- test_nocond: or_test | lambdef_nocond
 
-test_no_cond :: { Expr }
+test_no_cond :: { ExprSpan }
 test_no_cond: or(or_test, lambdef_nocond) { $1 }
 
 -- lambdef: 'lambda' [varargslist] ':' test
 
-lambdef :: { Expr }
-lambdef : 'lambda' opt_varargslist ':' test { AST.Lambda $2 $4 }
+lambdef :: { ExprSpan }
+lambdef : 'lambda' opt_varargslist ':' test { AST.Lambda $2 $4 (spanning $1 $4) }
 
 -- lambdef_nocond: 'lambda' [varargslist] ':' test_nocond
 
-lambdef_nocond :: { Expr }
-lambdef_nocond : 'lambda' opt_varargslist ':' test_no_cond { AST.Lambda $2 $4 }
+lambdef_nocond :: { ExprSpan }
+lambdef_nocond : 'lambda' opt_varargslist ':' test_no_cond { AST.Lambda $2 $4 (spanning $1 $4) }
 
-opt_varargslist :: { [Parameter] }
+opt_varargslist :: { [ParameterSpan] }
 opt_varargslist: opt(varargslist) { concat (maybeToList $1) }
 
 -- or_test: and_test ('or' and_test)* 
 
-or_test :: { Expr }
+or_test :: { ExprSpan }
 or_test : and_test many0(pair(or_op,and_test)) { makeBinOp $1 $2 }
 
-or_op :: { Op }
-or_op: 'or' { AST.Or }
+or_op :: { OpSpan }
+or_op: 'or' { AST.Or (getSpan $1) }
 
 -- and_test: not_test ('and' not_test)* 
 
-and_test :: { Expr }
+and_test :: { ExprSpan }
 and_test : not_test many0(pair(and_op, not_test)) { makeBinOp $1 $2 }
 
-and_op :: { Op }
-and_op: 'and' { AST.And }
+and_op :: { OpSpan }
+and_op: 'and' { AST.And (getSpan $1) }
 
 -- not_test: 'not' not_test | comparison 
 
-not_test :: { Expr }
+not_test :: { ExprSpan }
 not_test
-   : 'not' not_test { UnaryOp {operator = AST.Not, op_arg = $2} }
+   : 'not' not_test { UnaryOp (AST.Not (getSpan $1)) $2 (spanning $1 $2) }
    | comparison { $1 }
 
 -- comparison: expr (comp_op expr)*
 
-comparison :: { Expr }
+comparison :: { ExprSpan }
 comparison : expr many0(pair(comp_op, expr)) { makeBinOp $1 $2 }
 
 -- comp_op: '<'|'>'|'=='|'>='|'<='|'!='|'in'|'not' 'in'|'is'|'is' 'not' 
 
-comp_op :: { Op }
+comp_op :: { OpSpan }
 comp_op
-   : '<'        { AST.LessThan }
-   | '>'        { AST.GreaterThan }
-   | '=='       { AST.Equality }
-   | '>='       { AST.GreaterThanEquals }
-   | '<='       { AST.LessThanEquals }
-   | '!='       { AST.NotEquals }
-   | 'in'       { AST.In }
-   | 'not' 'in' { AST.NotIn }
-   | 'is'       { AST.Is }
-   | 'is' 'not' { AST.IsNot }
+   : '<'        { AST.LessThan (getSpan $1) }
+   | '>'        { AST.GreaterThan (getSpan $1) }
+   | '=='       { AST.Equality (getSpan $1) }
+   | '>='       { AST.GreaterThanEquals (getSpan $1) }
+   | '<='       { AST.LessThanEquals (getSpan $1) }
+   | '!='       { AST.NotEquals (getSpan $1) }
+   | 'in'       { AST.In (getSpan $1) }
+   | 'not' 'in' { AST.NotIn (spanning $1 $2) }
+   | 'is'       { AST.Is (getSpan $1) }
+   | 'is' 'not' { AST.IsNot (spanning $1 $2) }
 
 -- star_expr: '*' expr
 
-star_expr :: { Expr }
-star_expr : '*' expr { $2 }
+star_expr :: { ExprSpan }
+star_expr : '*' expr { Starred $2 (spanning $1 $2) }
 
 -- expr: xor_expr ('|' xor_expr)* 
 
-expr :: { Expr }
+expr :: { ExprSpan }
 expr : xor_expr many0(pair(bar_op, xor_expr)) { makeBinOp $1 $2 }
 
-bar_op :: { Op }
-bar_op: '|' { AST.BinaryOr }
+bar_op :: { OpSpan }
+bar_op: '|' { AST.BinaryOr (getSpan $1) }
 
 -- xor_expr: and_expr ('^' and_expr)* 
 
-xor_expr :: { Expr }
+xor_expr :: { ExprSpan }
 xor_expr : and_expr many0(pair(hat_op, and_expr)) { makeBinOp $1 $2 }
 
-hat_op :: { Op }
-hat_op: '^' { AST.Xor }
+hat_op :: { OpSpan }
+hat_op: '^' { AST.Xor (getSpan $1) }
 
 -- and_expr: shift_expr ('&' shift_expr)* 
 
-and_expr :: { Expr }
+and_expr :: { ExprSpan }
 and_expr : shift_expr many0(pair(ampersand, shift_expr)) { makeBinOp $1 $2 }
 
-ampersand :: { Op }
-ampersand: '&' { AST.BinaryAnd }
+ampersand :: { OpSpan }
+ampersand: '&' { AST.BinaryAnd (getSpan $1) }
 
 -- shift_expr: arith_expr (('<<'|'>>') arith_expr)* 
 
-shift_expr :: { Expr }
+shift_expr :: { ExprSpan }
 shift_expr: arith_expr many0(pair(shift_op, arith_expr)) { makeBinOp $1 $2 }
 
-shift_op :: { Op }
+shift_op :: { OpSpan }
 shift_op 
-   : '<<' { AST.ShiftLeft }
-   | '>>' { AST.ShiftRight }
+   : '<<' { AST.ShiftLeft (getSpan $1) }
+   | '>>' { AST.ShiftRight (getSpan $1) }
 
 -- arith_expr: term (('+'|'-') term)*
 
-arith_expr :: { Expr }
+arith_expr :: { ExprSpan }
 arith_expr: term many0(pair(arith_op, term)) { makeBinOp $1 $2 }
 
-arith_op :: { Op }
+arith_op :: { OpSpan }
 arith_op
-   : '+' { AST.Plus }
-   | '-' { AST.Minus }
+   : '+' { AST.Plus (getSpan $1) }
+   | '-' { AST.Minus (getSpan $1) }
 
 -- term: factor (('*'|'/'|'%'|'//') factor)* 
 
-term :: { Expr }
+term :: { ExprSpan }
 term : factor many0(pair(mult_div_mod_op, factor)) { makeBinOp $1 $2 }
 
-mult_div_mod_op :: { Op }
+mult_div_mod_op :: { OpSpan }
 mult_div_mod_op
-   : '*'  { AST.Multiply } 
-   | '/'  { AST.Divide }
-   | '%'  { AST.Modulo }
-   | '//' { AST.FloorDivide }
+   : '*'  { AST.Multiply (getSpan $1) } 
+   | '/'  { AST.Divide (getSpan $1) }
+   | '%'  { AST.Modulo (getSpan $1) }
+   | '//' { AST.FloorDivide (getSpan $1) }
 
 -- factor: ('+'|'-'|'~') factor | power 
 
-factor :: { Expr }
+factor :: { ExprSpan }
 factor 
-   : or(arith_op, tilde_op) factor { UnaryOp { operator = $1, op_arg = $2 } } 
+   : or(arith_op, tilde_op) factor { UnaryOp $1 $2 (spanning $1 $2) } 
    | power { $1 }
 
-tilde_op :: { Op }
-tilde_op: '~' { AST.Invert }
+tilde_op :: { OpSpan }
+tilde_op: '~' { AST.Invert (getSpan $1) }
 
 -- power: atom trailer* ['**' factor]
 
-power :: { Expr }
+power :: { ExprSpan }
 power : atom many0(trailer) opt(pair(exponent_op, factor)) 
         { makeBinOp (addTrailer $1 $2) (maybeToList $3) } 
 
-exponent_op :: { Op }
-exponent_op: '**' { AST.Exponent }
+exponent_op :: { OpSpan }
+exponent_op: '**' { AST.Exponent (getSpan $1) }
 
 {- 
    atom: ('(' [yield_expr|testlist_comp] ')' |
@@ -757,40 +767,40 @@ exponent_op: '**' { AST.Exponent }
            NAME | NUMBER | STRING+ | '...' | 'None' | 'True' | 'False')
 -}
 
-atom :: { Expr }
-atom : '(' yield_or_testlist_comp ')' { $2 } 
+atom :: { ExprSpan }
+atom : '(' yield_or_testlist_comp ')' { $2 (spanning $1 $3) } 
      | list_atom                      { $1 }
      | dict_or_set_atom               { $1 }
-     | NAME                           { AST.Var $1 }
-     | 'integer'                      { AST.Int $1 }
-     | 'float'                        { AST.Float $1 }
-     | 'imaginary'                    { AST.Imaginary { imaginary_value = $1 }}
-     | many1('string')                { AST.Strings (reverse $1) }
-     | many1('bytestring')            { AST.ByteStrings (reverse $1) }
-     | '...'                          { AST.Ellipsis }
-     | 'None'                         { AST.None }
-     | 'True'                         { AST.Bool Prelude.True }
-     | 'False'                        { AST.Bool Prelude.False }
+     | NAME                           { AST.Var $1 (getSpan $1) }
+     | 'integer'                      { AST.Int (token_integer $1) (getSpan $1) }
+     | 'float'                        { AST.Float (token_double $1) (getSpan $1) }
+     | 'imaginary'                    { AST.Imaginary (token_double $1) (getSpan $1) }
+     | many1('string')                { AST.Strings (map token_string $1) (getSpan $1) }
+     | many1('bytestring')            { AST.ByteStrings (map token_byte_string $1) (getSpan $1) }
+     | '...'                          { AST.Ellipsis (getSpan $1) }
+     | 'None'                         { AST.None (getSpan $1) }
+     | 'True'                         { AST.Bool Prelude.True (getSpan $1) }
+     | 'False'                        { AST.Bool Prelude.False (getSpan $1) }
 
-list_atom :: { Expr }
+list_atom :: { ExprSpan }
 list_atom
-   : '[' ']' { List { list_exprs = [] } }
-   | '[' testlist_comp ']' { makeListForm $2 }
+   : '[' ']' { List [] (spanning $1 $2) }
+   | '[' testlist_comp ']' { makeListForm (spanning $1 $3) $2 }
 
-dict_or_set_atom :: { Expr }
+dict_or_set_atom :: { ExprSpan }
 dict_or_set_atom
-   : '{' '}' { Dictionary { dict_mappings = [] }}
-   | '{' dictorsetmaker '}' { $2 }
+   : '{' '}' { Dictionary [] (spanning $1 $2) }
+   | '{' dictorsetmaker '}' { $2 (spanning $1 $3) }
 
-yield_or_testlist_comp :: { Expr }
+yield_or_testlist_comp :: { SrcSpan -> ExprSpan }
 yield_or_testlist_comp 
-   : {- empty -} { Tuple { tuple_exprs = [] } }
-   | yield_expr { $1 }
-   | testlist_comp { either id (\c -> Generator { gen_comprehension = c }) $1 } 
+   : {- empty -} { Tuple [] }
+   | yield_expr { Paren $1 }
+   | testlist_comp { either Paren Generator $1 } 
 
 -- testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
 
-testlist_comp :: { Either Expr (Comprehension Expr) }
+testlist_comp :: { Either ExprSpan (ComprehensionSpan ExprSpan) }
 testlist_comp
    : testlist_star_expr { Left $1 }
    | or(test,star_expr) comp_for { Right (makeComprehension $1 $2) }
@@ -799,9 +809,9 @@ testlist_comp
 
 trailer :: { Trailer }
 trailer 
-   : paren_arg_list { TrailerCall $1 }
-   | '[' subscriptlist ']' { TrailerSubscript $2 } 
-   | '.' NAME { TrailerDot $2 }
+   : paren_arg_list { TrailerCall $1 (getSpan $1) }
+   | '[' subscriptlist ']' { TrailerSubscript $2 (spanning $1 $3) } 
+   | '.' NAME { TrailerDot $2 (getSpan $1) (spanning $1 $2) }
 
 -- subscriptlist: subscript (',' subscript)* [',']
 
@@ -812,23 +822,24 @@ subscriptlist : sepOptEndBy(subscript, ',') { $1 }
 
 subscript :: { Subscript }
 subscript
-   : test { SubscriptExpr $1 }
-   | opt(test) ':' opt(test) opt(sliceop) { SubscriptSlice $1 $3 $4 }
+   : test { SubscriptExpr $1 (getSpan $1) }
+   | opt(test) ':' opt(test) opt(sliceop) 
+     { SubscriptSlice $1 $3 $4 (spanning (spanning (spanning $1 $2) $3) $4) }
 
 -- sliceop: ':' [test]
 
-sliceop :: { Maybe Expr }
+sliceop :: { Maybe ExprSpan }
 sliceop : ':' opt(test) { $2 }
 
 -- exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']
 
-exprlist :: { [Expr] }
+exprlist :: { [ExprSpan] }
 exprlist: sepOptEndBy(or(expr,star_expr), ',') { $1 }
 
-opt_comma :: { Bool }
+opt_comma :: { Maybe Token }
 opt_comma 
-   : {- empty -} { False }
-   | ','         { True }  
+   : {- empty -} { Nothing }
+   | ','         { Just $1 }  
 
 -- testlist: test (',' test)* [',']
 
@@ -842,10 +853,10 @@ opt_comma
 -- I've decided to leave it as a tuple, and in special cases, unpack the
 -- tuple and pull out the list of expressions.
 
-testlist :: { Expr }
+testlist :: { ExprSpan }
 testlist : testlistrev opt_comma { makeTupleOrExpr (reverse $1) $2 }
 
-testlistrev :: { [Expr] }
+testlistrev :: { [ExprSpan] }
 testlistrev 
    : test { [$1] }
    | testlistrev ',' test { $3 : $1 }
@@ -855,39 +866,39 @@ testlistrev
                    (test (comp_for | (',' test)* [','])) )
 -}
 
-dictorsetmaker :: { Expr }
+dictorsetmaker :: { SrcSpan -> ExprSpan }
 dictorsetmaker
    : test ':' test dict_rest { makeDictionary ($1, $3) $4 } 
    | test set_rest { makeSet $1 $2 } 
 
-dict_rest :: { Either CompFor [(Expr, Expr)] }
+dict_rest :: { Either CompForSpan [(ExprSpan, ExprSpan)] }
 dict_rest 
    : comp_for { Left $1 }
    | zero_or_more_dict_mappings_rev opt_comma { Right (reverse $1) }
 
-zero_or_more_dict_mappings_rev :: { [(Expr, Expr)] }
+zero_or_more_dict_mappings_rev :: { [(ExprSpan, ExprSpan)] }
 zero_or_more_dict_mappings_rev
    : {- empty -} { [] }
    | zero_or_more_dict_mappings_rev ',' test ':' test { ($3,$5) : $1 }
 
-set_rest :: { Either CompFor [Expr] }
+set_rest :: { Either CompForSpan [ExprSpan] }
 set_rest
    : comp_for { Left $1 }
    | zero_or_more_comma_test_rev opt_comma { Right (reverse $1) }
 
-zero_or_more_comma_test_rev :: { [Expr] }
+zero_or_more_comma_test_rev :: { [ExprSpan] }
 zero_or_more_comma_test_rev
    : {- empty -} { [] }
    | zero_or_more_comma_test_rev ',' test { $3 : $1 }
 
 -- classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
 
-classdef :: { Statement }
+classdef :: { StatementSpan }
 classdef 
    : 'class' NAME opt_paren_arg_list ':' suite 
-     { AST.Class { class_name = $2, class_args = $3, class_body = $5 }}
+     { AST.Class $2 $3 $5 (spanning $1 $5) }
 
-optional_arg_list :: { [Argument] }
+optional_arg_list :: { [ArgumentSpan] }
 optional_arg_list: opt(arglist) { concat (maybeToList $1) } 
 
 {- 
@@ -905,51 +916,53 @@ optional_arg_list: opt(arglist) { concat (maybeToList $1) }
    ** forms. It seems more consistent to me.
 -}
 
-arglist :: { [Argument] }
+arglist :: { [ArgumentSpan] }
 arglist: sepOptEndBy(oneArgument,',') {% checkArguments $1 }
 
 oneArgument
-   : '*' test { ArgVarArgsPos { arg_expr = $2 } }
-   | '**' test { ArgVarArgsKeyword { arg_expr = $2 } }
+   : '*' test { ArgVarArgsPos  $2 (spanning $1 $2) }
+   | '**' test { ArgVarArgsKeyword $2 (spanning $1 $2) }
    | argument { $1 }
 
 -- argument: test [comp_for] | test '=' test  # Really [keyword '='] test
 
-argument :: { Argument }
+argument :: { ArgumentSpan }
 argument
-   : NAME '=' test { ArgKeyword { arg_keyword = $1, arg_expr = $3 }}
-   | test { ArgExpr { arg_expr = $1 }} 
-   | test comp_for { ArgExpr { arg_expr = Generator { gen_comprehension = makeComprehension $1 $2 }}}
+   : NAME '=' test { ArgKeyword $1 $3 (spanning $1 $3) }
+   | test { ArgExpr $1 (getSpan $1) } 
+   | test comp_for 
+     { let span = spanning $1 $1 in ArgExpr (Generator (makeComprehension $1 $2) span) span }
 
 -- comp_iter: comp_for | comp_if
 
-comp_iter :: { CompIter }
+comp_iter :: { CompIterSpan }
 comp_iter
-   : comp_for { IterFor $1 }
-   | comp_if  { IterIf $1 } 
+   : comp_for { IterFor $1 (getSpan $1) }
+   | comp_if  { IterIf $1 (getSpan $1) } 
 
 -- comp_for: 'for' exprlist 'in' or_test [comp_iter]
 
-comp_for :: { CompFor }
+comp_for :: { CompForSpan }
 comp_for 
    : 'for' exprlist 'in' or_test opt(comp_iter) 
-     { CompFor { comp_for_exprs = $2, comp_in_expr = $4, comp_for_iter = $5 }}
+     { CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- comp_if: 'if' test_nocond [comp_iter]
 
-comp_if :: { CompIf }
+comp_if :: { CompIfSpan }
 comp_if 
-   : 'if' test_no_cond opt(comp_iter) { CompIf { comp_if = $2, comp_if_iter = $3 } }
+   : 'if' test_no_cond opt(comp_iter) 
+     { CompIf $2 $3 (spanning (spanning $1 $2) $3) }
 
 -- encoding_decl: NAME
 -- Not used in the rest of the grammar!
 
 -- yield_expr: 'yield' [testlist] 
 
-yield_expr :: { Expr }
-yield_expr : 'yield' optional_testlist { AST.Yield { yield_expr = $2 } }
+yield_expr :: { ExprSpan }
+yield_expr : 'yield' optional_testlist { AST.Yield $2 (spanning $1 $2) }
 
-optional_testlist :: { Maybe Expr }
+optional_testlist :: { Maybe ExprSpan }
 optional_testlist: opt(testlist) { $1 }
 
 {

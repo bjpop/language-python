@@ -40,16 +40,18 @@ module Language.Python.Version3.Parser.ParserMonad
    , getParenStackDepth
    ) where
 
-import Language.Python.Data.SrcLocation (SrcLocation (..))
+import Language.Python.Data.SrcLocation (SrcLocation (..), SrcSpan (..), mkSrcSpanPoint)
 import Language.Python.Version3.Parser.Token (Token (..))
 
 -- | Parse error. A list of error messages and a source location.
-newtype ParseError = ParseError ([String], SrcLocation) 
+-- newtype ParseError = ParseError ([String], SrcLocation) 
+newtype ParseError = ParseError ([String], SrcSpan) 
    deriving Show
 
 data ParseResult a
    = POk !State a
-   | PFailed [String] SrcLocation   -- The error message and position
+   -- | PFailed [String] SrcLocation   -- The error message and position
+   | PFailed [String] SrcSpan -- The error message and position
 
 data State = 
    State 
@@ -58,7 +60,7 @@ data State =
    , previousToken :: Token   -- the previous token
    , startCodeStack :: [Int]  -- a stack of start codes for the state of the lexer
    , indentStack :: [Int]     -- a stack of source column positions of indentation levels
-   , parenStack :: [Token]   -- a stack of parens and brackets for indentation handling
+   , parenStack :: [Token]    -- a stack of parens and brackets for indentation handling
    }
 
 initialState :: SrcLocation -> String -> [Int] -> State
@@ -77,7 +79,7 @@ newtype P a = P { unP :: State -> ParseResult a }
 instance Monad P where
    return = returnP
    (>>=) = thenP
-   fail m = getLocation >>= \loc -> failP loc [m]
+   fail m = getLocation >>= \loc -> failP (mkSrcSpanPoint loc) [m]
 
 execParser :: P a -> State -> Either ParseError a
 execParser (P parser) initialState =
@@ -92,7 +94,7 @@ runParser (P parser) initialState =
       POk st result -> Right (st, result)
 
 initToken :: Token
-initToken = Newline NoLocation
+initToken = Newline SpanEmpty 
 
 {-# INLINE returnP #-}
 returnP :: a -> P a
@@ -105,7 +107,8 @@ thenP :: P a -> (a -> P b) -> P b
                 POk s' a        -> (unP (k a)) s'
                 PFailed err loc -> PFailed err loc 
 
-failP :: SrcLocation -> [String] -> P a
+-- failP :: SrcLocation -> [String] -> P a
+failP :: SrcSpan -> [String] -> P a
 failP loc msg = P $ \_ -> PFailed msg loc 
 
 setLocation :: SrcLocation -> P ()
@@ -137,7 +140,7 @@ popStartCode = P newStack
    where 
    newStack s@State{ startCodeStack = scStack, location = loc } 
       = case scStack of
-           [] ->  PFailed err loc
+           [] ->  PFailed err (mkSrcSpanPoint loc)
            _:rest -> POk (s { startCodeStack = rest }) () 
    err = ["fatal error in lexer: attempt to pop empty start code stack"]
 
@@ -146,7 +149,7 @@ getStartCode = P getCode
    where
    getCode s@State{ startCodeStack = scStack, location = loc }
       = case scStack of
-           [] ->  PFailed err loc
+           [] ->  PFailed err (mkSrcSpanPoint loc)
            code:_ -> POk s code
    err = ["fatal error in lexer: start code stack empty on getStartCode"]
 
@@ -161,7 +164,7 @@ popIndent = P newStack
    where 
    newStack s@State{ indentStack = iStack, location = loc } 
       = case iStack of
-           [] -> PFailed err loc
+           [] -> PFailed err (mkSrcSpanPoint loc)
            _:rest -> POk (s { indentStack = rest }) () 
    -- XXX this message needs fixing
    err = ["fatal error in lexer: attempt to pop empty indentation stack"]
@@ -171,7 +174,7 @@ getIndent = P get
    where
    get s@State{ indentStack = iStack, location = loc }
       = case iStack of
-           [] -> PFailed err loc
+           [] -> PFailed err (mkSrcSpanPoint loc)
            indent:_ -> POk s indent 
    -- XXX this message needs fixing
    err = ["fatal error in lexer: indent stack empty on getIndent"]
@@ -192,7 +195,7 @@ popParen = P newStack
    where 
    newStack s@State{ parenStack = pStack, location = loc } 
       = case pStack of
-           [] -> PFailed err loc
+           [] -> PFailed err (mkSrcSpanPoint loc)
            _:rest -> POk (s { parenStack = rest }) () 
    -- XXX this message needs fixing
    err = ["fatal error in lexer: attempt to pop empty paren stack"]

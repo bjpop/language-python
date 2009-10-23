@@ -194,18 +194,18 @@ $white_no_nl+  ;  -- skip whitespace
 -- Functions for building tokens 
 
 type StartCode = Int
-type Action = SrcLocation -> Int -> String -> P Token 
+type Action = SrcSpan -> Int -> String -> P Token 
 
 dedentation :: Action
-dedentation loc _len _str = do
-   let endCol = sloc_column loc 
+dedentation span _len _str = do
+   -- let endCol = sloc_column loc 
    topIndent <- getIndent
-   case compare endCol topIndent of
+   case compare (endCol span) topIndent of
       EQ -> do popStartCode
                lexToken 
       LT -> do popIndent
                return dedentToken 
-      GT -> failP loc ["indentation error"]
+      GT -> failP span ["indentation error"]
 
 -- Beginning of. BOF = beginning of file, BOL = beginning of line
 data BO = BOF | BOL
@@ -218,55 +218,55 @@ indentation bo _loc _len [] = do
    case bo of
       BOF -> lexToken
       BOL -> return newlineToken
-indentation bo loc _len _str = do
+indentation bo span _len _str = do
    popStartCode
    parenDepth <- getParenStackDepth
    if parenDepth > 0
       then lexToken
       else do 
          topIndent <- getIndent
-         let endCol = sloc_column loc 
-         case compare endCol topIndent of
+         -- let endCol = sloc_column loc 
+         case compare (endCol span) topIndent of
             EQ -> case bo of
                      BOF -> lexToken
                      BOL -> return newlineToken   
             LT -> do pushStartCode dedent
                      return newlineToken 
-            GT -> do pushIndent endCol 
+            GT -> do pushIndent (endCol span)
                      return indentToken 
    where
    -- the location of the newline is not known here 
-   newlineToken = Newline NoLocation
-   indentToken = Indent loc 
+   newlineToken = Newline SpanEmpty 
+   indentToken = Indent span 
 
 begin :: StartCode -> Action 
 begin code loc len inp = do
    pushStartCode code
    lexToken 
 
-symbolToken :: (SrcLocation -> Token) -> Action 
+symbolToken :: (SrcSpan -> Token) -> Action 
 symbolToken mkToken location _ _ = return (mkToken location)
 
 token_fail :: String -> Action 
 token_fail message location _ _ 
    = failP location [ "Lexical Error !", message]
 
-token :: (SrcLocation -> a -> Token) -> (String -> a) -> Action 
+token :: (SrcSpan -> a -> Token) -> (String -> a) -> Action 
 token mkToken read location len str 
    = return $ mkToken location (read $ take len str)
 
 -- a keyword or an identifier (the syntax overlaps)
-keywordOrIdent :: String -> SrcLocation -> P Token
+keywordOrIdent :: String -> SrcSpan -> P Token
 keywordOrIdent str location
    = return $ case Map.lookup str keywords of
          Just symbol -> symbol location
          Nothing -> Identifier location str  
 
 -- mapping from strings to keywords
-keywords :: Map.Map String (SrcLocation -> Token) 
+keywords :: Map.Map String (SrcSpan -> Token) 
 keywords = Map.fromList keywordNames 
 
-keywordNames :: [(String, SrcLocation -> Token)]
+keywordNames :: [(String, SrcSpan -> Token)]
 keywordNames =
    [ ("False", Token.False), ("class", Class), ("finally", Finally), ("is", Is), ("return", Return)
    , ("None", None), ("continue", Continue), ("for", For), ("lambda", Lambda), ("try", Try)
@@ -283,9 +283,9 @@ initStartCodeStack = [bof,0]
 
 -- special tokens for the end of file and end of line
 endOfFileToken :: Token
-endOfFileToken = EOF
-newlineToken = Newline NoLocation
-dedentToken = Dedent NoLocation
+endOfFileToken = EOF SpanEmpty
+newlineToken = Newline SpanEmpty 
+dedentToken = Dedent SpanEmpty 
 
 -- Test if we are at the end of the line or file
 atEOLorEOF :: a -> AlexInput -> Int -> AlexInput -> Bool
@@ -322,32 +322,31 @@ readFloatRest [] = []
 readFloatRest ['.'] = ".0"
 readFloatRest (c:cs) = c : readFloatRest cs
 
-mkString :: Int -> Int -> (SrcLocation -> String -> Token) -> Action
+mkString :: Int -> Int -> (SrcSpan -> String -> Token) -> Action
 mkString leftSkip rightSkip toToken loc len str = do
    let contentLen = len - (leftSkip + rightSkip)
    let contents = take contentLen $ drop leftSkip str
-   -- return $ String loc $ processString contents 
    return $ toToken loc contents 
 
-stringToken :: SrcLocation -> String -> Token
+stringToken :: SrcSpan -> String -> Token
 stringToken loc str = String loc $ unescapeString str
 
-rawStringToken :: SrcLocation -> String -> Token
+rawStringToken :: SrcSpan -> String -> Token
 rawStringToken loc str = String loc $ unescapeRawString str
 
-byteStringToken :: SrcLocation -> String -> Token
+byteStringToken :: SrcSpan -> String -> Token
 byteStringToken loc str = ByteString loc $ BS.pack $ unescapeString str
 
-rawByteStringToken :: SrcLocation -> String -> Token
+rawByteStringToken :: SrcSpan -> String -> Token
 rawByteStringToken loc str = ByteString loc $ BS.pack $ unescapeRawString str
 
-openParen :: (SrcLocation -> Token) -> Action
+openParen :: (SrcSpan -> Token) -> Action
 openParen mkToken loc _len _str = do
    let token = mkToken loc
    pushParen token 
    return token 
 
-closeParen :: (SrcLocation -> Token) -> Action
+closeParen :: (SrcSpan -> Token) -> Action
 closeParen mkToken loc _len _str = do
   let token = mkToken loc
   topParen <- getParen
@@ -442,14 +441,14 @@ lexicalError :: P a
 lexicalError = do
   location <- getLocation
   c <- liftM head getInput
-  failP location 
+  failP (mkSrcSpanPoint location)
         ["Lexical error !",
          "The character " ++ show c ++ " does not fit here."]
 
 parseError :: P a
 parseError = do
   token <- getLastToken
-  failP (location token)
+  failP (getSpan token)
         ["Syntax error !",
          "The symbol `" ++ show token ++ "' does not fit here."]
 
@@ -474,7 +473,7 @@ lexToken = do
     AlexToken (nextLocation, rest) len action -> do
        setLocation nextLocation 
        setInput rest 
-       token <- action location len input 
+       token <- action (mkSrcSpan location $ decColumn 1 nextLocation) len input 
        setLastToken token
        return token
 

@@ -32,7 +32,7 @@ module Language.Python.Version3.Parser (
    ParseError(ParseError)) where
 
 import Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput, parseEval)
-import Language.Python.Version3.Syntax.AST (Module, Statement, Expr)
+import Language.Python.Version3.Syntax.AST (ModuleSpan, StatementSpan, ExprSpan)
 import Language.Python.Data.SrcLocation (initialSrcLocation)
 import Language.Python.Version3.Parser.ParserMonad (execParser, ParseError(ParseError), initialState)
 import Language.Python.Version3.Parser.Lexer (initStartCodeStack)
@@ -40,7 +40,7 @@ import Language.Python.Version3.Parser.Lexer (initStartCodeStack)
 -- | Parse a whole Python source file.
 parseModule :: String -- ^ The input stream (python module source code). 
       -> String -- ^ The name of the python source (filename or input device). 
-      -> Either ParseError Module -- ^ An error or the abstract syntax tree (AST) of the python module. 
+      -> Either ParseError ModuleSpan -- ^ An error or the abstract syntax tree (AST) of the python module. 
 parseModule input srcName = 
    execParser parseFileInput state 
    where
@@ -50,7 +50,7 @@ parseModule input srcName =
 -- | Parse one compound statement, or a sequence of simple statements. Generally used for interactive input, such as from the command line of an interpreter.
 parseStmt :: String -- ^ The input stream (python statement source code). 
       -> String -- ^ The name of the python source (filename or input device). 
-      -> Either ParseError [Statement] -- ^ An error or maybe the abstract syntax tree (AST) of zero or more python statements. 
+      -> Either ParseError [StatementSpan] -- ^ An error or maybe the abstract syntax tree (AST) of zero or more python statements. 
 parseStmt input srcName = 
    execParser parseSingleInput state 
    where
@@ -60,7 +60,7 @@ parseStmt input srcName =
 -- | Parse an expression. Generally used as input for the \'eval\' primitive. 
 parseExpr :: String -- ^ The input stream (python statement source code). 
       -> String -- ^ The name of the python source (filename or input device). 
-      -> Either ParseError Expr -- ^ An error or maybe the abstract syntax tree (AST) of the python expression. 
+      -> Either ParseError ExprSpan -- ^ An error or maybe the abstract syntax tree (AST) of the python expression. 
 parseExpr input srcName = 
    execParser parseEval state 
    where

@@ -17,11 +17,19 @@ module Language.Python.Data.SrcLocation (
   Location (..),
   -- * Construction 
   SrcLocation (..),
+  SrcSpan (..),
+  Span (..),
+  spanning,
+  mkSrcSpan,
+  mkSrcSpanPoint,
+  combineSrcSpans,
   initialSrcLocation,
   -- * Modification
   incColumn, 
+  decColumn,
   incLine,
-  incTab 
+  incTab,
+  endCol
 ) where
 
 -- | A location for a syntactic entity from the source code.
@@ -42,6 +50,32 @@ class Location a where
    -- | By default a value has no location. 
    location x = NoLocation
 
+class Span a where
+   getSpan :: a -> SrcSpan
+   getSpan x = SpanEmpty
+
+spanning :: (Span a, Span b) => a -> b -> SrcSpan
+spanning x y = combineSrcSpans (getSpan x) (getSpan y)
+
+instance Span a => Span [a] where
+   getSpan [] = SpanEmpty
+   getSpan [x] = getSpan x 
+   getSpan list@(x:xs) = combineSrcSpans (getSpan x) (getSpan (last list))
+
+instance Span a => Span (Maybe a) where
+   getSpan Nothing = SpanEmpty
+   getSpan (Just x) = getSpan x
+
+instance (Span a, Span b) => Span (Either a b) where
+   getSpan (Left x) = getSpan x
+   getSpan (Right x) = getSpan x
+
+instance (Span a, Span b) => Span (a, b) where
+   getSpan (x,y) = spanning x y
+
+instance Span SrcSpan where
+   getSpan = id
+
 -- | Construct the initial source location for a file.
 initialSrcLocation :: String -> SrcLocation
 initialSrcLocation filename 
@@ -51,7 +85,15 @@ initialSrcLocation filename
       , sloc_column = 1
       }
 
--- | Increment the column of a location by one. 
+-- | Decrement the column of a location, only if they are on the same row.
+decColumn :: Int -> SrcLocation -> SrcLocation
+decColumn n loc
+   | n < col = loc { sloc_column = col - n }
+   | otherwise = loc 
+   where
+   col = sloc_column loc
+
+-- | Increment the column of a location. 
 incColumn :: Int -> SrcLocation -> SrcLocation
 incColumn n loc@(Sloc { sloc_column = col })
    = loc { sloc_column = col + n }
@@ -82,25 +124,34 @@ span of (1,1)-(1,1) is zero characters long.
 -}
 data SrcSpan
   = SpanCoLinear
-    { span_file         :: !String
+    { span_filename     :: !String
     , span_row          :: {-# UNPACK #-} !Int
     , span_start_column :: {-# UNPACK #-} !Int
     , span_end_column   :: {-# UNPACK #-} !Int
     }
   | SpanMultiLine
-    { span_file         :: !String
+    { span_filename     :: !String
     , span_start_row    :: {-# UNPACK #-} !Int
     , span_start_column :: {-# UNPACK #-} !Int
     , span_end_row      :: {-# UNPACK #-} !Int
     , span_end_column   :: {-# UNPACK #-} !Int
     }
   | SpanPoint
-    { span_file     :: !String
+    { span_filename :: !String
     , span_row      :: {-# UNPACK #-} !Int
     , span_column   :: {-# UNPACK #-} !Int
     }
   | SpanEmpty 
   deriving (Eq,Ord,Show)
+
+mkSrcSpanPoint :: SrcLocation -> SrcSpan
+mkSrcSpanPoint loc@(Sloc {})
+   = SpanPoint 
+     { span_filename = sloc_filename loc
+     , span_row = sloc_row loc
+     , span_column = sloc_column loc
+     }
+mkSrcSpanPoint NoLocation = error "attempt to convert an empty location to a span"
 
 mkSrcSpan :: SrcLocation -> SrcLocation -> SrcSpan
 mkSrcSpan NoLocation _ = SpanEmpty
@@ -137,7 +188,7 @@ combineSrcSpans start end
   col1 = startCol start
   row2 = endRow end
   col2 = endCol end
-  file = span_file start
+  file = span_filename start
 
 startRow :: SrcSpan -> Int
 startRow (SpanCoLinear { span_row = row }) = row

@@ -65,55 +65,58 @@ prettyString :: String -> Doc
    -- XXX should handle the escaping properly
 prettyString str = text (show str)
 
-instance Pretty Module where
+instance Pretty (Module a) where
    -- pretty :: Module -> Doc 
    pretty (Module stmts) = vcat $ map pretty stmts 
 
-instance Pretty Ident where
-   pretty (Ident name) = text name
+instance Pretty (Ident a) where
+   pretty name@(Ident {}) = text $ ident_string name
 
 dot :: Doc
 dot = char '.'
 
-prettyDottedName :: DottedName -> Doc
+prettyDottedName :: DottedName a -> Doc
 prettyDottedName [] = empty
 prettyDottedName [name] = pretty name
 prettyDottedName (name:rest@(_:_))
    = pretty name <> dot <> prettyDottedName rest
 
-instance Pretty ImportItem where
+instance Pretty (ImportItem a) where
    pretty (ImportItem {import_item_name = name, import_as_name = asName})
       = prettyDottedName name <+> (maybe empty (\n -> text "as" <+> pretty n) asName)
 
-instance Pretty FromItem where
+instance Pretty (FromItem a) where
    pretty (FromItem { from_item_name = name, from_as_name = asName })
       = pretty name <+> (maybe empty (\n -> text "as" <+> pretty n) asName) 
 
-instance Pretty FromItems where
-   pretty ImportEverything = char '*'
-   pretty (FromItems [item]) = pretty item 
-   pretty (FromItems items) = parens (commaList items)
+instance Pretty (FromItems a) where
+   pretty ImportEverything {} = char '*'
+   pretty (FromItems { from_items_items = [item] }) = pretty item 
+   pretty (FromItems { from_items_items = items }) = parens (commaList items)
 
-instance Pretty ImportModule where
-   pretty (ImportRelative importModule) = dot <> pretty importModule
-   pretty ImportDot = dot
-   pretty (ImportName dottedName) = prettyDottedName dottedName 
+instance Pretty (ImportRelative a) where
+   pretty (ImportRelative { import_relative_dots = dots, import_relative_module = mod }) 
+      = case mod of
+           Nothing -> dotDoc 
+           Just name -> dotDoc <> prettyDottedName name 
+      where
+      dotDoc = text (replicate dots '.')
 
-prettySuite :: [Statement] -> Doc
+prettySuite :: [Statement a] -> Doc
 prettySuite stmts = vcat $ map pretty stmts 
 
-optionalKeywordSuite :: String -> [Statement] -> Doc
+optionalKeywordSuite :: String -> [Statement a] -> Doc
 optionalKeywordSuite _ [] = empty
 optionalKeywordSuite keyword stmts = text keyword <> colon $+$ indent (prettySuite stmts)
 
-prettyArgList :: [Argument] -> Doc
+prettyArgList :: [Argument a] -> Doc
 prettyArgList = parens . commaList 
 
-prettyOptionalArgList :: [Argument] -> Doc
+prettyOptionalArgList :: [Argument a] -> Doc
 prettyOptionalArgList [] = empty
 prettyOptionalArgList list = parens $ commaList list
 
-prettyGuards :: [(Expr, Suite)] -> Doc
+prettyGuards :: [(Expr a, Suite a)] -> Doc
 prettyGuards [] = empty
 prettyGuards ((cond,body):guards)
    = text "elif" <+> pretty cond <> colon $+$ indent (prettySuite body) $+$
@@ -126,7 +129,7 @@ indent doc = nest 4 doc
 blankLine :: Doc
 blankLine = text []
 
-instance Pretty Statement where
+instance Pretty (Statement a) where
    -- pretty :: Statement -> Doc 
    pretty (Import { import_items = items}) = text "import" <+> commaList items 
    pretty stmt@(FromImport {})
@@ -168,77 +171,78 @@ instance Pretty Statement where
    pretty (With { with_context = context, with_body = body })
       = text "with" <+> hcat (punctuate comma (map prettyWithContext context)) <+> colon $+$
         indent (prettySuite body)
-   pretty Pass = text "pass"
-   pretty Break = text "break"
-   pretty Continue = text "continue"
+   pretty Pass {} = text "pass"
+   pretty Break {} = text "break"
+   pretty Continue {} = text "continue"
    pretty (Delete { del_exprs = es }) = text "del" <+> commaList es
    pretty (StmtExpr { stmt_expr = e }) = pretty e
    pretty (Global { global_vars = idents }) = text "global" <+> commaList idents
    pretty (NonLocal { nonLocal_vars = idents }) = text "nonlocal" <+> commaList idents
    pretty (Assert { assert_exprs = es }) = text "assert" <+> commaList es
 
-prettyWithContext :: (Expr, Maybe Expr) -> Doc
+prettyWithContext :: (Expr a, Maybe (Expr a)) -> Doc
 prettyWithContext (e, Nothing) = pretty e
 prettyWithContext (e, Just as) = pretty e <+> text "as" <+> pretty as
 
-prettyHandlers :: [Handler] -> Doc
-prettyHandlers = foldr (\next rec -> prettyHandler next $+$ rec) empty
+prettyHandlers :: [Handler a] -> Doc
+prettyHandlers = foldr (\next rec -> pretty next $+$ rec) empty
 
-prettyHandler :: Handler -> Doc
-prettyHandler (exceptClause, suite) 
-   = text "except" <+> prettyExceptClause exceptClause <> colon $+$ indent (prettySuite suite)
-prettyExceptClause :: ExceptClause -> Doc
-prettyExceptClause Nothing = empty
-prettyExceptClause (Just (e, target))
-   = pretty e <+> maybe empty (\t -> text "as" <+> pretty t) target
+instance Pretty (Handler a) where
+   pretty (Handler { handler_clause = exceptClause, handler_suite = suite })
+      = pretty exceptClause <> colon $+$ indent (prettySuite suite)
 
-instance Pretty Decorator where
+instance Pretty (ExceptClause a) where
+   pretty (ExceptClause { except_clause = Nothing }) = text "except"
+   pretty (ExceptClause { except_clause = Just (e, target)}) 
+      = text "except" <+> pretty e <+> maybe empty (\t -> text "as" <+> pretty t) target
+
+instance Pretty (Decorator a) where
    pretty (Decorator { decorator_name = name, decorator_args = args })
       = char '@' <> prettyDottedName name <+> prettyOptionalArgList args
 
-instance Pretty Parameter where
-   pretty (Param { param_name = ident, param_annotation = annot, param_default = def})
+instance Pretty (Parameter a) where
+   pretty (Param { param_name = ident, param_py_annotation = annot, param_default = def})
       = pretty ident <> (maybe empty (\e -> colon <> pretty e <> space) annot) <> 
         maybe empty (\e -> equals <> pretty e) def 
-   pretty (VarArgsPos { param_name = ident, param_annotation = annot})
+   pretty (VarArgsPos { param_name = ident, param_py_annotation = annot})
       = char '*' <> pretty ident <> (maybe empty (\e -> colon <> pretty e) annot)
-   pretty (VarArgsKeyword { param_name = ident, param_annotation = annot })
+   pretty (VarArgsKeyword { param_name = ident, param_py_annotation = annot })
       = text "**" <> pretty ident <> (maybe empty (\e -> colon <> pretty e) annot)
-   pretty EndPositional = char '*' 
+   pretty EndPositional {} = char '*' 
 
-instance Pretty Argument where
+instance Pretty (Argument a) where
    pretty (ArgExpr { arg_expr = e }) = pretty e
    pretty (ArgVarArgsPos { arg_expr = e}) = char '*' <> pretty e
    pretty (ArgVarArgsKeyword { arg_expr = e }) = text "**" <> pretty e
    pretty (ArgKeyword { arg_keyword = ident, arg_expr = e }) 
       = pretty ident <> equals <> pretty e
 
-instance Pretty a => Pretty (Comprehension a) where
+instance Pretty t => Pretty (Comprehension t a) where
    pretty (Comprehension { comprehension_expr = e, comprehension_for = for }) 
       = pretty e <+> pretty for 
 
-instance Pretty CompFor where
+instance Pretty (CompFor a) where
    pretty (CompFor { comp_for_exprs = es, comp_in_expr = e, comp_for_iter = iter }) 
       = text "for" <+> commaList es <+> text "in" <+> pretty e <+> pretty iter
 
-instance Pretty CompIf where
+instance Pretty (CompIf a) where
    pretty (CompIf { comp_if = e, comp_if_iter = iter }) 
       = text "if" <+> pretty e <+> pretty iter 
 
-instance Pretty CompIter where
-   pretty (IterFor compFor) = pretty compFor 
-   pretty (IterIf compIf) = pretty compIf
+instance Pretty (CompIter a) where
+   pretty (IterFor { comp_iter_for = compFor }) = pretty compFor 
+   pretty (IterIf { comp_iter_if = compIf }) = pretty compIf
 
-instance Pretty Expr where
-   pretty (Var i) = pretty i
-   pretty (Int i) = pretty i
-   pretty (Float d) = pretty d
+instance Pretty (Expr a) where
+   pretty (Var { var_ident = i }) = pretty i
+   pretty (Int { int_value = i }) = pretty i
+   pretty (Float { float_value = d }) = pretty d
    pretty (Imaginary { imaginary_value = i }) = pretty i <> char 'j' 
-   pretty (Bool b) = pretty b
-   pretty None = text "None"
-   pretty Ellipsis = text "..."
-   pretty (ByteStrings bs) = hcat (map pretty bs)
-   pretty (Strings ss) = hcat (map prettyString ss)
+   pretty (Bool { bool_value = b}) = pretty b
+   pretty None {} = text "None"
+   pretty Ellipsis {} = text "..."
+   pretty (ByteStrings { byte_string_strings = bs }) = hcat (map pretty bs)
+   pretty (Strings { strings_strings = ss }) = hcat (map prettyString ss)
    pretty (Call { call_fun = f, call_args = args }) = pretty f <> prettyArgList args
    pretty (Subscript { subscriptee = e, subscript_exprs = subs })
       = pretty e <> brackets (commaList subs)
@@ -247,7 +251,10 @@ instance Pretty Expr where
    pretty (CondExpr { ce_true_branch = trueBranch, ce_condition = cond, ce_false_branch = falseBranch })
       = pretty trueBranch <+> text "if" <+> pretty cond <+> text "else" <+> pretty falseBranch
    pretty (BinaryOp { operator = op, left_op_arg = left, right_op_arg = right })
-      = pretty left <> (if op == Dot then dot else space <> pretty op <> space) <> pretty right
+      = pretty left <> (if isDot op then dot else space <> pretty op <> space) <> pretty right
+      where
+      isDot (Dot {}) = True
+      isDot _other = False
    pretty (UnaryOp { operator = op, op_arg = e }) = pretty op <+> pretty e
    pretty (Lambda { lambda_args = args, lambda_body = body })
       = text "lambda" <+> commaList args <> colon <+> pretty body
@@ -260,51 +267,52 @@ instance Pretty Expr where
    pretty (Set { set_exprs = es }) = braces $ commaList es
    pretty (ListComp { list_comprehension = lc }) = brackets $ pretty lc
    pretty (Generator { gen_comprehension = gc }) = parens $ pretty gc
+   pretty (Paren { paren_expr = e }) = parens $ pretty e
 
-instance Pretty Slice where
+instance Pretty (Slice a) where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })
       = pretty lower <> colon <> pretty upper <> (maybe empty (\s -> colon <> pretty s) stride)
    pretty (SliceExpr { slice_expr = e }) = pretty e
 
-instance Pretty Op where
-   pretty And = text "and"
-   pretty Or = text "or"
-   pretty Not = text "not"
-   pretty Exponent = text "**"
-   pretty LessThan = text "<"
-   pretty GreaterThan = text ">"
-   pretty Equality = text "=="
-   pretty GreaterThanEquals = text ">="
-   pretty LessThanEquals = text "<="
-   pretty NotEquals = text "!="
-   pretty In = text "in"
-   pretty Is = text "is"
-   pretty IsNot = text "is not"
-   pretty NotIn = text "not in"
-   pretty BinaryOr = text "|"
-   pretty Xor = text "^"
-   pretty BinaryAnd = text "&"
-   pretty ShiftLeft = text "<<"
-   pretty ShiftRight = text ">>"
-   pretty Multiply = text "*"
-   pretty Plus = text "+"
-   pretty Minus = text "-"
-   pretty Divide = text "/"
-   pretty FloorDivide = text "//"
-   pretty Invert = text "~"
-   pretty Modulo = text "%"
-   pretty Dot = dot
+instance Pretty (Op a) where
+   pretty (And {}) = text "and"
+   pretty (Or {}) = text "or"
+   pretty (Not {}) = text "not"
+   pretty (Exponent {}) = text "**"
+   pretty (LessThan {}) = text "<"
+   pretty (GreaterThan {}) = text ">"
+   pretty (Equality {}) = text "=="
+   pretty (GreaterThanEquals {}) = text ">="
+   pretty (LessThanEquals {}) = text "<="
+   pretty (NotEquals {}) = text "!="
+   pretty (In {}) = text "in"
+   pretty (Is {}) = text "is"
+   pretty (IsNot {}) = text "is not"
+   pretty (NotIn {}) = text "not in"
+   pretty (BinaryOr {}) = text "|"
+   pretty (Xor {}) = text "^"
+   pretty (BinaryAnd {}) = text "&"
+   pretty (ShiftLeft {}) = text "<<"
+   pretty (ShiftRight {}) = text ">>"
+   pretty (Multiply {}) = text "*"
+   pretty (Plus {}) = text "+"
+   pretty (Minus {}) = text "-"
+   pretty (Divide {}) = text "/"
+   pretty (FloorDivide {}) = text "//"
+   pretty (Invert {}) = text "~"
+   pretty (Modulo {}) = text "%"
+   pretty (Dot {}) = dot
 
-instance Pretty AssignOp where
-   pretty PlusAssign = text "+="
-   pretty MinusAssign = text "-="
-   pretty MultAssign = text "*="
-   pretty DivAssign = text "/="
-   pretty ModAssign = text "%="
-   pretty PowAssign = text "**="
-   pretty BinAndAssign = text "&="
-   pretty BinOrAssign = text "|="
-   pretty BinXorAssign = text "^="
-   pretty LeftShiftAssign = text "<<="
-   pretty RightShiftAssign = text ">>="
-   pretty FloorDivAssign = text "//="
+instance Pretty (AssignOp a) where
+   pretty (PlusAssign {}) = text "+="
+   pretty (MinusAssign {}) = text "-="
+   pretty (MultAssign {}) = text "*="
+   pretty (DivAssign {}) = text "/="
+   pretty (ModAssign {}) = text "%="
+   pretty (PowAssign {}) = text "**="
+   pretty (BinAndAssign {}) = text "&="
+   pretty (BinOrAssign {}) = text "|="
+   pretty (BinXorAssign {}) = text "^="
+   pretty (LeftShiftAssign {}) = text "<<="
+   pretty (RightShiftAssign {}) = text ">>="
+   pretty (FloorDivAssign {}) = text "//="
