@@ -26,8 +26,8 @@ module Language.Python.Common.ParserMonad
    , setLastToken
    , setLastEOL
    , getLastEOL
-   , ParseError (ParseError)
-   , State (..)
+   , ParseError 
+   , ParseState (..)
    , initialState
    , pushStartCode
    , popStartCode
@@ -44,30 +44,32 @@ module Language.Python.Common.ParserMonad
 
 import Language.Python.Common.SrcLocation (SrcLocation (..), SrcSpan (..), mkSrcSpanPoint)
 import Language.Python.Common.Token (Token (..))
+import Control.Monad.State.Class
+import Control.Monad.State.Strict as State
+import Control.Monad.Error as Error
+import Control.Monad.Identity as Identity
+import Control.Monad.Trans as Trans
+import Language.Python.Common.PrettyClass
 
--- | Parse error. A list of error messages and a source location.
--- newtype ParseError = ParseError ([String], SrcLocation) 
-newtype ParseError = ParseError ([String], SrcSpan) 
-   deriving Show
+type ParseError = String
 
-data ParseResult a
-   = POk !State a
-   | PFailed [String] SrcSpan -- The error message and position
-
-data State = 
-   State 
+data ParseState = 
+   ParseState 
    { location :: !SrcLocation -- position at current input location
    , input :: !String         -- the current input
-   , previousToken :: Token   -- the previous token
+   , previousToken :: !Token   -- the previous token
    , startCodeStack :: [Int]  -- a stack of start codes for the state of the lexer
    , indentStack :: [Int]     -- a stack of source column positions of indentation levels
    , parenStack :: [Token]    -- a stack of parens and brackets for indentation handling
    , lastEOL :: !SrcSpan      -- location of the most recent end-of-line encountered
    }
 
-initialState :: SrcLocation -> String -> [Int] -> State
+initToken :: Token
+initToken = Newline SpanEmpty 
+
+initialState :: SrcLocation -> String -> [Int] -> ParseState
 initialState initLoc inp scStack
-   = State
+   = ParseState 
    { location = initLoc 
    , input = inp
    , previousToken = initToken
@@ -77,147 +79,109 @@ initialState initLoc inp scStack
    , lastEOL = SpanEmpty 
    }
 
-newtype P a = P { unP :: State -> ParseResult a }
+type P a = StateT ParseState (Either ParseError) a
 
-instance Monad P where
-   return = returnP
-   (>>=) = thenP
-   fail m = getLocation >>= \loc -> failP (mkSrcSpanPoint loc) [m]
+execParser :: P a -> ParseState -> Either ParseError a
+execParser = evalStateT 
 
-execParser :: P a -> State -> Either ParseError a
-execParser (P parser) initialState =
-   case parser initialState of
-      PFailed message errloc -> Left (ParseError (message, errloc))
-      POk st result -> Right result
-
-runParser :: P a -> State -> Either ParseError (State, a)
-runParser (P parser) initialState =
-   case parser initialState of
-      PFailed message errloc -> Left (ParseError (message, errloc))
-      POk st result -> Right (st, result)
-
-initToken :: Token
-initToken = Newline SpanEmpty 
+runParser :: P a -> ParseState -> Either ParseError (a, ParseState)
+runParser = runStateT 
 
 {-# INLINE returnP #-}
 returnP :: a -> P a
-returnP a = P $ \s -> POk s a
+returnP = return 
 
 {-# INLINE thenP #-}
 thenP :: P a -> (a -> P b) -> P b
-(P m) `thenP` k = P $ \s ->
-        case m s of
-                POk s' a        -> (unP (k a)) s'
-                PFailed err loc -> PFailed err loc 
+thenP = (>>=)
 
--- failP :: SrcLocation -> [String] -> P a
 failP :: SrcSpan -> [String] -> P a
-failP loc msg = P $ \_ -> PFailed msg loc 
+failP span strs = 
+   throwError (prettyText span ++ ": " ++ unwords strs) 
 
 setLastEOL :: SrcSpan -> P ()
-setLastEOL loc = P $ \s -> POk (s { lastEOL = loc }) ()
+setLastEOL span = modify $ \s -> s { lastEOL = span }
 
 getLastEOL :: P SrcSpan
-getLastEOL =  P $ \s@State{ lastEOL = loc } -> POk s loc 
+getLastEOL = gets lastEOL
 
 setLocation :: SrcLocation -> P ()
-setLocation loc = P $ \s -> POk (s { location = loc }) ()
+setLocation loc = modify $ \s -> s { location = loc } 
 
 getLocation :: P SrcLocation
-getLocation = P $ \s@State{ location = loc } -> POk s loc 
+getLocation = gets location 
 
 getInput :: P String 
-getInput = P $ \s@State{ input = inp } -> POk s inp
+getInput = gets input 
 
 setInput :: String -> P ()
-setInput inp = P $ \s -> POk (s { input = inp }) ()
+setInput inp = modify $ \s -> s { input = inp }
 
 getLastToken :: P Token
-getLastToken = P $ \s@State{ previousToken = tok } -> POk s tok
+getLastToken = gets previousToken 
 
 setLastToken :: Token -> P ()
-setLastToken tok = P $ \s -> POk (s { previousToken = tok }) ()
+setLastToken tok = modify $ \s -> s { previousToken = tok } 
 
 pushStartCode :: Int -> P () 
-pushStartCode code = P newStack
-   where 
-   newStack s@State{ startCodeStack = scStack } 
-      = POk (s { startCodeStack = code : scStack}) () 
+pushStartCode code = do
+   oldStack <- gets startCodeStack
+   modify $ \s -> s { startCodeStack = code : oldStack }
 
 popStartCode :: P ()
-popStartCode = P newStack
-   where 
-   newStack s@State{ startCodeStack = scStack, location = loc } 
-      = case scStack of
-           [] ->  PFailed err (mkSrcSpanPoint loc)
-           _:rest -> POk (s { startCodeStack = rest }) () 
-   err = ["fatal error in lexer: attempt to pop empty start code stack"]
+popStartCode = do
+   oldStack <- gets startCodeStack
+   case oldStack of
+     [] -> throwError "fatal error in lexer: attempt to pop empty start code stack"
+     _:rest -> modify $ \s -> s { startCodeStack = rest }
 
 getStartCode :: P Int
-getStartCode = P getCode
-   where
-   getCode s@State{ startCodeStack = scStack, location = loc }
-      = case scStack of
-           [] ->  PFailed err (mkSrcSpanPoint loc)
-           code:_ -> POk s code
-   err = ["fatal error in lexer: start code stack empty on getStartCode"]
+getStartCode = do 
+   oldStack <- gets startCodeStack
+   case oldStack of
+     [] -> throwError "fatal error in lexer: start code stack empty on getStartCode"
+     code:_ -> return code 
 
 pushIndent :: Int -> P () 
-pushIndent indent = P newStack
-   where 
-   newStack s@State{ indentStack = iStack } 
-      = POk (s { indentStack = indent : iStack }) () 
+pushIndent indent = do 
+   oldStack <- gets indentStack
+   modify $ \s -> s { indentStack = indent : oldStack }
 
 popIndent :: P ()
-popIndent = P newStack
-   where 
-   newStack s@State{ indentStack = iStack, location = loc } 
-      = case iStack of
-           [] -> PFailed err (mkSrcSpanPoint loc)
-           _:rest -> POk (s { indentStack = rest }) () 
-   -- XXX this message needs fixing
-   err = ["fatal error in lexer: attempt to pop empty indentation stack"]
+popIndent = do 
+   oldStack <- gets indentStack
+   case oldStack of
+     [] -> throwError "fatal error in lexer: attempt to pop empty indentation stack"
+     _:rest -> modify $ \s -> s { indentStack = rest }
 
 getIndent :: P Int
-getIndent = P get
-   where
-   get s@State{ indentStack = iStack, location = loc }
-      = case iStack of
-           [] -> PFailed err (mkSrcSpanPoint loc)
-           indent:_ -> POk s indent 
-   -- XXX this message needs fixing
-   err = ["fatal error in lexer: indent stack empty on getIndent"]
+getIndent = do
+   oldStack <- gets indentStack 
+   case oldStack of
+     [] -> throwError "fatal error in lexer: indent stack empty on getIndent"
+     indent:_ -> return indent 
 
 getIndentStackDepth :: P Int
-getIndentStackDepth = P get
-   where
-   get s@State{ indentStack = iStack } = POk s (length iStack)
+getIndentStackDepth = gets (length . indentStack)
 
 pushParen :: Token -> P () 
-pushParen symbol = P newStack
-   where 
-   newStack s@State{ parenStack = pStack } 
-      = POk (s { parenStack = symbol : pStack }) () 
+pushParen symbol = do
+   oldStack <- gets parenStack 
+   modify $ \s -> s { parenStack = symbol : oldStack }
 
 popParen :: P ()
-popParen = P newStack
-   where 
-   newStack s@State{ parenStack = pStack, location = loc } 
-      = case pStack of
-           [] -> PFailed err (mkSrcSpanPoint loc)
-           _:rest -> POk (s { parenStack = rest }) () 
-   -- XXX this message needs fixing
-   err = ["fatal error in lexer: attempt to pop empty paren stack"]
+popParen = do
+   oldStack <- gets parenStack
+   case oldStack of
+      [] -> throwError "fatal error in lexer: attempt to pop empty paren stack"
+      _:rest -> modify $ \s -> s { parenStack = rest }  
 
 getParen :: P (Maybe Token)
-getParen = P get
-   where
-   get s@State{ parenStack = pStack }
-      = case pStack of
-           [] -> POk s Nothing 
-           symbol:_ -> POk s (Just symbol) 
+getParen = do
+   oldStack <- gets parenStack
+   case oldStack of
+      [] -> return Nothing 
+      symbol:_ -> return $ Just symbol
 
 getParenStackDepth :: P Int
-getParenStackDepth = P get
-   where
-   get s@State{ parenStack = pStack } = POk s (length pStack)
+getParenStackDepth = gets (length . parenStack) 

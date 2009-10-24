@@ -19,9 +19,10 @@ extra-source-files:  src/Language/Python/Version3/Parser/Parser.y
 
 Library
    hs-source-dirs:   src
-   build-depends:    base, containers, pretty, bytestring, array
+   build-depends:    base, containers, pretty, bytestring, array, transformers, monads-tf
    build-tools:      happy, alex
    exposed-modules:
+      Language.Python.Common
       Language.Python.Common.SrcLocation
       Language.Python.Common.Token
       Language.Python.Version3

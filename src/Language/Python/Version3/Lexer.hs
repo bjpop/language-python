@@ -17,14 +17,14 @@ module Language.Python.Version3.Lexer (
    lex, 
    lexOneToken,
    -- * Parse errors
-   ParseError(ParseError)) where
+   ParseError) where
 
 import Prelude hiding (lex)
 import Language.Python.Version3.Parser.Lexer (lexToken, initStartCodeStack)
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.SrcLocation (initialSrcLocation)
 import Language.Python.Common.ParserMonad 
-       (State(input), P, runParser, execParser, ParseError(ParseError), initialState)
+       (ParseState (input), P, runParser, execParser, ParseError, initialState)
 
 -- | Parse a string into a list of Python Tokens, or return an error. 
 lex :: String -- ^ The input stream (python source code). 
@@ -44,7 +44,7 @@ lexOneToken :: String -- ^ The input stream (python source code).
 lexOneToken source srcName =
    case runParser lexToken state of
       Left err -> Left err
-      Right (st, tok) -> Right (tok, input st)
+      Right (tok, state) -> Right (tok, input state)
    where
    initLoc = initialSrcLocation srcName
    state = initialState initLoc source initStartCodeStack
