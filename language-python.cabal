@@ -28,6 +28,7 @@ Library
       Language.Python.Version3.Lexer
       Language.Python.Version3.Syntax.AST
       Language.Python.Version3.Syntax.Pretty
+      Language.Python.Utils.PrettyClass
    other-modules:
       Language.Python.Version3.Parser.Parser
       Language.Python.Version3.Parser.Lexer

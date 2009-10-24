@@ -13,6 +13,7 @@
 
 module Language.Python.Version3.Syntax.Pretty where
 
+import Language.Python.Utils.PrettyClass
 import Language.Python.Version3.Syntax.AST 
 
 import Text.PrettyPrint as TextPP
@@ -20,60 +21,29 @@ import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------
 
--- | All types which can be transformed into a 'Doc'.
-class Pretty a where
-   pretty :: a -> Doc
+dot :: Doc
+dot = char '.'
 
--- | Transform values into strings.
-prettyText :: Pretty a => a -> String
-prettyText = render . pretty
+indent :: Doc -> Doc
+indent doc = nest 4 doc
 
--- | Conditionally wrap parentheses around an item.
-parensIf :: Pretty a => (a -> Bool) -> a -> Doc
-parensIf test x = if test x then parens $ pretty x else pretty x 
-
-perhaps :: Pretty a => Maybe a -> Doc -> Doc
-perhaps Nothing doc = empty
-perhaps (Just {}) doc = doc 
-
--- | A list of things separated by commas.
-commaList :: Pretty a => [a] -> Doc
-commaList = hsep . punctuate comma . map pretty 
+-- XXX is there a better way to do this?
+blankLine :: Doc
+blankLine = text []
 
 instance Pretty BS.ByteString where
    -- XXX should handle the escaping properly
    pretty b = text "b" <> text (show $ BS.unpack b)
-
-instance Pretty Int where
-  pretty = int
-
-instance Pretty Integer where
-  pretty = integer
-
-instance Pretty Double where
-   pretty = double
-
-instance Pretty Bool where
-  pretty True = text "True"
-  pretty False = text "False"
-
-instance Pretty a => Pretty (Maybe a) where
-   pretty Nothing = empty
-   pretty (Just x) = pretty x
 
 prettyString :: String -> Doc
    -- XXX should handle the escaping properly
 prettyString str = text (show str)
 
 instance Pretty (Module a) where
-   -- pretty :: Module -> Doc 
    pretty (Module stmts) = vcat $ map pretty stmts 
 
 instance Pretty (Ident a) where
    pretty name@(Ident {}) = text $ ident_string name
-
-dot :: Doc
-dot = char '.'
 
 prettyDottedName :: DottedName a -> Doc
 prettyDottedName [] = empty
@@ -121,13 +91,6 @@ prettyGuards [] = empty
 prettyGuards ((cond,body):guards)
    = text "elif" <+> pretty cond <> colon $+$ indent (prettySuite body) $+$
      prettyGuards guards
-
-indent :: Doc -> Doc
-indent doc = nest 4 doc
-
--- XXX is there a better way to do this?
-blankLine :: Doc
-blankLine = text []
 
 instance Pretty (Statement a) where
    -- pretty :: Statement -> Doc 

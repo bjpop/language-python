@@ -19,8 +19,11 @@
 -- the various Python top-levels, which correspond to the parsers provided here.
 -----------------------------------------------------------------------------
 
-module Language.Python.Version3 (module Parser, module Lexer, module Pretty) where
+module Language.Python.Version3 
+   (module Parser, module Lexer, module Pretty, module PrettyClass) where
 
 import Language.Python.Version3.Parser as Parser 
 import Language.Python.Version3.Lexer as Lexer hiding (ParseError)
 import Language.Python.Version3.Syntax.Pretty as Pretty
+import Language.Python.Utils.PrettyClass as PrettyClass
+import Language.Python.Version3.Parser.Token as Token

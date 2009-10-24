@@ -17,13 +17,13 @@ module Language.Python.Version3.Lexer (
    lex, 
    lexOneToken,
    -- * Tokens
-   Token(..), 
+   module Token, 
    -- * Parse errors
    ParseError(ParseError)) where
 
 import Prelude hiding (lex)
 import Language.Python.Version3.Parser.Lexer (lexToken, initStartCodeStack)
-import Language.Python.Version3.Parser.Token (Token (..))
+import Language.Python.Version3.Parser.Token as Token 
 import Language.Python.Data.SrcLocation (initialSrcLocation)
 import Language.Python.Version3.Parser.ParserMonad 
        (State(input), P, runParser, execParser, ParseError(ParseError), initialState)

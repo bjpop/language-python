@@ -1,4 +1,4 @@
-{-# OPTIONS  #-}
+{-# LANGUAGE CPP, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Version3.Parser.Token 
@@ -12,10 +12,17 @@
 -- See: <http://www.python.org/doc/3.0/reference/lexical_analysis.html>
 -----------------------------------------------------------------------------
 
-module Language.Python.Version3.Parser.Token ( Token (..)) where
+module Language.Python.Version3.Parser.Token ( Token (..), prettyToken) where
 
+import Language.Python.Utils.PrettyClass
 import Language.Python.Data.SrcLocation (SrcSpan (..), SrcLocation (..), Location (location), Span(getSpan))
-import qualified Data.ByteString.Char8 as BS (ByteString)
+import qualified Data.ByteString.Char8 as BS (ByteString, unpack)
+
+#ifdef BASE4
+import Data.Data
+#else
+import Data.Generics (Data(..),Typeable(..))
+#endif
 
 -- | Lexical tokens.
 data Token 
@@ -23,6 +30,9 @@ data Token
    = Indent { token_span :: !SrcSpan }                       -- ^ Indentation: increase.
    | Dedent { token_span :: !SrcSpan }                       -- ^ Indentation: decrease.
    | Newline { token_span :: !SrcSpan }                      -- ^ Newline.
+
+   -- Comment
+   | Comment { token_span :: !SrcSpan, token_comment :: !String } -- ^ Comment.
 
    -- Identifiers 
    | Identifier { token_span :: !SrcSpan, token_identifier :: !String }            -- ^ Identifier.
@@ -120,7 +130,23 @@ data Token
 
    -- Special cases
    | EOF { token_span :: !SrcSpan }                          -- ^ End of file 
-   deriving (Show, Eq, Ord)
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 instance Span Token where
   getSpan = token_span 
+
+instance Pretty Token where
+   pretty token = 
+      text (show $ toConstr token) <+> pretty (token_span token) <+>
+         case token of
+            Comment {}    -> quotes $ text $ token_comment token 
+            Identifier {} -> text $ token_identifier token
+            String {}     -> quotes $ text $ token_string token
+            ByteString {} -> quotes $ text $ BS.unpack $ token_byte_string token 
+            Integer {}    -> pretty $ token_integer token 
+            Float {}      -> pretty $ token_double token
+            Imaginary {}  -> pretty $ token_double token
+            other         -> empty
+   
+prettyToken :: Token -> String
+prettyToken = prettyText 

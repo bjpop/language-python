@@ -78,10 +78,12 @@ tokens :-
 -- will not be applied because the rule for the literal will always
 -- match a longer sequence of characters. 
 
-\# ($not_eol_char)* ;  -- skip comments 
+-- \# ($not_eol_char)* ;  -- skip comments 
+\# ($not_eol_char)* { token Token.Comment tail } 
 $white_no_nl+  ;  -- skip whitespace 
 
-\\ @eol_pattern ; -- line join 
+-- \\ @eol_pattern ; -- line join 
+\\ @eol_pattern { endOfLine } -- line join 
 
 <0> {
    @float_number { token Token.Float readFloat }
@@ -118,20 +120,23 @@ $white_no_nl+  ;  -- skip whitespace
 }
 
 <0> {
-   @eol_pattern     { begin bol }  
+   -- @eol_pattern     { begin bol }  
+   @eol_pattern     { bolEndOfLine }  
 }
 
 <dedent> ()                             { dedentation }
 
 -- beginning of line
 <bol> {
-   @eol_pattern                         ;
+   -- @eol_pattern                        ; 
+   @eol_pattern                         { endOfLine } 
    ()                                   { indentation BOL }
 }
 
 -- beginning of file
 <bof> {
-   @eol_pattern                         ;
+   -- @eol_pattern                         ;
+   @eol_pattern                         { endOfLine }
    ()                                   { indentation BOF }
 }
 
@@ -196,6 +201,16 @@ $white_no_nl+  ;  -- skip whitespace
 type StartCode = Int
 type Action = SrcSpan -> Int -> String -> P Token 
 
+endOfLine :: Action
+endOfLine span _len _str = do
+   setLastEOL $ spanStartPoint span
+   lexToken  
+
+bolEndOfLine :: Action 
+bolEndOfLine span len inp = do
+   pushStartCode bol 
+   endOfLine span len inp
+
 dedentation :: Action
 dedentation span _len _str = do
    -- let endCol = sloc_column loc 
@@ -217,7 +232,8 @@ indentation bo _loc _len [] = do
    popStartCode
    case bo of
       BOF -> lexToken
-      BOL -> return newlineToken
+      -- BOL -> return newlineToken
+      BOL -> newlineToken
 indentation bo span _len _str = do
    popStartCode
    parenDepth <- getParenStackDepth
@@ -225,18 +241,17 @@ indentation bo span _len _str = do
       then lexToken
       else do 
          topIndent <- getIndent
-         -- let endCol = sloc_column loc 
          case compare (endCol span) topIndent of
             EQ -> case bo of
                      BOF -> lexToken
-                     BOL -> return newlineToken   
+                     -- BOL -> return newlineToken   
+                     BOL -> newlineToken   
             LT -> do pushStartCode dedent
-                     return newlineToken 
+                     -- return newlineToken 
+                     newlineToken 
             GT -> do pushIndent (endCol span)
                      return indentToken 
    where
-   -- the location of the newline is not known here 
-   newlineToken = Newline SpanEmpty 
    indentToken = Indent span 
 
 begin :: StartCode -> Action 
@@ -284,8 +299,12 @@ initStartCodeStack = [bof,0]
 -- special tokens for the end of file and end of line
 endOfFileToken :: Token
 endOfFileToken = EOF SpanEmpty
-newlineToken = Newline SpanEmpty 
 dedentToken = Dedent SpanEmpty 
+
+newlineToken :: P Token
+newlineToken = do
+   loc <- getLastEOL
+   return $ Newline loc
 
 -- Test if we are at the end of the line or file
 atEOLorEOF :: a -> AlexInput -> Int -> AlexInput -> Bool
@@ -477,8 +496,18 @@ lexToken = do
        setLastToken token
        return token
 
+-- This is called by the Happy parser.
+
 lexCont :: (Token -> P a) -> P a
 lexCont cont = do
-  tok <- lexToken
-  cont tok
+   lexLoop
+   where
+   -- lexLoop :: P a
+   lexLoop = do
+      tok <- lexToken
+      case tok of
+         Token.Comment {} -> do
+            lexLoop
+         _other -> cont tok
+  
 }

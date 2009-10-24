@@ -1,4 +1,4 @@
-{-# OPTIONS  #-}
+{-# LANGUAGE CPP, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Data.SrcLocation 
@@ -24,6 +24,7 @@ module Language.Python.Data.SrcLocation (
   mkSrcSpanPoint,
   combineSrcSpans,
   initialSrcLocation,
+  spanStartPoint,
   -- * Modification
   incColumn, 
   decColumn,
@@ -31,6 +32,16 @@ module Language.Python.Data.SrcLocation (
   incTab,
   endCol
 ) where
+
+import Language.Python.Utils.PrettyClass
+
+#ifdef __GLASGOW_HASKELL__
+#ifdef BASE4
+import Data.Data
+#else
+import Data.Generics (Data(..),Typeable(..))
+#endif
+#endif
 
 -- | A location for a syntactic entity from the source code.
 -- The location is specified by its filename, and starting row
@@ -41,7 +52,7 @@ data SrcLocation =
         , sloc_column :: {-# UNPACK #-} !Int 
         } 
    | NoLocation
-   deriving (Eq, Ord, Show)
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 -- | Types which have a source location.
 class Location a where
@@ -110,7 +121,7 @@ incLine :: Int -> SrcLocation -> SrcLocation
 incLine n loc@(Sloc { sloc_row = row }) 
    = loc { sloc_column = 1, sloc_row = row + n }
 
-{- |
+{-
 Taken from compiler/basicTypes/SrcLoc.lhs in ghc (inluding comments).
 
 A SrcSpan delimits a portion of a text file.  It could be represented
@@ -142,7 +153,21 @@ data SrcSpan
     , span_column   :: {-# UNPACK #-} !Int
     }
   | SpanEmpty 
-  deriving (Eq,Ord,Show)
+   deriving (Eq,Ord,Show,Typeable,Data)
+
+instance Pretty SrcSpan where
+   pretty span@(SpanCoLinear {}) = prettyMultiSpan span
+   pretty span@(SpanMultiLine {}) = prettyMultiSpan span
+   pretty span@(SpanPoint {})
+      = text (span_filename span) <> colon <+>
+        parens (pretty (span_row span) <> comma <> pretty (span_column span))
+   pretty SpanEmpty = empty
+
+prettyMultiSpan :: SrcSpan -> Doc 
+prettyMultiSpan span 
+  = text (span_filename span) <> colon <+>
+    parens (pretty (startRow span) <> comma <> pretty (startCol span)) <> char '-' <>
+    parens (pretty (endRow span) <> comma <> pretty (endCol span))
 
 mkSrcSpanPoint :: SrcLocation -> SrcSpan
 mkSrcSpanPoint loc@(Sloc {})
@@ -152,6 +177,16 @@ mkSrcSpanPoint loc@(Sloc {})
      , span_column = sloc_column loc
      }
 mkSrcSpanPoint NoLocation = error "attempt to convert an empty location to a span"
+
+-- make a point span from the start of a span
+spanStartPoint :: SrcSpan -> SrcSpan
+spanStartPoint SpanEmpty = SpanEmpty
+spanStartPoint span = 
+   SpanPoint 
+   { span_filename = span_filename span
+   , span_row = startRow span
+   , span_column = startCol span
+   }
 
 mkSrcSpan :: SrcLocation -> SrcLocation -> SrcSpan
 mkSrcSpan NoLocation _ = SpanEmpty

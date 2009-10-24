@@ -24,6 +24,8 @@ module Language.Python.Version3.Parser.ParserMonad
    , setInput
    , getLastToken
    , setLastToken
+   , setLastEOL
+   , getLastEOL
    , ParseError (ParseError)
    , State (..)
    , initialState
@@ -50,7 +52,6 @@ newtype ParseError = ParseError ([String], SrcSpan)
 
 data ParseResult a
    = POk !State a
-   -- | PFailed [String] SrcLocation   -- The error message and position
    | PFailed [String] SrcSpan -- The error message and position
 
 data State = 
@@ -61,6 +62,7 @@ data State =
    , startCodeStack :: [Int]  -- a stack of start codes for the state of the lexer
    , indentStack :: [Int]     -- a stack of source column positions of indentation levels
    , parenStack :: [Token]    -- a stack of parens and brackets for indentation handling
+   , lastEOL :: !SrcSpan      -- location of the most recent end-of-line encountered
    }
 
 initialState :: SrcLocation -> String -> [Int] -> State
@@ -72,6 +74,7 @@ initialState initLoc inp scStack
    , startCodeStack = scStack
    , indentStack = [1]
    , parenStack = []
+   , lastEOL = SpanEmpty 
    }
 
 newtype P a = P { unP :: State -> ParseResult a }
@@ -110,6 +113,12 @@ thenP :: P a -> (a -> P b) -> P b
 -- failP :: SrcLocation -> [String] -> P a
 failP :: SrcSpan -> [String] -> P a
 failP loc msg = P $ \_ -> PFailed msg loc 
+
+setLastEOL :: SrcSpan -> P ()
+setLastEOL loc = P $ \s -> POk (s { lastEOL = loc }) ()
+
+getLastEOL :: P SrcSpan
+getLastEOL =  P $ \s@State{ lastEOL = loc } -> POk s loc 
 
 setLocation :: SrcLocation -> P ()
 setLocation loc = P $ \s -> POk (s { location = loc }) ()
