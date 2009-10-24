@@ -57,7 +57,7 @@ module Language.Python.Version3.Syntax.AST (
    )
    where
 
-import Language.Python.Data.SrcLocation ( Span (getSpan), SrcSpan (..) ) 
+import Language.Python.Common.SrcLocation ( Span (getSpan), SrcSpan (..) ) 
 import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------

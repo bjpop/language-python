@@ -1,21 +1,21 @@
 {-# LANGUAGE CPP, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      : Language.Python.Version3.Parser.Token 
+-- Module      : Language.Python.Common.Token 
 -- Copyright   : (c) 2009 Bernie Pope 
 -- License     : BSD-style
 -- Maintainer  : bjpop@csse.unimelb.edu.au
 -- Stability   : experimental
 -- Portability : ghc
 --
--- Lexical tokens for the Python version 3 lexer. 
+-- Lexical tokens for the Python lexer. 
 -- See: <http://www.python.org/doc/3.0/reference/lexical_analysis.html>
 -----------------------------------------------------------------------------
 
-module Language.Python.Version3.Parser.Token ( Token (..), prettyToken) where
+module Language.Python.Common.Token ( Token (..), prettyToken) where
 
-import Language.Python.Utils.PrettyClass
-import Language.Python.Data.SrcLocation (SrcSpan (..), SrcLocation (..), Location (location), Span(getSpan))
+import Language.Python.Common.PrettyClass
+import Language.Python.Common.SrcLocation (SrcSpan (..), SrcLocation (..), Location (location), Span(getSpan))
 import qualified Data.ByteString.Char8 as BS (ByteString, unpack)
 
 #ifdef BASE4

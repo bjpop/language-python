@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      : Language.Python.Utils.PrettyClass
+-- Module      : Language.Python.Common.PrettyClass
 -- Copyright   : (c) 2009 Bernie Pope 
 -- License     : BSD-style
 -- Maintainer  : bjpop@csse.unimelb.edu.au
@@ -10,7 +10,7 @@
 -- Convenience class for pretty printing combinators.
 -----------------------------------------------------------------------------
 
-module Language.Python.Utils.PrettyClass (module TextPP, module Language.Python.Utils.PrettyClass) where
+module Language.Python.Common.PrettyClass (module TextPP, module Language.Python.Common.PrettyClass) where
 
 import Text.PrettyPrint as TextPP
 import qualified Data.ByteString.Char8 as BS

@@ -22,16 +22,16 @@ Library
    build-depends:    base, containers, pretty, bytestring, array
    build-tools:      happy, alex
    exposed-modules:
-      Language.Python.Data.SrcLocation
+      Language.Python.Common.SrcLocation
+      Language.Python.Common.Token
       Language.Python.Version3
       Language.Python.Version3.Parser
       Language.Python.Version3.Lexer
       Language.Python.Version3.Syntax.AST
       Language.Python.Version3.Syntax.Pretty
-      Language.Python.Utils.PrettyClass
+      Language.Python.Common.PrettyClass
    other-modules:
       Language.Python.Version3.Parser.Parser
       Language.Python.Version3.Parser.Lexer
-      Language.Python.Version3.Parser.ParserMonad
+      Language.Python.Common.ParserMonad
       Language.Python.Version3.Parser.ParserUtils
-      Language.Python.Version3.Parser.Token

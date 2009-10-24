@@ -1,7 +1,7 @@
 {-# OPTIONS  #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      : Language.Python.Version3.Parser.ParserMonad 
+-- Module      : Language.Python.Common.ParserMonad 
 -- Copyright   : (c) 2009 Bernie Pope 
 -- License     : BSD-style
 -- Maintainer  : bjpop@csse.unimelb.edu.au
@@ -11,7 +11,7 @@
 -- Monad support for Python parser and lexer. 
 -----------------------------------------------------------------------------
 
-module Language.Python.Version3.Parser.ParserMonad 
+module Language.Python.Common.ParserMonad 
    ( P
    , execParser
    , runParser
@@ -42,8 +42,8 @@ module Language.Python.Version3.Parser.ParserMonad
    , getParenStackDepth
    ) where
 
-import Language.Python.Data.SrcLocation (SrcLocation (..), SrcSpan (..), mkSrcSpanPoint)
-import Language.Python.Version3.Parser.Token (Token (..))
+import Language.Python.Common.SrcLocation (SrcLocation (..), SrcSpan (..), mkSrcSpanPoint)
+import Language.Python.Common.Token (Token (..))
 
 -- | Parse error. A list of error messages and a source location.
 -- newtype ParseError = ParseError ([String], SrcLocation) 

@@ -16,16 +16,14 @@ module Language.Python.Version3.Lexer (
    -- * Lexical analysis
    lex, 
    lexOneToken,
-   -- * Tokens
-   module Token, 
    -- * Parse errors
    ParseError(ParseError)) where
 
 import Prelude hiding (lex)
 import Language.Python.Version3.Parser.Lexer (lexToken, initStartCodeStack)
-import Language.Python.Version3.Parser.Token as Token 
-import Language.Python.Data.SrcLocation (initialSrcLocation)
-import Language.Python.Version3.Parser.ParserMonad 
+import Language.Python.Common.Token as Token 
+import Language.Python.Common.SrcLocation (initialSrcLocation)
+import Language.Python.Common.ParserMonad 
        (State(input), P, runParser, execParser, ParseError(ParseError), initialState)
 
 -- | Parse a string into a list of Python Tokens, or return an error. 

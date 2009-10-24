@@ -13,10 +13,8 @@
 
 module Language.Python.Version3.Syntax.Pretty where
 
-import Language.Python.Utils.PrettyClass
+import Language.Python.Common.PrettyClass
 import Language.Python.Version3.Syntax.AST 
-
-import Text.PrettyPrint as TextPP
 import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------

@@ -15,10 +15,10 @@
 module Language.Python.Version3.Parser.Lexer 
    (initStartCodeStack, lexToken, endOfFileToken, lexCont) where
 
-import Language.Python.Version3.Parser.Token hiding (True, False)
-import qualified Language.Python.Version3.Parser.Token as Token
-import Language.Python.Version3.Parser.ParserMonad hiding (location)
-import Language.Python.Data.SrcLocation
+import Language.Python.Common.Token hiding (True, False)
+import qualified Language.Python.Common.Token as Token
+import Language.Python.Common.ParserMonad hiding (location)
+import Language.Python.Common.SrcLocation
 import qualified Data.Map as Map
 import Control.Monad (liftM)
 import Data.List (foldl')

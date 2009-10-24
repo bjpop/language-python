@@ -14,12 +14,12 @@
 module Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput, parseEval) where
 
 import Language.Python.Version3.Parser.Lexer
-import Language.Python.Version3.Parser.Token hiding (True, False)
-import qualified Language.Python.Version3.Parser.Token as Token
+import Language.Python.Common.Token hiding (True, False)
+import qualified Language.Python.Common.Token as Token
 import Language.Python.Version3.Syntax.AST as AST
 import Language.Python.Version3.Parser.ParserUtils
-import Language.Python.Version3.Parser.ParserMonad
-import Language.Python.Data.SrcLocation
+import Language.Python.Common.ParserMonad
+import Language.Python.Common.SrcLocation
 import qualified Data.ByteString.Char8 as BS (ByteString)
 import Data.Either (rights, either)
 import Data.Maybe (maybeToList)

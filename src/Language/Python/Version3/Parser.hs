@@ -32,10 +32,10 @@ module Language.Python.Version3.Parser (
    ParseError(ParseError)) where
 
 import Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput, parseEval)
-import Language.Python.Version3.Syntax.AST (ModuleSpan, StatementSpan, ExprSpan)
-import Language.Python.Data.SrcLocation (initialSrcLocation)
-import Language.Python.Version3.Parser.ParserMonad (execParser, ParseError(ParseError), initialState)
 import Language.Python.Version3.Parser.Lexer (initStartCodeStack)
+import Language.Python.Version3.Syntax.AST (ModuleSpan, StatementSpan, ExprSpan)
+import Language.Python.Common.SrcLocation (initialSrcLocation)
+import Language.Python.Common.ParserMonad (execParser, ParseError(ParseError), initialState)
 
 -- | Parse a whole Python source file.
 parseModule :: String -- ^ The input stream (python module source code). 

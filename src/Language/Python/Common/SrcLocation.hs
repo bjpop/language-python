@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      : Language.Python.Data.SrcLocation 
+-- Module      : Language.Python.Common.SrcLocation 
 -- Copyright   : (c) 2009 Bernie Pope 
 -- License     : BSD-style
 -- Maintainer  : bjpop@csse.unimelb.edu.au
@@ -12,7 +12,7 @@
 -- XXX We will probably move to source spans at some point.
 -----------------------------------------------------------------------------
 
-module Language.Python.Data.SrcLocation (
+module Language.Python.Common.SrcLocation (
   -- * Projection of locations from values 
   Location (..),
   -- * Construction 
@@ -33,7 +33,7 @@ module Language.Python.Data.SrcLocation (
   endCol
 ) where
 
-import Language.Python.Utils.PrettyClass
+import Language.Python.Common.PrettyClass
 
 #ifdef __GLASGOW_HASKELL__
 #ifdef BASE4
