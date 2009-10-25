@@ -30,9 +30,17 @@ Library
       Language.Python.Version3.Lexer
       Language.Python.Version3.Syntax.AST
       Language.Python.Version3.Syntax.Pretty
+      Language.Python.Version2
+      Language.Python.Version2.Parser
+      Language.Python.Version2.Lexer
+      Language.Python.Version2.Syntax.AST
+      Language.Python.Version2.Syntax.Pretty
       Language.Python.Common.PrettyClass
    other-modules:
       Language.Python.Version3.Parser.Parser
       Language.Python.Version3.Parser.Lexer
-      Language.Python.Common.ParserMonad
       Language.Python.Version3.Parser.ParserUtils
+      Language.Python.Version2.Parser.Parser
+      Language.Python.Version2.Parser.Lexer
+      Language.Python.Version2.Parser.ParserUtils
+      Language.Python.Common.ParserMonad
