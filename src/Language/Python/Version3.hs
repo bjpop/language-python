@@ -24,4 +24,4 @@ module Language.Python.Version3
 
 import Language.Python.Version3.Parser as Parser 
 import Language.Python.Version3.Lexer as Lexer hiding (ParseError)
-import Language.Python.Version3.Syntax.Pretty as Pretty
+import Language.Python.Common.Pretty as Pretty

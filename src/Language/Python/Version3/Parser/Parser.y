@@ -18,7 +18,7 @@ import Language.Python.Common.Token hiding (True, False)
 import qualified Language.Python.Common.Token as Token
 import Language.Python.Common.AST as AST
 -- import Language.Python.Version3.Syntax.AST as AST
-import Language.Python.Version3.Parser.ParserUtils
+import Language.Python.Common.ParserUtils
 import Language.Python.Common.ParserMonad
 import Language.Python.Common.SrcLocation
 import qualified Data.ByteString.Char8 as BS (ByteString)

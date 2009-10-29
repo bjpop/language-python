@@ -1,7 +1,7 @@
 {-# OPTIONS  #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      : Language.Python.Version2.Parser.ParserUtils 
+-- Module      : Language.Python.Common.ParserUtils 
 -- Copyright   : (c) 2009 Bernie Pope 
 -- License     : BSD-style
 -- Maintainer  : bjpop@csse.unimelb.edu.au
@@ -11,7 +11,7 @@
 -- Various utilities to support the Python parser. 
 -----------------------------------------------------------------------------
 
-module Language.Python.Version2.Parser.ParserUtils where
+module Language.Python.Common.ParserUtils where
 
 import Language.Python.Common.AST as AST
 import Language.Python.Common.Token as Token hiding (True, False)

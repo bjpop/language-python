@@ -37,8 +37,7 @@ Library
    other-modules:
       Language.Python.Version3.Parser.Parser
       Language.Python.Version3.Parser.Lexer
-      Language.Python.Version3.Parser.ParserUtils
       Language.Python.Version2.Parser.Parser
       Language.Python.Version2.Parser.Lexer
-      Language.Python.Version2.Parser.ParserUtils
       Language.Python.Common.ParserMonad
+      Language.Python.Common.ParserUtils
