@@ -62,7 +62,6 @@ data Token
    | None { token_span :: !SrcSpan }                         -- ^ Keyword: \'None\'
    | For { token_span :: !SrcSpan }                          -- ^ Keyword: \'for\'.
    | From { token_span :: !SrcSpan }                         -- ^ Keyword: \'from\'.
-   | NonLocal { token_span :: !SrcSpan }                     -- ^ Keyword: \'nonlocal\'.
    | Global { token_span :: !SrcSpan }                       -- ^ Keyword: \'global\'.
    | With { token_span :: !SrcSpan }                         -- ^ Keyword: \'with\'.
    | As { token_span :: !SrcSpan }                           -- ^ Keyword: \'as\'.
@@ -78,6 +77,11 @@ data Token
    | Not { token_span :: !SrcSpan }                          -- ^ Keyword: \'not\'.
    | And { token_span :: !SrcSpan }                          -- ^ Keyword: boolean conjunction \'and\'.
    | Or { token_span :: !SrcSpan }                           -- ^ Keyword: boolean disjunction \'or\'.
+   -- Version 3.x only:
+   | NonLocal { token_span :: !SrcSpan }                     -- ^ Keyword: \'nonlocal\' (Python 2.x only)
+   -- Version 2.x only:
+   | Print { token_span :: !SrcSpan }                        -- ^ Keyword: \'print\'. (Python 3.x only)
+   | Exec { token_span :: !SrcSpan }                         -- ^ Keyword: \'exec\'. (Python 3.x only)
 
    -- Delimiters
    | At { token_span :: !SrcSpan }                           -- ^ Delimiter: at sign \'\@\'. 
@@ -106,6 +110,7 @@ data Token
    | LeftShiftAssign { token_span :: !SrcSpan }              -- ^ Delimiter: binary-left-shift assignment \'<<=\'.
    | RightShiftAssign { token_span :: !SrcSpan }             -- ^ Delimiter: binary-right-shift assignment \'>>=\'.
    | FloorDivAssign { token_span :: !SrcSpan }               -- ^ Delimiter: floor-divide assignment \'//=\'.
+   | BackQuote { token_span :: !SrcSpan }                    -- ^ Delimiter: back quote character \'`\'.
 
    -- Operators
    | Plus { token_span :: !SrcSpan }                         -- ^ Operator: plus \'+\'.

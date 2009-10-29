@@ -96,8 +96,7 @@ thenP :: P a -> (a -> P b) -> P b
 thenP = (>>=)
 
 failP :: SrcSpan -> [String] -> P a
-failP span strs = 
-   throwError (prettyText span ++ ": " ++ unwords strs) 
+failP span strs = throwError (prettyText span ++ ": " ++ unwords strs) 
 
 setLastEOL :: SrcSpan -> P ()
 setLastEOL span = modify $ \s -> s { lastEOL = span }

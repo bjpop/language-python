@@ -80,9 +80,9 @@ optionalKeywordSuite keyword stmts = text keyword <> colon $+$ indent (prettySui
 prettyArgList :: [Argument a] -> Doc
 prettyArgList = parens . commaList 
 
-prettyOptionalArgList :: [Argument a] -> Doc
-prettyOptionalArgList [] = empty
-prettyOptionalArgList list = parens $ commaList list
+prettyOptionalList :: Pretty a => [a] -> Doc
+prettyOptionalList [] = empty
+prettyOptionalList list = parens $ commaList list
 
 prettyGuards :: [(Expr a, Suite a)] -> Doc
 prettyGuards [] = empty
@@ -106,7 +106,7 @@ instance Pretty (Statement a) where
         perhaps (fun_result_annotation stmt) (text "->") <+>
         pretty (fun_result_annotation stmt) <> colon $+$ indent (prettySuite (fun_body stmt)) 
    pretty stmt@(Class {})
-      = text "class" <+> pretty (class_name stmt) <> prettyOptionalArgList (class_args stmt) <> 
+      = text "class" <+> pretty (class_name stmt) <> prettyOptionalList (class_args stmt) <> 
         colon $+$ indent (prettySuite (class_body stmt)) 
    pretty stmt@(Conditional { cond_guards = guards, cond_else = optionalElse })
       = case guards of
@@ -159,7 +159,7 @@ instance Pretty (ExceptClause a) where
 
 instance Pretty (Decorator a) where
    pretty (Decorator { decorator_name = name, decorator_args = args })
-      = char '@' <> prettyDottedName name <+> prettyOptionalArgList args
+      = char '@' <> prettyDottedName name <+> prettyOptionalList args
 
 instance Pretty (Parameter a) where
    pretty (Param { param_name = ident, param_py_annotation = annot, param_default = def})

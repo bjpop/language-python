@@ -59,8 +59,8 @@ import Data.Maybe (maybeToList)
    '|'             { Token.BinaryOr _ }
    '^'             { Token.Xor _ }      
    '&'             { Token.BinaryAnd _ }      
-   '>>'            { Token.ShiftLeft _ }
-   '<<'            { Token.ShiftRight _ }
+   '>>'            { Token.ShiftRight _ }
+   '<<'            { Token.ShiftLeft _ }
    '%'             { Token.Modulo _ }
    '~'             { Token.Tilde _ }
    '!='            { Token.NotEquals _ }
@@ -593,9 +593,10 @@ with_item :: { (ExprSpan, Maybe ExprSpan) }
 with_item: pair(test,opt(right('as',expr))) { $1 }
 
 -- except_clause: 'except' [test ['as' NAME]] 
+-- XXX is this a bug in the grammar? In the online does the target is more complex than a NAME.
+-- see: http://docs.python.org/3.1/reference/compound_stmts.html#the-try-statement
 
 except_clause :: { ExceptClauseSpan }
--- except_clause : right('except', opt(pair(test, optional_as_name))) { ExceptClause $1 (spanning $1) }
 except_clause : 'except' opt(pair(test, optional_as_name)) { ExceptClause $2 (spanning $1 $2) }
 
 optional_as_name :: { Maybe IdentSpan }
@@ -894,9 +895,8 @@ zero_or_more_comma_test_rev
 -- classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
 
 classdef :: { StatementSpan }
-classdef 
-   : 'class' NAME opt_paren_arg_list ':' suite 
-     { AST.Class $2 $3 $5 (spanning $1 $5) }
+classdef: 'class' NAME optional_arg_list ':' suite 
+           { AST.Class $2 $3 $5 (spanning $1 $5) }
 
 optional_arg_list :: { [ArgumentSpan] }
 optional_arg_list: opt(arglist) { concat (maybeToList $1) } 
