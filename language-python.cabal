@@ -28,13 +28,11 @@ Library
       Language.Python.Version3
       Language.Python.Version3.Parser
       Language.Python.Version3.Lexer
-      Language.Python.Version3.Syntax.AST
-      Language.Python.Version3.Syntax.Pretty
       Language.Python.Version2
       Language.Python.Version2.Parser
       Language.Python.Version2.Lexer
-      Language.Python.Version2.Syntax.AST
-      Language.Python.Version2.Syntax.Pretty
+      Language.Python.Common.AST
+      Language.Python.Common.Pretty
       Language.Python.Common.PrettyClass
    other-modules:
       Language.Python.Version3.Parser.Parser

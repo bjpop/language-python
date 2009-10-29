@@ -10,7 +10,10 @@
 -----------------------------------------------------------------------------
 
 module Language.Python.Common
-   (module PrettyClass, module Token) where
+   -- (module PrettyClass, module Token, module Pretty, module AST) where
+   (module PrettyClass, module Token, module Pretty) where
 
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.PrettyClass as PrettyClass 
+-- import Language.Python.Common.AST as AST 
+import Language.Python.Common.Pretty as Pretty 

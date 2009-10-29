@@ -33,7 +33,7 @@ module Language.Python.Version3.Parser (
 
 import Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput, parseEval)
 import Language.Python.Version3.Parser.Lexer (initStartCodeStack)
-import Language.Python.Version3.Syntax.AST (ModuleSpan, StatementSpan, ExprSpan)
+import Language.Python.Common.AST (ModuleSpan, StatementSpan, ExprSpan)
 import Language.Python.Common.SrcLocation (initialSrcLocation)
 import Language.Python.Common.ParserMonad (execParser, ParseError, initialState)
 

@@ -13,7 +13,7 @@
 
 module Language.Python.Version2.Parser.ParserUtils where
 
-import Language.Python.Version2.Syntax.AST as AST
+import Language.Python.Common.AST as AST
 import Language.Python.Common.Token as Token hiding (True, False)
 import Language.Python.Common.ParserMonad hiding (location)
 import Language.Python.Common.SrcLocation 

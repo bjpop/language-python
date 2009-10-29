@@ -16,7 +16,8 @@ module Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput,
 import Language.Python.Version3.Parser.Lexer
 import Language.Python.Common.Token hiding (True, False)
 import qualified Language.Python.Common.Token as Token
-import Language.Python.Version3.Syntax.AST as AST
+import Language.Python.Common.AST as AST
+-- import Language.Python.Version3.Syntax.AST as AST
 import Language.Python.Version3.Parser.ParserUtils
 import Language.Python.Common.ParserMonad
 import Language.Python.Common.SrcLocation
@@ -431,7 +432,7 @@ yield_stmt : yield_expr { StmtExpr $1 (getSpan $1) }
 
 raise_stmt :: { StatementSpan }
 raise_stmt : 'raise' opt(pair(test, opt(right('from', test)))) 
-             { AST.Raise $2 (spanning $1 $2) }
+             { AST.Raise (RaiseV3 $2) (spanning $1 $2) }
 
 -- import_stmt: import_name | import_from
 
@@ -597,7 +598,10 @@ with_item: pair(test,opt(right('as',expr))) { $1 }
 -- see: http://docs.python.org/3.1/reference/compound_stmts.html#the-try-statement
 
 except_clause :: { ExceptClauseSpan }
-except_clause : 'except' opt(pair(test, optional_as_name)) { ExceptClause $2 (spanning $1 $2) }
+except_clause : 'except' opt(pair(test, optional_as_expr)) { ExceptClause $2 (spanning $1 $2) }
+
+optional_as_expr :: { Maybe ExprSpan}
+optional_as_expr: opt(right('as', test)) { $1 }
 
 optional_as_name :: { Maybe IdentSpan }
 optional_as_name: opt(right('as', NAME)) { $1 }
