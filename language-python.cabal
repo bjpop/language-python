@@ -22,22 +22,21 @@ Library
    build-depends:    base, containers, pretty, bytestring, array, transformers, monads-tf
    build-tools:      happy, alex
    exposed-modules:
-      Language.Python.Common
       Language.Python.Common.SrcLocation
       Language.Python.Common.Token
+      Language.Python.Common.AST
+      Language.Python.Common.Pretty
+      Language.Python.Common.PrettyClass
       Language.Python.Version3
       Language.Python.Version3.Parser
       Language.Python.Version3.Lexer
       Language.Python.Version2
       Language.Python.Version2.Parser
       Language.Python.Version2.Lexer
-      Language.Python.Common.AST
-      Language.Python.Common.Pretty
-      Language.Python.Common.PrettyClass
    other-modules:
+      Language.Python.Common.ParserMonad
+      Language.Python.Common.ParserUtils
       Language.Python.Version3.Parser.Parser
       Language.Python.Version3.Parser.Lexer
       Language.Python.Version2.Parser.Parser
       Language.Python.Version2.Parser.Lexer
-      Language.Python.Common.ParserMonad
-      Language.Python.Common.ParserUtils

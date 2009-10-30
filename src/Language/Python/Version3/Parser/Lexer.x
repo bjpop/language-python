@@ -15,7 +15,7 @@
 module Language.Python.Version3.Parser.Lexer 
    (initStartCodeStack, lexToken, endOfFileToken, lexCont) where
 
-import Language.Python.Common.Token hiding (True, False)
+import Language.Python.Common.Token
 import qualified Language.Python.Common.Token as Token
 import Language.Python.Common.ParserMonad hiding (location)
 import Language.Python.Common.SrcLocation
@@ -79,20 +79,20 @@ tokens :-
 -- match a longer sequence of characters. 
 
 -- \# ($not_eol_char)* ;  -- skip comments 
-\# ($not_eol_char)* { token Token.Comment tail } 
+\# ($not_eol_char)* { token CommentToken tail } 
 $white_no_nl+  ;  -- skip whitespace 
 
 -- \\ @eol_pattern ; -- line join 
 \\ @eol_pattern { endOfLine } -- line join 
 
 <0> {
-   @float_number { token Token.Float readFloat }
-   $non_zero_digit $digit* { token Token.Integer read }  
-   (@float_number | @int_part) (j | J) { token Token.Imaginary (readFloat.init) }
-   0+ { token Token.Integer read }  
-   0 (o | O) $oct_digit+ { token Token.Integer read }
-   0 (x | X) $hex_digit+ { token Token.Integer read }
-   0 (b | B) $bin_digit+ { token Token.Integer readBinary }
+   @float_number { token FloatToken readFloat }
+   $non_zero_digit $digit* { token IntegerToken read }  
+   (@float_number | @int_part) (j | J) { token ImaginaryToken (readFloat.init) }
+   0+ { token IntegerToken read }  
+   0 (o | O) $oct_digit+ { token IntegerToken read }
+   0 (x | X) $hex_digit+ { token IntegerToken read }
+   0 (b | B) $bin_digit+ { token IntegerToken readBinary }
 }
 
 -- String literals 
@@ -146,53 +146,53 @@ $white_no_nl+  ;  -- skip whitespace
 -- operators and separators
 --
 <0> {
-    "("   { openParen Token.LeftRoundBracket }
-    ")"   { closeParen Token.RightRoundBracket }
-    "["   { openParen Token.LeftSquareBracket }
-    "]"   { closeParen Token.RightSquareBracket }
-    "{"   { openParen Token.LeftBrace }
-    "}"   { closeParen Token.RightBrace }
-    "->"  { symbolToken Token.RightArrow }
-    "."   { symbolToken Token.Dot }
-    "..." { symbolToken Token.Ellipsis }
-    "~"   { symbolToken Token.Tilde }
-    "+"   { symbolToken Token.Plus }
-    "-"   { symbolToken Token.Minus }
-    "**"  { symbolToken Token.Exponent }
-    "*"   { symbolToken Token.Mult }
-    "/"   { symbolToken Token.Div }
-    "//"  { symbolToken Token.FloorDiv }
-    "%"   { symbolToken Token.Modulo }
-    "<<"  { symbolToken Token.ShiftLeft }
-    ">>"  { symbolToken Token.ShiftRight }
-    "<"   { symbolToken Token.LessThan }
-    "<="  { symbolToken Token.LessThanEquals }
-    ">"   { symbolToken Token.GreaterThan }
-    ">="  { symbolToken Token.GreaterThanEquals }
-    "=="  { symbolToken Token.Equality }
-    "!="  { symbolToken Token.NotEquals }
-    "^"   { symbolToken Token.Xor }
-    "|"   { symbolToken Token.BinaryOr }
-    "&&"  { symbolToken Token.And }
-    "&"   { symbolToken Token.BinaryAnd }
-    "||"  { symbolToken Token.Or }
-    ":"   { symbolToken Token.Colon }
-    "="   { symbolToken Token.Assign }
-    "+="  { symbolToken Token.PlusAssign }
-    "-="  { symbolToken Token.MinusAssign }
-    "*="  { symbolToken Token.MultAssign }
-    "/="  { symbolToken Token.DivAssign }
-    "%="  { symbolToken Token.ModAssign }
-    "**=" { symbolToken Token.PowAssign }
-    "&="  { symbolToken Token.BinAndAssign }
-    "|="  { symbolToken Token.BinOrAssign }
-    "^="  { symbolToken Token.BinXorAssign }
-    "<<=" { symbolToken Token.LeftShiftAssign }
-    ">>=" { symbolToken Token.RightShiftAssign }
-    "//=" { symbolToken Token.FloorDivAssign } 
-    ","   { symbolToken Token.Comma }
-    "@"   { symbolToken Token.At }
-    \;    { symbolToken Token.SemiColon }
+    "("   { openParen LeftRoundBracketToken }
+    ")"   { closeParen RightRoundBracketToken }
+    "["   { openParen LeftSquareBracketToken }
+    "]"   { closeParen RightSquareBracketToken }
+    "{"   { openParen LeftBraceToken }
+    "}"   { closeParen RightBraceToken }
+    "->"  { symbolToken RightArrowToken }
+    "."   { symbolToken DotToken }
+    "..." { symbolToken EllipsisToken }
+    "~"   { symbolToken TildeToken }
+    "+"   { symbolToken PlusToken }
+    "-"   { symbolToken MinusToken }
+    "**"  { symbolToken ExponentToken }
+    "*"   { symbolToken MultToken }
+    "/"   { symbolToken DivToken }
+    "//"  { symbolToken FloorDivToken }
+    "%"   { symbolToken ModuloToken }
+    "<<"  { symbolToken ShiftLeftToken }
+    ">>"  { symbolToken ShiftRightToken }
+    "<"   { symbolToken LessThanToken }
+    "<="  { symbolToken LessThanEqualsToken }
+    ">"   { symbolToken GreaterThanToken }
+    ">="  { symbolToken GreaterThanEqualsToken }
+    "=="  { symbolToken EqualityToken }
+    "!="  { symbolToken NotEqualsToken }
+    "^"   { symbolToken XorToken }
+    "|"   { symbolToken BinaryOrToken }
+    "&&"  { symbolToken AndToken }
+    "&"   { symbolToken BinaryAndToken }
+    "||"  { symbolToken OrToken }
+    ":"   { symbolToken ColonToken }
+    "="   { symbolToken AssignToken }
+    "+="  { symbolToken PlusAssignToken }
+    "-="  { symbolToken MinusAssignToken }
+    "*="  { symbolToken MultAssignToken }
+    "/="  { symbolToken DivAssignToken }
+    "%="  { symbolToken ModAssignToken }
+    "**=" { symbolToken PowAssignToken }
+    "&="  { symbolToken BinAndAssignToken }
+    "|="  { symbolToken BinOrAssignToken }
+    "^="  { symbolToken BinXorAssignToken }
+    "<<=" { symbolToken LeftShiftAssignToken }
+    ">>=" { symbolToken RightShiftAssignToken }
+    "//=" { symbolToken FloorDivAssignToken } 
+    ","   { symbolToken CommaToken }
+    "@"   { symbolToken AtToken }
+    \;    { symbolToken SemiColonToken }
 }
 
 {
@@ -252,7 +252,7 @@ indentation bo span _len _str = do
             GT -> do pushIndent (endCol span)
                      return indentToken 
    where
-   indentToken = Indent span 
+   indentToken = IndentToken span 
 
 begin :: StartCode -> Action 
 begin code loc len inp = do
@@ -275,7 +275,7 @@ keywordOrIdent :: String -> SrcSpan -> P Token
 keywordOrIdent str location
    = return $ case Map.lookup str keywords of
          Just symbol -> symbol location
-         Nothing -> Identifier location str  
+         Nothing -> IdentifierToken location str  
 
 -- mapping from strings to keywords
 keywords :: Map.Map String (SrcSpan -> Token) 
@@ -283,13 +283,13 @@ keywords = Map.fromList keywordNames
 
 keywordNames :: [(String, SrcSpan -> Token)]
 keywordNames =
-   [ ("False", Token.False), ("class", Class), ("finally", Finally), ("is", Is), ("return", Return)
-   , ("None", None), ("continue", Continue), ("for", For), ("lambda", Lambda), ("try", Try)
-   , ("True", Token.True), ("def", Def), ("from", From), ("nonlocal", NonLocal), ("while", While)
-   , ("and", And), ("del", Delete), ("global", Global), ("not", Not), ("with", With)
-   , ("as", As), ("elif", Elif), ("if", If), ("or", Or), ("yield", Yield)
-   , ("assert", Assert), ("else", Else), ("import", Import), ("pass", Pass)
-   , ("break", Break), ("except", Except), ("in", In), ("raise", Raise)
+   [ ("False", FalseToken), ("class", ClassToken), ("finally", FinallyToken), ("is", IsToken), ("return", ReturnToken)
+   , ("None", NoneToken), ("continue", ContinueToken), ("for", ForToken), ("lambda", LambdaToken), ("try", TryToken)
+   , ("True", TrueToken), ("def", DefToken), ("from", FromToken), ("nonlocal", NonLocalToken), ("while", WhileToken)
+   , ("and", AndToken), ("del", DeleteToken), ("global", GlobalToken), ("not", NotToken), ("with", WithToken)
+   , ("as", AsToken), ("elif", ElifToken), ("if", IfToken), ("or", OrToken), ("yield", YieldToken)
+   , ("assert", AssertToken), ("else", ElseToken), ("import", ImportToken), ("pass", PassToken)
+   , ("break", BreakToken), ("except", ExceptToken), ("in", InToken), ("raise", RaiseToken)
    ]
 
 -- The lexer starts off in the beginning of file state (bof)
@@ -298,13 +298,13 @@ initStartCodeStack = [bof,0]
 
 -- special tokens for the end of file and end of line
 endOfFileToken :: Token
-endOfFileToken = EOF SpanEmpty
-dedentToken = Dedent SpanEmpty 
+endOfFileToken = EOFToken SpanEmpty
+dedentToken = DedentToken SpanEmpty 
 
 newlineToken :: P Token
 newlineToken = do
    loc <- getLastEOL
-   return $ Newline loc
+   return $ NewlineToken loc
 
 -- Test if we are at the end of the line or file
 atEOLorEOF :: a -> AlexInput -> Int -> AlexInput -> Bool
@@ -348,16 +348,16 @@ mkString leftSkip rightSkip toToken loc len str = do
    return $ toToken loc contents 
 
 stringToken :: SrcSpan -> String -> Token
-stringToken loc str = String loc $ unescapeString str
+stringToken loc str = StringToken loc $ unescapeString str
 
 rawStringToken :: SrcSpan -> String -> Token
-rawStringToken loc str = String loc $ unescapeRawString str
+rawStringToken loc str = StringToken loc $ unescapeRawString str
 
 byteStringToken :: SrcSpan -> String -> Token
-byteStringToken loc str = ByteString loc $ BS.pack $ unescapeString str
+byteStringToken loc str = ByteStringToken loc $ BS.pack $ unescapeString str
 
 rawByteStringToken :: SrcSpan -> String -> Token
-rawByteStringToken loc str = ByteString loc $ BS.pack $ unescapeRawString str
+rawByteStringToken loc str = ByteStringToken loc $ BS.pack $ unescapeRawString str
 
 openParen :: (SrcSpan -> Token) -> Action
 openParen mkToken loc _len _str = do
@@ -380,9 +380,9 @@ closeParen mkToken loc _len _str = do
    err2 = ["Lexical error ! unmatched closing paren"]
 
 matchParen :: Token -> Token -> Bool
-matchParen (LeftRoundBracket {}) (RightRoundBracket {}) = True
-matchParen (LeftBrace {}) (RightBrace {}) = True
-matchParen (LeftSquareBracket {}) (RightSquareBracket {}) = True
+matchParen (LeftRoundBracketToken {}) (RightRoundBracketToken {}) = True
+matchParen (LeftBraceToken {}) (RightBraceToken {}) = True
+matchParen (LeftSquareBracketToken {}) (RightSquareBracketToken {}) = True
 matchParen _ _ = False
 
 unescapeString :: String -> String
@@ -506,7 +506,7 @@ lexCont cont = do
    lexLoop = do
       tok <- lexToken
       case tok of
-         Token.Comment {} -> do
+         CommentToken {} -> do
             lexLoop
          _other -> cont tok
   

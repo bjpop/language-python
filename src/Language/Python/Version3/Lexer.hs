@@ -55,5 +55,5 @@ lexer = loop []
    loop toks = do
       tok <- lexToken
       case tok of
-         EOF {} -> return (reverse toks)
+         EOFToken {} -> return (reverse toks)
          other -> loop (tok:toks)

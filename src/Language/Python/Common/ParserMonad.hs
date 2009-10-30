@@ -65,7 +65,7 @@ data ParseState =
    }
 
 initToken :: Token
-initToken = Newline SpanEmpty 
+initToken = NewlineToken SpanEmpty 
 
 initialState :: SrcLocation -> String -> [Int] -> ParseState
 initialState initLoc inp scStack

@@ -1,4 +1,4 @@
-{-# OPTIONS -XFlexibleInstances -XTypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances, CPP, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Version2.Syntax.AST 
@@ -62,6 +62,12 @@ module Language.Python.Common.AST (
 import Language.Python.Common.SrcLocation ( Span (getSpan), SrcSpan (..) ) 
 import qualified Data.ByteString.Char8 as BS
 
+#ifdef BASE4
+import Data.Data
+#else
+import Data.Generics (Data(..),Typeable(..))
+#endif
+
 --------------------------------------------------------------------------------
 
 class Annotated t where
@@ -69,7 +75,7 @@ class Annotated t where
 
 -- | Identifier.
 data Ident annot = Ident { ident_string :: !String, ident_annot :: annot }
-   deriving (Eq, Show, Ord)
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 -- | Identifier, annotated with source span.
 type IdentSpan = Ident SrcSpan
@@ -82,7 +88,7 @@ instance Annotated Ident where
 
 -- | A module (Python source file). See <http://www.python.org/doc/3.0/reference/toplevel_components.html>.
 newtype Module annot = Module [Statement annot] -- ^ A module is just a sequence of top-level statements.
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 -- | Module, annotated with source span.
 type ModuleSpan = Module SrcSpan
@@ -108,7 +114,7 @@ data ImportItem annot =
    , import_as_name :: Maybe (Ident annot)  -- ^ An optional name to refer to the entity (the \'as\' name). 
    , import_item_annot :: annot
    }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ImportItemSpan = ImportItem SrcSpan
 
@@ -126,7 +132,7 @@ data FromItem annot =
    , from_as_name :: Maybe (Ident annot) -- ^ An optional name to refer to the entity (the \'as\' name).
    , from_item_annot :: annot
    }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type FromItemSpan = FromItem SrcSpan
 
@@ -140,7 +146,7 @@ instance Annotated FromItem where
 data FromItems annot 
    = ImportEverything { from_items_annot :: annot } -- ^ Import everything exported from the module.
    | FromItems { from_items_items :: [FromItem annot], from_items_annot :: annot } -- ^ Import a specific list of items from the module.
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type FromItemsSpan = FromItems SrcSpan
 
@@ -157,7 +163,7 @@ data ImportRelative annot
      , import_relative_module :: Maybe (DottedName annot) 
      , import_relative_annot :: annot 
      }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ImportRelativeSpan = ImportRelative SrcSpan
 
@@ -306,12 +312,12 @@ data Statement annot
      , exec_globals_locals :: Maybe (Expr annot, Maybe (Expr annot))
      , stmt_annot :: annot 
      }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 data RaiseExpr annot
    = RaiseV3 (Maybe (Expr annot, Maybe (Expr annot))) -- ^ Optional expression to evaluate, and optional \'from\' clause.
    | RaiseV2 (Maybe (Expr annot, (Maybe (Expr annot, Maybe (Expr annot)))))
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type RaiseExprSpan = RaiseExpr SrcSpan
 
@@ -330,7 +336,7 @@ data Decorator annot =
    , decorator_args :: [Argument annot] -- ^ Decorator arguments.
    , decorator_annot :: annot 
    }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type DecoratorSpan = Decorator SrcSpan
 
@@ -374,7 +380,7 @@ data Parameter annot
      , param_default :: Maybe (Expr annot)
      , param_annot :: annot
      }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ParameterSpan = Parameter SrcSpan
 
@@ -387,7 +393,7 @@ instance Annotated Parameter where
 data ParamTuple annot
    = ParamTupleName { param_tuple_name :: Ident annot, param_tuple_annot :: annot }
    | ParamTuple { param_tuple :: [ParamTuple annot], param_tuple_annot :: annot } 
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ParamTupleSpan = ParamTuple SrcSpan
 
@@ -411,7 +417,7 @@ data Argument annot
      , arg_expr :: Expr annot -- ^ Argument expression.
      , arg_annot :: annot
      }
-   deriving Show 
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ArgumentSpan = Argument SrcSpan
 
@@ -428,7 +434,7 @@ data Handler annot
      , handler_suite :: Suite annot
      , handler_annot :: annot 
      }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type HandlerSpan = Handler SrcSpan
 
@@ -445,7 +451,7 @@ data ExceptClause annot
      { except_clause :: Maybe (Expr annot, Maybe (Expr annot))
      , except_clause_annot :: annot 
      }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ExceptClauseSpan = ExceptClause SrcSpan
 
@@ -462,7 +468,7 @@ data Comprehension e annot
      , comprehension_for :: CompFor annot
      , comprehension_annot :: annot 
      }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ComprehensionSpan e = Comprehension e SrcSpan
 
@@ -480,7 +486,7 @@ data CompFor annot =
    , comp_for_iter :: Maybe (CompIter annot) 
    , comp_for_annot :: annot
    }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type CompForSpan = CompFor SrcSpan
 
@@ -497,7 +503,7 @@ data CompIf annot =
    , comp_if_iter :: Maybe (CompIter annot)
    , comp_if_annot :: annot 
    }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type CompIfSpan = CompIf SrcSpan
 
@@ -511,7 +517,7 @@ instance Annotated CompIf where
 data CompIter annot 
    = IterFor { comp_iter_for :: CompFor annot, comp_iter_annot :: annot }
    | IterIf { comp_iter_if :: CompIf annot, comp_iter_annot :: annot }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type CompIterSpan = CompIter SrcSpan
 
@@ -593,7 +599,7 @@ data Expr annot
    | Paren { paren_expr :: Expr annot, expr_annot :: annot }
    -- | String conversion (backquoted expression). Version 2 only. See: <http://docs.python.org/reference/expressions.html#grammar-token-string_conversion>.
    | StringConversion { backquoted_expr :: Expr annot, expr_anot :: annot }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type ExprSpan = Expr SrcSpan
 
@@ -615,7 +621,7 @@ data Slice annot
      , slice_annot :: annot 
      }
    | SliceEllipsis { slice_annot :: annot }
-   deriving Show
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type SliceSpan = Slice SrcSpan
 
@@ -654,7 +660,7 @@ data Op annot
    | Invert { op_annot :: annot } -- ^ \'~\' (bitwise inversion of its integer argument)
    | Modulo { op_annot :: annot } -- ^ \'%\'
    | Dot { op_annot :: annot } -- ^ \'.\'
-   deriving (Eq, Show)
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type OpSpan = Op SrcSpan
 
@@ -678,7 +684,7 @@ data AssignOp annot
    | LeftShiftAssign { assignOp_annot :: annot } -- ^ \'<<=\'
    | RightShiftAssign { assignOp_annot :: annot } -- ^ \'>>=\'
    | FloorDivAssign { assignOp_annot :: annot } -- ^ \'\/\/=\'
-   deriving (Eq, Show)
+   deriving (Eq,Ord,Show,Typeable,Data)
 
 type AssignOpSpan = AssignOp SrcSpan
 

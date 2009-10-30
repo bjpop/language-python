@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Common.PrettyClass
@@ -24,6 +25,17 @@ class Pretty a where
 -- | Transform values into strings.
 prettyText :: Pretty a => a -> String
 prettyText = render . pretty
+
+-- | Print just the prefix of something
+prettyPrefix :: Pretty a => Int -> a -> Doc
+prettyPrefix maxLen x
+   | length fullText <= maxLen = pretty fullText
+   | otherwise = pretty (take maxLen fullText) <+> text "..." 
+   where
+   fullText = prettyText x 
+
+instance Pretty String where
+   pretty s = text s
 
 -- | Conditionally wrap parentheses around an item.
 parensIf :: Pretty a => (a -> Bool) -> a -> Doc

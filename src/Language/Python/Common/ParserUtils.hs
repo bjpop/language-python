@@ -14,7 +14,7 @@
 module Language.Python.Common.ParserUtils where
 
 import Language.Python.Common.AST as AST
-import Language.Python.Common.Token as Token hiding (True, False)
+import Language.Python.Common.Token as Token 
 import Language.Python.Common.ParserMonad hiding (location)
 import Language.Python.Common.SrcLocation 
 import Data.List (foldl')
@@ -212,8 +212,8 @@ makeRelative items =
    countDots count [] = (count, Nothing)
    countDots count (Right name:_) = (count, Just name)
    countDots count (Left token:rest) = countDots (count + dots token) rest 
-   dots (Token.Dot {}) = 1
-   dots (Token.Ellipsis {}) = 3
+   dots (DotToken {}) = 1
+   dots (EllipsisToken {}) = 3
 
 {-
    See: http://www.python.org/doc/3.0/reference/expressions.html#calls

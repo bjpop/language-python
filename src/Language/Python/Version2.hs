@@ -19,9 +19,9 @@
 -- the various Python top-levels, which correspond to the parsers provided here.
 -----------------------------------------------------------------------------
 
-module Language.Python.Version2 
-   (module Parser, module Lexer) where
+module Language.Python.Version2 (module Parser, module Lexer, module Token, module AST) where
 
 import Language.Python.Version2.Parser as Parser 
 import Language.Python.Version2.Lexer as Lexer hiding (ParseError)
--- import Language.Python.Version2.Syntax.Pretty as Pretty
+import Language.Python.Common.Token as Token
+import Language.Python.Common.AST as AST

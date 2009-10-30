@@ -122,17 +122,10 @@ incLine n loc@(Sloc { sloc_row = row })
    = loc { sloc_column = 1, sloc_row = row + n }
 
 {-
-Taken from compiler/basicTypes/SrcLoc.lhs in ghc (inluding comments).
-
-A SrcSpan delimits a portion of a text file.  It could be represented
-by a pair of (line,column) coordinates, but in fact we optimise
-slightly by using more compact representations for single-line and
-zero-length spans, both of which are quite common.
-
-The end position is defined to be the column /after/ the end of the
-span.  That is, a span of (1,1)-(1,2) is one character long, and a
-span of (1,1)-(1,1) is zero characters long.
+Inspired heavily by compiler/basicTypes/SrcLoc.lhs 
+A SrcSpan delimits a portion of a text file.  
 -}
+
 data SrcSpan
   = SpanCoLinear
     { span_filename     :: !String
