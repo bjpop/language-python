@@ -179,6 +179,7 @@ $white_no_nl+  ;  -- skip whitespace
     ">="  { symbolToken GreaterThanEqualsToken }
     "=="  { symbolToken EqualityToken }
     "!="  { symbolToken NotEqualsToken }
+    "<>"  { symbolToken NotEqualsV2Token } -- only version 2
     "^"   { symbolToken XorToken }
     "|"   { symbolToken BinaryOrToken }
     "&&"  { symbolToken AndToken }
@@ -244,6 +245,7 @@ lexCont cont = do
       tok <- lexToken
       case tok of
          CommentToken {} -> do
+            addComment tok
             lexLoop
          _other -> cont tok
 
@@ -260,9 +262,9 @@ keywords = Map.fromList keywordNames
 
 keywordNames :: [(String, SrcSpan -> Token)]
 keywordNames =
-   [ ("False", FalseToken), ("class", ClassToken), ("finally", FinallyToken), ("is", IsToken), ("return", ReturnToken)
-   , ("None", NoneToken), ("continue", ContinueToken), ("for", ForToken), ("lambda", LambdaToken), ("try", TryToken)
-   , ("True", TrueToken), ("def", DefToken), ("from", FromToken), ("nonlocal", NonLocalToken), ("while", WhileToken)
+   [ ("class", ClassToken), ("finally", FinallyToken), ("is", IsToken), ("return", ReturnToken)
+   , ("continue", ContinueToken), ("for", ForToken), ("lambda", LambdaToken), ("try", TryToken)
+   , ("def", DefToken), ("from", FromToken), ("while", WhileToken)
    , ("and", AndToken), ("del", DeleteToken), ("global", GlobalToken), ("not", NotToken), ("with", WithToken)
    , ("as", AsToken), ("elif", ElifToken), ("if", IfToken), ("or", OrToken), ("yield", YieldToken)
    , ("assert", AssertToken), ("else", ElseToken), ("import", ImportToken), ("pass", PassToken)

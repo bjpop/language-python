@@ -34,14 +34,7 @@ module Language.Python.Common.SrcLocation (
 ) where
 
 import Language.Python.Common.PrettyClass
-
-#ifdef __GLASGOW_HASKELL__
-#ifdef BASE4
 import Data.Data
-#else
-import Data.Generics (Data(..),Typeable(..))
-#endif
-#endif
 
 -- | A location for a syntactic entity from the source code.
 -- The location is specified by its filename, and starting row

@@ -14,6 +14,7 @@
 module Language.Python.Common.ParserMonad 
    ( P
    , execParser
+   , execParserKeepComments
    , runParser
    , failP
    , thenP
@@ -40,10 +41,13 @@ module Language.Python.Common.ParserMonad
    , pushParen
    , popParen
    , getParenStackDepth
+   , addComment
+   , getComments
    ) where
 
 import Language.Python.Common.SrcLocation (SrcLocation (..), SrcSpan (..), mkSrcSpanPoint)
 import Language.Python.Common.Token (Token (..))
+import Control.Applicative ((<$>))
 import Control.Monad.State.Class
 import Control.Monad.State.Strict as State
 import Control.Monad.Error as Error
@@ -57,11 +61,12 @@ data ParseState =
    ParseState 
    { location :: !SrcLocation -- position at current input location
    , input :: !String         -- the current input
-   , previousToken :: !Token   -- the previous token
+   , previousToken :: !Token  -- the previous token
    , startCodeStack :: [Int]  -- a stack of start codes for the state of the lexer
    , indentStack :: [Int]     -- a stack of source column positions of indentation levels
    , parenStack :: [Token]    -- a stack of parens and brackets for indentation handling
    , lastEOL :: !SrcSpan      -- location of the most recent end-of-line encountered
+   , comments :: [Token]      -- accumulated comments 
    }
 
 initToken :: Token
@@ -77,12 +82,17 @@ initialState initLoc inp scStack
    , indentStack = [1]
    , parenStack = []
    , lastEOL = SpanEmpty 
+   , comments = []
    }
 
 type P a = StateT ParseState (Either ParseError) a
 
 execParser :: P a -> ParseState -> Either ParseError a
 execParser = evalStateT 
+
+execParserKeepComments :: P a -> ParseState -> Either ParseError (a, [Token])
+execParserKeepComments parser state = 
+   evalStateT (parser >>= \x -> getComments >>= \c -> return (x, c)) state
 
 runParser :: P a -> ParseState -> Either ParseError (a, ParseState)
 runParser = runStateT 
@@ -184,3 +194,11 @@ getParen = do
 
 getParenStackDepth :: P Int
 getParenStackDepth = gets (length . parenStack) 
+
+addComment :: Token -> P ()
+addComment c = do
+   oldComments <- gets comments
+   modify $ \s -> s { comments = c : oldComments }
+
+getComments :: P [Token]
+getComments = reverse <$> gets comments

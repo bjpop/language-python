@@ -267,7 +267,7 @@ checkArguments args = do
    (state 3) Then more parameters. 
    (state 4) Then the double star form.
 
-XXX fixme: we need to include SrcLocations for the errors.
+   XXX fixme, add support for version 2 unpack tuple.
 -}
 
 checkParameters :: [ParameterSpan] -> P [ParameterSpan]

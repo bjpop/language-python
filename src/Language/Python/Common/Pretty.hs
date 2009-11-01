@@ -128,7 +128,6 @@ instance Pretty (Statement a) where
         optionalKeywordSuite "finally" finally 
    pretty (Raise { raise_expr = e })
       = text "raise" <+> pretty e
-
    pretty (With { with_context = context, with_body = body })
       = text "with" <+> hcat (punctuate comma (map prettyWithContext context)) <+> colon $+$
         indent (prettySuite body)
@@ -144,7 +143,10 @@ instance Pretty (Statement a) where
       text "print" <> (if have_chevron then text " >>>" else empty) <+>
       hcat (punctuate comma (map pretty es)) <>
       if trail_comma then comma else empty
-
+   pretty (Exec { exec_expr = e, exec_globals_locals = gls }) = 
+      text "exec" <+> pretty e <+> 
+      maybe empty (\ (globals, next) -> text "in" <+> pretty globals <+>
+      maybe empty (\locals -> comma <+> pretty locals) next) gls
 
 prettyWithContext :: (Expr a, Maybe (Expr a)) -> Doc
 prettyWithContext (e, Nothing) = pretty e
@@ -233,7 +235,7 @@ instance Pretty (Expr a) where
    pretty (UnaryOp { operator = op, op_arg = e }) = pretty op <+> pretty e
    pretty (Lambda { lambda_args = args, lambda_body = body })
       = text "lambda" <+> commaList args <> colon <+> pretty body
-   pretty (Tuple { tuple_exprs = es }) = parens $ commaList es
+   pretty (Tuple { tuple_exprs = es }) = commaList es
    pretty (Yield { yield_expr = e })
       = text "yield" <+> pretty e
    pretty (List { list_exprs = es }) = brackets (commaList es)
@@ -260,6 +262,7 @@ instance Pretty (Op a) where
    pretty (GreaterThanEquals {}) = text ">="
    pretty (LessThanEquals {}) = text "<="
    pretty (NotEquals {}) = text "!="
+   pretty (NotEqualsV2 {}) = text "<>"
    pretty (In {}) = text "in"
    pretty (Is {}) = text "is"
    pretty (IsNot {}) = text "is not"

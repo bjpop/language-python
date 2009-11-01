@@ -17,12 +17,7 @@ module Language.Python.Common.Token ( Token (..), prettyToken, debugTokenStr) wh
 import Language.Python.Common.PrettyClass
 import Language.Python.Common.SrcLocation (SrcSpan (..), SrcLocation (..), Location (location), Span(getSpan))
 import qualified Data.ByteString.Char8 as BS (ByteString, unpack)
-
-#ifdef BASE4
 import Data.Data
-#else
-import Data.Generics (Data(..),Typeable(..))
-#endif
 
 -- | Lexical tokens.
 data Token 
@@ -132,6 +127,7 @@ data Token
    | FloorDivToken { token_span :: !SrcSpan }                     -- ^ Operator: floor-divide \'//\'.
    | TildeToken { token_span :: !SrcSpan }                        -- ^ Operator: tilde \'~\'.
    | NotEqualsToken { token_span :: !SrcSpan }                    -- ^ Operator: not-equals \'!=\'.
+   | NotEqualsV2Token { token_span :: !SrcSpan }                  -- ^ Operator: not-equals \'<>\'. Version 2 only.
 
    -- Special cases
    | EOFToken { token_span :: !SrcSpan }                          -- ^ End of file 
@@ -190,7 +186,7 @@ instance Pretty Token where
         LambdaToken {} -> text "lambda" 
         ClassToken {} -> text "class"                       
         FinallyToken {} -> text "finally"                     
-        NoneToken {} -> text "none"
+        NoneToken {} -> text "None"
         ForToken {} -> text "for"
         FromToken {} -> text "from"
         GlobalToken {} -> text "global"
@@ -257,4 +253,5 @@ instance Pretty Token where
         FloorDivToken {} -> text "//"
         TildeToken {} -> text "~"
         NotEqualsToken {} -> text "!="
+        NotEqualsV2Token {} -> text "<>"
         EOFToken {} -> text "end of input"

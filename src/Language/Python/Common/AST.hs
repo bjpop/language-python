@@ -61,12 +61,7 @@ module Language.Python.Common.AST (
 
 import Language.Python.Common.SrcLocation ( Span (getSpan), SrcSpan (..) ) 
 import qualified Data.ByteString.Char8 as BS
-
-#ifdef BASE4
 import Data.Data
-#else
-import Data.Generics (Data(..),Typeable(..))
-#endif
 
 --------------------------------------------------------------------------------
 
@@ -375,6 +370,7 @@ data Parameter annot
      }
    -- | Marker for the end of positional parameters (not a parameter itself).
    | EndPositional { param_annot :: annot }
+   -- | Tuple unpack. Version 2 only.
    | UnPackTuple 
      { param_unpack_tuple :: ParamTuple annot
      , param_default :: Maybe (Expr annot)
@@ -643,6 +639,7 @@ data Op annot
    | GreaterThanEquals { op_annot :: annot } -- ^ \'>=\'
    | LessThanEquals { op_annot :: annot } -- ^ \'<=\'
    | NotEquals  { op_annot :: annot } -- ^ \'!=\'
+   | NotEqualsV2  { op_annot :: annot } -- ^ \'<>\'. Version 2 only.
    | In { op_annot :: annot } -- ^ \'in\'
    | Is { op_annot :: annot } -- ^ \'is\'
    | IsNot { op_annot :: annot } -- ^ \'is not\'

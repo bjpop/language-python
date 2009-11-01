@@ -63,6 +63,7 @@ import Data.Maybe (maybeToList)
    '%'             { ModuloToken _ }
    '~'             { TildeToken _ }
    '!='            { NotEqualsToken _ }
+   '<>'            { NotEqualsV2Token _ }
    '.'             { DotToken _ }
    '`'             { BackQuoteToken _ }
    '+='            { PlusAssignToken _ }
@@ -653,7 +654,7 @@ not_test
 comparison :: { ExprSpan }
 comparison : expr many0(pair(comp_op, expr)) { makeBinOp $1 $2 }
 
--- comp_op: '<'|'>'|'=='|'>='|'<='|'!='|'in'|'not' 'in'|'is'|'is' 'not' 
+-- comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
 
 comp_op :: { OpSpan }
 comp_op
@@ -663,15 +664,11 @@ comp_op
    | '>='       { AST.GreaterThanEquals (getSpan $1) }
    | '<='       { AST.LessThanEquals (getSpan $1) }
    | '!='       { AST.NotEquals (getSpan $1) }
+   | '<>'       { AST.NotEqualsV2 (getSpan $1) }
    | 'in'       { AST.In (getSpan $1) }
    | 'not' 'in' { AST.NotIn (spanning $1 $2) }
    | 'is'       { AST.Is (getSpan $1) }
    | 'is' 'not' { AST.IsNot (spanning $1 $2) }
-
--- star_expr: '*' expr
-
-star_expr :: { ExprSpan }
-star_expr : '*' expr { Starred $2 (spanning $1 $2) }
 
 -- expr: xor_expr ('|' xor_expr)* 
 
@@ -778,7 +775,7 @@ list_atom
 
 testlistfor :: { Either ExprSpan (ComprehensionSpan ExprSpan) }
 testlistfor
-   : test { Left $1 }
+   : testlist { Left $1 }
    | test list_for { Right (makeComprehension $1 $2) }
 
 yield_or_testlist_gexp :: { SrcSpan -> ExprSpan }
@@ -791,7 +788,7 @@ yield_or_testlist_gexp
 
 testlist_gexp :: { Either ExprSpan (ComprehensionSpan ExprSpan) }
 testlist_gexp
-   : test { Left $1 }
+   : testlist { Left $1 }
    | test gen_for { Right (makeComprehension $1 $2) }
 
 -- trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME 
@@ -824,7 +821,7 @@ sliceop : ':' opt(test) { $2 }
 -- exprlist: expr (',' expr)* [',']
 
 exprlist :: { [ExprSpan] }
-exprlist: sepOptEndBy(star_expr, ',') { $1 }
+exprlist: sepOptEndBy(expr, ',') { $1 }
 
 opt_comma :: { Maybe Token }
 opt_comma 
