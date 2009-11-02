@@ -531,6 +531,8 @@ data Expr annot
    = Var { var_ident :: Ident annot, expr_annot :: annot }
    -- | Literal integer.
    | Int { int_value :: Integer, expr_annot :: annot }
+   -- | Long literal integer. Version 2 only.
+   | LongInt { int_value :: Integer, expr_annot :: annot }
    -- | Literal floating point number.
    | Float { float_value :: Double, expr_annot :: annot }
    -- | Literal imaginary number.

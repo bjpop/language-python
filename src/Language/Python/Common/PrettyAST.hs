@@ -76,8 +76,8 @@ optionalKeywordSuite :: String -> [Statement a] -> Doc
 optionalKeywordSuite _ [] = empty
 optionalKeywordSuite keyword stmts = text keyword <> colon $+$ indent (prettySuite stmts)
 
-prettyArgList :: [Argument a] -> Doc
-prettyArgList = parens . commaList 
+prettyParenList :: Pretty a => [a] -> Doc
+prettyParenList = parens . commaList 
 
 prettyOptionalList :: Pretty a => [a] -> Doc
 prettyOptionalList [] = empty
@@ -177,7 +177,7 @@ instance Pretty (Decorator a) where
       = char '@' <> prettyDottedName name <+> prettyOptionalList args
 
 instance Pretty (Parameter a) where
-   pretty (Param { param_name = ident, param_py_annotation = annot, param_default = def})
+   pretty (Param { param_name = ident, param_py_annotation = annot, param_default = def })
       = pretty ident <> (maybe empty (\e -> colon <> pretty e <> space) annot) <> 
         maybe empty (\e -> equals <> pretty e) def 
    pretty (VarArgsPos { param_name = ident, param_py_annotation = annot})
@@ -185,6 +185,12 @@ instance Pretty (Parameter a) where
    pretty (VarArgsKeyword { param_name = ident, param_py_annotation = annot })
       = text "**" <> pretty ident <> (maybe empty (\e -> colon <> pretty e) annot)
    pretty EndPositional {} = char '*' 
+   pretty (UnPackTuple { param_unpack_tuple = tuple, param_default = def })
+      = pretty tuple <> maybe empty (\e -> equals <> pretty e) def
+
+instance Pretty (ParamTuple a) where
+   pretty (ParamTupleName { param_tuple_name = name }) = pretty name
+   pretty (ParamTuple { param_tuple = tuple }) = prettyParenList tuple
 
 instance Pretty (Argument a) where
    pretty (ArgExpr { arg_expr = e }) = pretty e
@@ -212,6 +218,7 @@ instance Pretty (CompIter a) where
 instance Pretty (Expr a) where
    pretty (Var { var_ident = i }) = pretty i
    pretty (Int { int_value = i }) = pretty i
+   pretty (LongInt { int_value = i }) = pretty i <> char 'L'
    pretty (Float { float_value = d }) = pretty d
    pretty (Imaginary { imaginary_value = i }) = pretty i <> char 'j' 
    pretty (Bool { bool_value = b}) = pretty b
@@ -219,7 +226,7 @@ instance Pretty (Expr a) where
    pretty Ellipsis {} = text "..."
    pretty (ByteStrings { byte_string_strings = bs }) = hcat (map pretty bs)
    pretty (Strings { strings_strings = ss }) = hcat (map prettyString ss)
-   pretty (Call { call_fun = f, call_args = args }) = pretty f <> prettyArgList args
+   pretty (Call { call_fun = f, call_args = args }) = pretty f <> prettyParenList args
    pretty (Subscript { subscriptee = e, subscript_exprs = subs })
       = pretty e <> brackets (commaList subs)
    pretty (SlicedExpr { slicee = e, slices = ss })

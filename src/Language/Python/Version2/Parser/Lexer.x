@@ -87,12 +87,19 @@ $white_no_nl+  ;  -- skip whitespace
 
 <0> {
    @float_number { token FloatToken readFloat }
-   $non_zero_digit $digit* { token IntegerToken read }  
    (@float_number | @int_part) (j | J) { token ImaginaryToken (readFloat.init) }
+   $non_zero_digit $digit* { token IntegerToken read }  
+   $non_zero_digit $digit* (l | L) { token LongIntegerToken (read.init) }  
    0+ { token IntegerToken read }  
+   0+ (l | L)  { token LongIntegerToken (read.init) }  
    0 (o | O) $oct_digit+ { token IntegerToken read }
+   0 (o | O) $oct_digit+ (l | L) { token LongIntegerToken (read.init) }
+   0 $oct_digit+ { token IntegerToken readOctNoO } 
+   0 $oct_digit+ (l | L) { token LongIntegerToken (readOctNoO.init) } 
    0 (x | X) $hex_digit+ { token IntegerToken read }
+   0 (x | X) $hex_digit+ (l | L) { token LongIntegerToken (read.init) }
    0 (b | B) $bin_digit+ { token IntegerToken readBinary }
+   0 (b | B) $bin_digit+ (l | L) { token LongIntegerToken (readBinary.init) }
 }
 
 -- String literals 
@@ -260,15 +267,16 @@ keywordOrIdent str location
 keywords :: Map.Map String (SrcSpan -> Token)
 keywords = Map.fromList keywordNames
 
+-- see: <http://docs.python.org/reference/lexical_analysis.html#keywords>
 keywordNames :: [(String, SrcSpan -> Token)]
 keywordNames =
-   [ ("class", ClassToken), ("finally", FinallyToken), ("is", IsToken), ("return", ReturnToken)
-   , ("continue", ContinueToken), ("for", ForToken), ("lambda", LambdaToken), ("try", TryToken)
-   , ("def", DefToken), ("from", FromToken), ("while", WhileToken)
-   , ("and", AndToken), ("del", DeleteToken), ("global", GlobalToken), ("not", NotToken), ("with", WithToken)
-   , ("as", AsToken), ("elif", ElifToken), ("if", IfToken), ("or", OrToken), ("yield", YieldToken)
-   , ("assert", AssertToken), ("else", ElseToken), ("import", ImportToken), ("pass", PassToken)
-   , ("break", BreakToken), ("except", ExceptToken), ("in", InToken), ("raise", RaiseToken), ("print", PrintToken)
-   , ("exec", ExecToken)
+   [ ("and", AndToken), ("as", AsToken), ("assert", AssertToken), ("break", BreakToken)
+   , ("class", ClassToken), ("continue", ContinueToken), ("def", DefToken), ("del", DeleteToken)
+   , ("elif", ElifToken),  ("else", ElseToken), ("except", ExceptToken), ("exec", ExecToken)
+   , ("finally", FinallyToken), ("for", ForToken), ("from", FromToken),  ("global", GlobalToken)
+   , ("if", IfToken), ("import", ImportToken), ("in", InToken), ("is", IsToken)
+   , ("lambda", LambdaToken), ("not", NotToken), ("or", OrToken), ("pass", PassToken)
+   , ("print", PrintToken), ("raise", RaiseToken), ("return", ReturnToken), ("try", TryToken)
+   , ("while", WhileToken), ("with", WithToken), ("yield", YieldToken)
    ]
 }

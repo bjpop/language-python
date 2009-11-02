@@ -247,11 +247,5 @@ lexicalError = do
   c <- liftM head getInput
   throwError $ UnexpectedChar c location
 
-{-
-parseError :: P a
-parseError = do
-  token <- getLastToken
-  failP (getSpan token)
-        ["Syntax error !",
-         "The symbol `" ++ show token ++ "' does not fit here."]
--}
+readOctNoO :: String -> Integer
+readOctNoO (zero:rest) = read (zero:'O':rest)

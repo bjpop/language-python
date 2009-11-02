@@ -262,7 +262,7 @@ checkArguments args = do
                     | "**" parameter
                     | defparameter [","] )
 
-   (state 1) Parameters first.
+   (state 1) Parameters/unpack tuples first.
    (state 2) Then the single star (on its own or with parameter)
    (state 3) Then more parameters. 
    (state 4) Then the double star form.
@@ -280,6 +280,10 @@ checkParameters params = do
    check 4 (param:_) = spanError param "a **parameter must not be followed by any other parameters"
    check state (param:rest) = do
       case param of
+         -- Param and UnPackTuple are treated the same.
+         UnPackTuple {}
+            | state `elem` [1,3] -> check state rest
+            | state == 2 -> check 3 rest 
          Param {}
             | state `elem` [1,3] -> check state rest
             | state == 2 -> check 3 rest 

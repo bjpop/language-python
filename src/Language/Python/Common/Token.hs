@@ -36,6 +36,7 @@ data Token
    | StringToken { token_span :: !SrcSpan, token_string :: !String }                    -- ^ Literal: string.
    | ByteStringToken { token_span :: !SrcSpan, token_byte_string :: !BS.ByteString }    -- ^ Literal: byte string.
    | IntegerToken { token_span :: !SrcSpan, token_integer :: !Integer }                 -- ^ Literal: integer.
+   | LongIntegerToken { token_span :: !SrcSpan, token_integer :: !Integer }             -- ^ Literal: long integer. Version 2 only.
    | FloatToken { token_span :: !SrcSpan, token_double :: !Double }                     -- ^ Literal: floating point.
    | ImaginaryToken { token_span :: !SrcSpan, token_double :: !Double }                 -- ^ Literal: imaginary number.
 
@@ -145,6 +146,7 @@ debugTokenStr token =
          StringToken {}     -> quotes $ text $ token_string token
          ByteStringToken {} -> quotes $ text $ BS.unpack $ token_byte_string token 
          IntegerToken {}    -> pretty $ token_integer token 
+         LongIntegerToken {} -> pretty (token_integer token) <> char 'L'
          FloatToken {}      -> pretty $ token_double token
          ImaginaryToken  {} -> pretty $ token_double token
          other              -> empty)

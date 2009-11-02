@@ -105,6 +105,7 @@ import Data.Maybe (maybeToList)
    'indent'        { IndentToken _ }
    'in'            { InToken _ }
    'integer'       { IntegerToken _ _ }
+   'long_integer'  { LongIntegerToken _ _ }
    'is'            { IsToken _ }
    'lambda'        { LambdaToken _ }
    'NEWLINE'       { NewlineToken _ }
@@ -761,6 +762,7 @@ atom
    | '`' testlist1 '`'              { AST.StringConversion $2 (spanning $1 $3) }
    | NAME                           { AST.Var $1 (getSpan $1) }
    | 'integer'                      { AST.Int (token_integer $1) (getSpan $1) }
+   | 'long_integer'                 { AST.LongInt (token_integer $1) (getSpan $1) }
    | 'float'                        { AST.Float (token_double $1) (getSpan $1) }
    | 'imaginary'                    { AST.Imaginary (token_double $1) (getSpan $1) }
    | many1('string')                { AST.Strings (map token_string $1) (getSpan $1) }

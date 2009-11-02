@@ -35,6 +35,8 @@ instance Pretty Token where
            text "byte string:" <+> quotes (prettyPrefix 5 (BS.unpack $ str))
         IntegerToken { token_integer = i } ->
            text "integer:" <+> pretty i
+        LongIntegerToken { token_integer = i } ->
+           text "long integer:" <+> pretty i <> char 'L'
         FloatToken { token_double = d } ->
            text "floating point number:" <+> pretty d
         ImaginaryToken { token_double = d } ->
