@@ -21,7 +21,6 @@ module Language.Python.Common.SrcLocation (
   Span (..),
   spanning,
   mkSrcSpan,
-  mkSrcSpanPoint,
   combineSrcSpans,
   initialSrcLocation,
   spanStartPoint,
@@ -33,7 +32,7 @@ module Language.Python.Common.SrcLocation (
   endCol
 ) where
 
-import Language.Python.Common.PrettyClass
+import Language.Python.Common.Pretty
 import Data.Data
 
 -- | A location for a syntactic entity from the source code.
@@ -46,6 +45,9 @@ data SrcLocation =
         } 
    | NoLocation
    deriving (Eq,Ord,Show,Typeable,Data)
+
+instance Pretty SrcLocation where
+   pretty = pretty . getSpan
 
 -- | Types which have a source location.
 class Location a where
@@ -155,14 +157,14 @@ prettyMultiSpan span
     parens (pretty (startRow span) <> comma <> pretty (startCol span)) <> char '-' <>
     parens (pretty (endRow span) <> comma <> pretty (endCol span))
 
-mkSrcSpanPoint :: SrcLocation -> SrcSpan
-mkSrcSpanPoint loc@(Sloc {})
-   = SpanPoint 
-     { span_filename = sloc_filename loc
-     , span_row = sloc_row loc
-     , span_column = sloc_column loc
-     }
-mkSrcSpanPoint NoLocation = error "attempt to convert an empty location to a span"
+instance Span SrcLocation where
+   getSpan loc@(Sloc {})
+      = SpanPoint 
+        { span_filename = sloc_filename loc
+        , span_row = sloc_row loc
+        , span_column = sloc_column loc
+        }
+   getSpan NoLocation = SpanEmpty 
 
 -- make a point span from the start of a span
 spanStartPoint :: SrcSpan -> SrcSpan

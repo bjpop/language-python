@@ -897,7 +897,8 @@ zero_or_more_comma_test_rev
 -- classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
 
 classdef :: { StatementSpan }
-classdef: 'class' NAME optional_arg_list ':' suite 
+-- classdef: 'class' NAME optional_arg_list ':' suite 
+classdef: 'class' NAME opt_paren_arg_list ':' suite 
            { AST.Class $2 $3 $5 (spanning $1 $5) }
 
 optional_arg_list :: { [ArgumentSpan] }

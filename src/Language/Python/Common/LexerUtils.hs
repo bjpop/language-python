@@ -13,14 +13,15 @@
 
 module Language.Python.Common.LexerUtils where
 
-import Language.Python.Common.Token as Token 
-import Language.Python.Common.ParserMonad hiding (location)
-import Language.Python.Common.SrcLocation 
 import Control.Monad (liftM)
+import Control.Monad.Error.Class (throwError)
 import Data.List (foldl')
 import Data.Map as Map hiding (null, map)
 import qualified Data.ByteString.Char8 as BS (pack)
 import Numeric (readHex, readOct)
+import Language.Python.Common.Token as Token 
+import Language.Python.Common.ParserMonad hiding (location)
+import Language.Python.Common.SrcLocation 
 
 -- Beginning of. BOF = beginning of file, BOL = beginning of line
 data BO = BOF | BOL
@@ -48,7 +49,7 @@ dedentation lexToken span _len _str = do
                lexToken 
       LT -> do popIndent
                return dedentToken 
-      GT -> failP span ["indentation error"]
+      GT -> spanError span "indentation error"
 
 indentation :: P Token -> Int -> BO -> Action 
 -- Check if we are at the EOF. If yes, we may need to generate a newline,
@@ -79,9 +80,11 @@ indentation lexToken dedentCode bo span _len _str = do
 symbolToken :: (SrcSpan -> Token) -> Action 
 symbolToken mkToken location _ _ = return (mkToken location)
 
+{-
 token_fail :: String -> Action 
 token_fail message location _ _ 
    = failP location [ "Lexical Error !", message]
+-}
 
 token :: (SrcSpan -> a -> Token) -> (String -> a) -> Action 
 token mkToken read location len str 
@@ -153,14 +156,14 @@ closeParen mkToken loc _len _str = do
   let token = mkToken loc
   topParen <- getParen
   case topParen of
-     Nothing -> failP loc err1 
+     Nothing -> spanError loc err1 
      Just open -> if matchParen open token 
                     then popParen >> return token
-                    else failP loc err2
+                    else spanError loc err2
    where
    -- XXX fix these error messages
-   err1 = ["Lexical error ! unmatched closing paren"]
-   err2 = ["Lexical error ! unmatched closing paren"]
+   err1 = "Lexical error ! unmatched closing paren"
+   err2 = "Lexical error ! unmatched closing paren"
 
 matchParen :: Token -> Token -> Bool
 matchParen (LeftRoundBracketToken {}) (RightRoundBracketToken {}) = True
@@ -242,13 +245,13 @@ lexicalError :: P a
 lexicalError = do
   location <- getLocation
   c <- liftM head getInput
-  failP (mkSrcSpanPoint location)
-        ["Lexical error !",
-         "The character " ++ show c ++ " does not fit here."]
+  throwError $ UnexpectedChar c location
 
+{-
 parseError :: P a
 parseError = do
   token <- getLastToken
   failP (getSpan token)
         ["Syntax error !",
          "The symbol `" ++ show token ++ "' does not fit here."]
+-}

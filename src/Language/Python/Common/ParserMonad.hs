@@ -16,7 +16,6 @@ module Language.Python.Common.ParserMonad
    , execParser
    , execParserKeepComments
    , runParser
-   , failP
    , thenP
    , returnP
    , setLocation
@@ -27,7 +26,7 @@ module Language.Python.Common.ParserMonad
    , setLastToken
    , setLastEOL
    , getLastEOL
-   , ParseError 
+   , ParseError (..)
    , ParseState (..)
    , initialState
    , pushStartCode
@@ -43,19 +42,36 @@ module Language.Python.Common.ParserMonad
    , getParenStackDepth
    , addComment
    , getComments
+   , spanError
    ) where
 
-import Language.Python.Common.SrcLocation (SrcLocation (..), SrcSpan (..), mkSrcSpanPoint)
+import Language.Python.Common.SrcLocation (SrcLocation (..), SrcSpan (..), Span (..))
 import Language.Python.Common.Token (Token (..))
 import Control.Applicative ((<$>))
 import Control.Monad.State.Class
 import Control.Monad.State.Strict as State
 import Control.Monad.Error as Error
+import Control.Monad.Error.Class
 import Control.Monad.Identity as Identity
 import Control.Monad.Trans as Trans
-import Language.Python.Common.PrettyClass
+import Language.Python.Common.Pretty
 
-type ParseError = String
+data ParseError  
+   = UnexpectedToken Token 
+   | UnexpectedChar Char SrcLocation  
+   | StrError String 
+   deriving (Eq, Ord, Show)
+
+-- XXX should probably use extensible exceptions
+instance Error ParseError where
+   noMsg = StrError ""
+   strMsg = StrError 
+
+internalError :: String -> P a 
+internalError = throwError . StrError 
+
+spanError :: Span a => a -> String -> P b 
+spanError x str = throwError $ StrError $ unwords [prettyText $ getSpan x, str]
 
 data ParseState = 
    ParseState 
@@ -105,8 +121,10 @@ returnP = return
 thenP :: P a -> (a -> P b) -> P b
 thenP = (>>=)
 
+{-
 failP :: SrcSpan -> [String] -> P a
 failP span strs = throwError (prettyText span ++ ": " ++ unwords strs) 
+-}
 
 setLastEOL :: SrcSpan -> P ()
 setLastEOL span = modify $ \s -> s { lastEOL = span }
@@ -141,14 +159,14 @@ popStartCode :: P ()
 popStartCode = do
    oldStack <- gets startCodeStack
    case oldStack of
-     [] -> throwError "fatal error in lexer: attempt to pop empty start code stack"
+     [] -> internalError "fatal error in lexer: attempt to pop empty start code stack"
      _:rest -> modify $ \s -> s { startCodeStack = rest }
 
 getStartCode :: P Int
 getStartCode = do 
    oldStack <- gets startCodeStack
    case oldStack of
-     [] -> throwError "fatal error in lexer: start code stack empty on getStartCode"
+     [] -> internalError "fatal error in lexer: start code stack empty on getStartCode"
      code:_ -> return code 
 
 pushIndent :: Int -> P () 
@@ -160,14 +178,14 @@ popIndent :: P ()
 popIndent = do 
    oldStack <- gets indentStack
    case oldStack of
-     [] -> throwError "fatal error in lexer: attempt to pop empty indentation stack"
+     [] -> internalError "fatal error in lexer: attempt to pop empty indentation stack"
      _:rest -> modify $ \s -> s { indentStack = rest }
 
 getIndent :: P Int
 getIndent = do
    oldStack <- gets indentStack 
    case oldStack of
-     [] -> throwError "fatal error in lexer: indent stack empty on getIndent"
+     [] -> internalError "fatal error in lexer: indent stack empty on getIndent"
      indent:_ -> return indent 
 
 getIndentStackDepth :: P Int
@@ -182,7 +200,7 @@ popParen :: P ()
 popParen = do
    oldStack <- gets parenStack
    case oldStack of
-      [] -> throwError "fatal error in lexer: attempt to pop empty paren stack"
+      [] -> internalError "fatal error in lexer: attempt to pop empty paren stack"
       _:rest -> modify $ \s -> s { parenStack = rest }  
 
 getParen :: P (Maybe Token)

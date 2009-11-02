@@ -13,12 +13,13 @@
 
 module Language.Python.Common.ParserUtils where
 
+import Data.List (foldl')
+import Data.Maybe (isJust)
+import Control.Monad.Error.Class (throwError)
 import Language.Python.Common.AST as AST
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.ParserMonad hiding (location)
 import Language.Python.Common.SrcLocation 
-import Data.List (foldl')
-import Data.Maybe (isJust)
 
 makeConditionalExpr :: ExprSpan -> Maybe (ExprSpan, ExprSpan) -> ExprSpan
 makeConditionalExpr e Nothing = e
@@ -32,8 +33,7 @@ makeBinOp e es
    mkOp e1 (op, e2) = BinaryOp op e1 e2 (spanning e1 e2)
 
 parseError :: Token -> P a 
-parseError token 
-   = failP (getSpan token) ["Unexpected token", prettyToken token] 
+parseError = throwError . UnexpectedToken 
 
 data Trailer
    = TrailerCall { trailer_call_args :: [ArgumentSpan], trailer_span :: SrcSpan }
@@ -238,19 +238,19 @@ checkArguments args = do
    where
    check :: Int -> [ArgumentSpan] -> P ()
    check state [] = return ()
-   check 5 (arg:_) = failP (getSpan arg) ["an **argument must not be followed by any other arguments"]
+   check 5 (arg:_) = spanError arg "an **argument must not be followed by any other arguments"
    check state (arg:rest) = do
       case arg of
          ArgExpr {}
             | state == 1 -> check state rest
-            | state == 2 -> failP (getSpan arg) ["a positional argument must not follow a keyword argument"]
-            | otherwise -> failP (getSpan arg) ["a positional argument must not follow a *argument"]
+            | state == 2 -> spanError arg "a positional argument must not follow a keyword argument"
+            | otherwise -> spanError arg "a positional argument must not follow a *argument"
          ArgKeyword {}
             | state `elem` [1,2] -> check 2 rest
             | state `elem` [3,4] -> check 4 rest
          ArgVarArgsPos {}
             | state `elem` [1,2] -> check 3 rest
-            | state `elem` [3,4] -> failP (getSpan arg) ["there must not be two *arguments in an argument list"]
+            | state `elem` [3,4] -> spanError arg "there must not be two *arguments in an argument list"
          ArgVarArgsKeyword {} -> check 5 rest
 
 {-
@@ -277,7 +277,7 @@ checkParameters params = do
    where
    check :: Int -> [ParameterSpan] -> P ()
    check state [] = return ()
-   check 4 (p:_) = failP (getSpan p) ["a **parameter must not be followed by any other parameters"]
+   check 4 (param:_) = spanError param "a **parameter must not be followed by any other parameters"
    check state (param:rest) = do
       case param of
          Param {}
@@ -285,8 +285,13 @@ checkParameters params = do
             | state == 2 -> check 3 rest 
          EndPositional {}
             | state == 1 -> check 2 rest
-            | otherwise -> failP (getSpan param) ["there must not be two *parameters in a parameter list"]
+            | otherwise -> spanError param "there must not be two *parameters in a parameter list"
          VarArgsPos {}
             | state == 1 -> check 2 rest
-            | otherwise -> failP (getSpan param) ["there must not be two *parameters in a parameter list"]
+            | otherwise -> spanError param "there must not be two *parameters in a parameter list"
          VarArgsKeyword {} -> check 4 rest
+
+{-
+spanError :: Span a => a -> String -> P ()
+spanError x str = throwError $ StrError $ unwords [prettyText $ getSpan x, str]
+-}
