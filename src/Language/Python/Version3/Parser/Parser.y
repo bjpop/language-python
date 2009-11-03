@@ -19,7 +19,6 @@ import Language.Python.Common.AST as AST
 import Language.Python.Common.ParserUtils
 import Language.Python.Common.ParserMonad
 import Language.Python.Common.SrcLocation
-import qualified Data.ByteString.Char8 as BS (ByteString)
 import Data.Either (rights, either)
 import Data.Maybe (maybeToList)
 }
@@ -31,96 +30,96 @@ import Data.Maybe (maybeToList)
 %tokentype { Token } 
 %error { parseError } 
 %monad { P } { thenP } { returnP }
-%lexer { lexCont } { EOFToken _ }
+%lexer { lexCont } { EOFToken {} }
 
 %token 
-   '='             { AssignToken _ }
-   '('             { LeftRoundBracketToken _ }
-   ')'             { RightRoundBracketToken _ }
-   '['             { LeftSquareBracketToken _ }
-   ']'             { RightSquareBracketToken _ }
-   '{'             { LeftBraceToken _ }
-   '}'             { RightBraceToken _ }
-   ','             { CommaToken _ }
-   ';'             { SemiColonToken _ }
-   ':'             { ColonToken _ }
-   '+'             { PlusToken _ }
-   '-'             { MinusToken _ }
-   '*'             { MultToken _ }
-   '**'            { ExponentToken _ }
-   '/'             { DivToken _ }
-   '//'            { FloorDivToken _ }
-   '>'             { GreaterThanToken _ }
-   '<'             { LessThanToken _ }
-   '=='            { EqualityToken _ }
-   '>='            { GreaterThanEqualsToken _ }
-   '<='            { LessThanEqualsToken _ }
-   '|'             { BinaryOrToken _ }
-   '^'             { XorToken _ }      
-   '&'             { BinaryAndToken _ }      
-   '>>'            { ShiftRightToken _ }
-   '<<'            { ShiftLeftToken _ }
-   '%'             { ModuloToken _ }
-   '~'             { TildeToken _ }
-   '!='            { NotEqualsToken _ }
-   '.'             { DotToken _ }
-   '...'           { EllipsisToken _ }
-   '+='            { PlusAssignToken _ }
-   '-='            { MinusAssignToken _ }
-   '*='            { MultAssignToken _ }
-   '/='            { DivAssignToken _ }
-   '%='            { ModAssignToken _ }
-   '**='           { PowAssignToken _ }
-   '&='            { BinAndAssignToken _ }
-   '|='            { BinOrAssignToken _ }
-   '^='            { BinXorAssignToken _ }
-   '<<='           { LeftShiftAssignToken _ }
-   '>>='           { RightShiftAssignToken _ }
-   '//='           { FloorDivAssignToken _ } 
-   '@'             { AtToken _ }
-   '->'            { RightArrowToken _ }
-   'and'           { AndToken _ }
-   'as'            { AsToken _ }
-   'assert'        { AssertToken _ }
-   'break'         { BreakToken _ }
-   'bytestring'    { ByteStringToken _ _ }
-   'class'         { ClassToken _ }
-   'continue'      { ContinueToken _ }
-   'dedent'        { DedentToken _ }
-   'def'           { DefToken _ }
-   'del'           { DeleteToken _ }
-   'elif'          { ElifToken _ }
-   'else'          { ElseToken _ }
-   'except'        { ExceptToken _ }
-   'False'         { FalseToken _ }
-   'finally'       { FinallyToken _ }
-   'float'         { FloatToken _ _ }
-   'for'           { ForToken _ }
-   'from'          { FromToken _ }
-   'global'        { GlobalToken _ }
-   'ident'         { IdentifierToken _ _ }
-   'if'            { IfToken _ }
-   'imaginary'     { ImaginaryToken _ _ }
-   'import'        { ImportToken _ }
-   'indent'        { IndentToken _ }
-   'in'            { InToken _ }
-   'integer'       { IntegerToken _ _ }
-   'is'            { IsToken _ }
-   'lambda'        { LambdaToken _ }
-   'NEWLINE'       { NewlineToken _ }
-   'None'          { NoneToken _ }
-   'nonlocal'      { NonLocalToken _ }
-   'not'           { NotToken _ }
-   'or'            { OrToken _ }
-   'pass'          { PassToken _ }
-   'raise'         { RaiseToken _ }
-   'return'        { ReturnToken _ }
-   'string'        { StringToken _ _ }
-   'True'          { TrueToken _ }
-   'try'           { TryToken _ }
-   'while'         { WhileToken _ }
-   'with'          { WithToken _ }
-   'yield'         { YieldToken _ }
+   '='             { AssignToken {} }
+   '('             { LeftRoundBracketToken {} }
+   ')'             { RightRoundBracketToken {} }
+   '['             { LeftSquareBracketToken {} }
+   ']'             { RightSquareBracketToken {} }
+   '{'             { LeftBraceToken {} }
+   '}'             { RightBraceToken {} }
+   ','             { CommaToken {} }
+   ';'             { SemiColonToken {} }
+   ':'             { ColonToken {} }
+   '+'             { PlusToken {} }
+   '-'             { MinusToken {} }
+   '*'             { MultToken {} }
+   '**'            { ExponentToken {} }
+   '/'             { DivToken {} }
+   '//'            { FloorDivToken {} }
+   '>'             { GreaterThanToken {} }
+   '<'             { LessThanToken {} }
+   '=='            { EqualityToken {} }
+   '>='            { GreaterThanEqualsToken {} }
+   '<='            { LessThanEqualsToken {} }
+   '|'             { BinaryOrToken {} }
+   '^'             { XorToken {} }      
+   '&'             { BinaryAndToken {} }      
+   '>>'            { ShiftRightToken {} }
+   '<<'            { ShiftLeftToken {} }
+   '%'             { ModuloToken {} }
+   '~'             { TildeToken {} }
+   '!='            { NotEqualsToken {} }
+   '.'             { DotToken {} }
+   '...'           { EllipsisToken {} }
+   '+='            { PlusAssignToken {} }
+   '-='            { MinusAssignToken {} }
+   '*='            { MultAssignToken {} }
+   '/='            { DivAssignToken {} }
+   '%='            { ModAssignToken {} }
+   '**='           { PowAssignToken {} }
+   '&='            { BinAndAssignToken {} }
+   '|='            { BinOrAssignToken {} }
+   '^='            { BinXorAssignToken {} }
+   '<<='           { LeftShiftAssignToken {} }
+   '>>='           { RightShiftAssignToken {} }
+   '//='           { FloorDivAssignToken {} } 
+   '@'             { AtToken {} }
+   '->'            { RightArrowToken {} }
+   'and'           { AndToken {} }
+   'as'            { AsToken {} }
+   'assert'        { AssertToken {} }
+   'break'         { BreakToken {} }
+   'bytestring'    { ByteStringToken {} }
+   'class'         { ClassToken {} }
+   'continue'      { ContinueToken {} }
+   'dedent'        { DedentToken {} }
+   'def'           { DefToken {} }
+   'del'           { DeleteToken {} }
+   'elif'          { ElifToken {} }
+   'else'          { ElseToken {} }
+   'except'        { ExceptToken {} }
+   'False'         { FalseToken {} }
+   'finally'       { FinallyToken {} }
+   'float'         { FloatToken {} }
+   'for'           { ForToken {} }
+   'from'          { FromToken {} }
+   'global'        { GlobalToken {} }
+   'ident'         { IdentifierToken {} }
+   'if'            { IfToken {} }
+   'imaginary'     { ImaginaryToken {} }
+   'import'        { ImportToken {} }
+   'indent'        { IndentToken {} }
+   'in'            { InToken {} }
+   'integer'       { IntegerToken {} }
+   'is'            { IsToken {} }
+   'lambda'        { LambdaToken {} }
+   'NEWLINE'       { NewlineToken {} }
+   'None'          { NoneToken {} }
+   'nonlocal'      { NonLocalToken {} }
+   'not'           { NotToken {} }
+   'or'            { OrToken {} }
+   'pass'          { PassToken {} }
+   'raise'         { RaiseToken {} }
+   'return'        { ReturnToken {} }
+   'string'        { StringToken {} }
+   'True'          { TrueToken {} }
+   'try'           { TryToken {} }
+   'while'         { WhileToken {} }
+   'with'          { WithToken {} }
+   'yield'         { YieldToken {} }
 
 %%
 
@@ -163,7 +162,7 @@ sepByRev(p,sep)
    | sepByRev(p,sep) sep p { $3 : $1 }
 
 NAME :: { IdentSpan }
-NAME : 'ident' { Ident (token_identifier $1) (getSpan $1) }
+NAME : 'ident' { Ident (token_literal $1) (getSpan $1) }
 
 {- 
    Note: newline tokens in the grammar:
@@ -775,11 +774,11 @@ atom : '(' yield_or_testlist_comp ')' { $2 (spanning $1 $3) }
      | list_atom                      { $1 }
      | dict_or_set_atom               { $1 }
      | NAME                           { AST.Var $1 (getSpan $1) }
-     | 'integer'                      { AST.Int (token_integer $1) (getSpan $1) }
-     | 'float'                        { AST.Float (token_double $1) (getSpan $1) }
-     | 'imaginary'                    { AST.Imaginary (token_double $1) (getSpan $1) }
-     | many1('string')                { AST.Strings (map token_string $1) (getSpan $1) }
-     | many1('bytestring')            { AST.ByteStrings (map token_byte_string $1) (getSpan $1) }
+     | 'integer'                      { AST.Int (token_integer $1) (token_literal $1) (getSpan $1) }
+     | 'float'                        { AST.Float (token_double $1) (token_literal $1) (getSpan $1) }
+     | 'imaginary'                    { AST.Imaginary (token_double $1) (token_literal $1) (getSpan $1) }
+     | many1('string')                { AST.Strings (map token_literal $1) (getSpan $1) }
+     | many1('bytestring')            { AST.ByteStrings (map token_literal $1) (getSpan $1) }
      | '...'                          { AST.Ellipsis (getSpan $1) }
      | 'None'                         { AST.None (getSpan $1) }
      | 'True'                         { AST.Bool Prelude.True (getSpan $1) }

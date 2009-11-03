@@ -60,7 +60,6 @@ module Language.Python.Common.AST (
    where
 
 import Language.Python.Common.SrcLocation ( Span (getSpan), SrcSpan (..) ) 
-import qualified Data.ByteString.Char8 as BS
 import Data.Data
 
 --------------------------------------------------------------------------------
@@ -530,13 +529,13 @@ data Expr annot
    -- | Variable.
    = Var { var_ident :: Ident annot, expr_annot :: annot }
    -- | Literal integer.
-   | Int { int_value :: Integer, expr_annot :: annot }
+   | Int { int_value :: Integer, expr_literal :: String, expr_annot :: annot }
    -- | Long literal integer. Version 2 only.
-   | LongInt { int_value :: Integer, expr_annot :: annot }
+   | LongInt { int_value :: Integer, expr_literal :: String, expr_annot :: annot }
    -- | Literal floating point number.
-   | Float { float_value :: Double, expr_annot :: annot }
+   | Float { float_value :: Double, expr_literal :: String, expr_annot :: annot }
    -- | Literal imaginary number.
-   | Imaginary { imaginary_value :: Double, expr_annot :: annot } 
+   | Imaginary { imaginary_value :: Double, expr_literal :: String, expr_annot :: annot } 
    -- | Literal boolean.
    | Bool { bool_value :: Bool, expr_annot :: annot }
    -- | Literal \'None\' value.
@@ -544,7 +543,7 @@ data Expr annot
    -- | Ellipsis \'...\'.
    | Ellipsis { expr_annot :: annot }
    -- | Literal byte string.
-   | ByteStrings { byte_string_strings :: [BS.ByteString], expr_annot :: annot }
+   | ByteStrings { byte_string_strings :: [String], expr_annot :: annot }
    -- | Literal strings (to be concatentated together).
    | Strings { strings_strings :: [String], expr_annot :: annot }
    -- | Function call. See: <http://www.python.org/doc/3.0/reference/expressions.html#calls>.

@@ -15,9 +15,6 @@ module Language.Python.Common.PrettyToken where
 
 import Language.Python.Common.Token
 import Language.Python.Common.Pretty
--- import Language.Python.Common.SrcLocation (SrcSpan (..), SrcLocation (..), Location (location), Span(getSpan))
-import qualified Data.ByteString.Char8 as BS (ByteString, unpack)
--- import Data.Data
 
 instance Pretty Token where
    pretty tok = 
@@ -25,22 +22,22 @@ instance Pretty Token where
         IndentToken {} -> text "indentation"
         DedentToken {} -> text "dedentation"
         NewlineToken {} -> text "end of line" 
-        CommentToken { token_comment = str } -> 
-           text "comment:" <+> prettyPrefix 5 str
-        IdentifierToken { token_identifier = str } ->
+        CommentToken { token_literal = str } -> 
+           text "comment:" <+> prettyPrefix 10 str
+        IdentifierToken { token_literal = str } ->
            text "identifier:" <+> text str 
-        StringToken { token_string = str } -> 
-           text "string:" <+> quotes (prettyPrefix 5 str)
-        ByteStringToken { token_byte_string = str } ->
-           text "byte string:" <+> quotes (prettyPrefix 5 (BS.unpack $ str))
-        IntegerToken { token_integer = i } ->
-           text "integer:" <+> pretty i
-        LongIntegerToken { token_integer = i } ->
-           text "long integer:" <+> pretty i <> char 'L'
-        FloatToken { token_double = d } ->
-           text "floating point number:" <+> pretty d
-        ImaginaryToken { token_double = d } ->
-           text "imaginary number:" <+> pretty d
+        StringToken { token_literal = str } -> 
+           text "string:" <+> prettyPrefix 10 str
+        ByteStringToken { token_literal = str } ->
+           text "byte string:" <+> prettyPrefix 10 str
+        IntegerToken { token_literal = str } ->
+           text "integer:" <+> text str 
+        LongIntegerToken { token_literal = str } ->
+           text "long integer:" <+> text str 
+        FloatToken { token_literal = str } ->
+           text "floating point number:" <+> text str 
+        ImaginaryToken { token_literal = str } ->
+           text "imaginary number:" <+> text str 
         DefToken {} -> text "def" 
         WhileToken {} -> text "while"
         IfToken {} -> text "if"
@@ -124,3 +121,4 @@ instance Pretty Token where
         NotEqualsToken {} -> text "!="
         NotEqualsV2Token {} -> text "<>"
         EOFToken {} -> text "end of input"
+        LineJoinToken {} -> text "line join"

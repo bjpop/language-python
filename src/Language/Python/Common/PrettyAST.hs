@@ -14,7 +14,6 @@ module Language.Python.Common.PrettyAST where
 
 import Language.Python.Common.Pretty
 import Language.Python.Common.AST 
-import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------
 
@@ -28,13 +27,10 @@ indent doc = nest 4 doc
 blankLine :: Doc
 blankLine = text []
 
-instance Pretty BS.ByteString where
-   -- XXX should handle the escaping properly
-   pretty b = text "b" <> text (show $ BS.unpack b)
-
 prettyString :: String -> Doc
    -- XXX should handle the escaping properly
-prettyString str = text (show str)
+-- prettyString str = text (show str)
+prettyString str = text str
 
 instance Pretty (Module a) where
    pretty (Module stmts) = vcat $ map pretty stmts 
@@ -139,7 +135,7 @@ instance Pretty (Statement a) where
    pretty (NonLocal { nonLocal_vars = idents }) = text "nonlocal" <+> commaList idents
    pretty (Assert { assert_exprs = es }) = text "assert" <+> commaList es
    pretty (Print { print_chevron = have_chevron, print_exprs = es, print_trailing_comma = trail_comma }) =
-      text "print" <> (if have_chevron then text " >>>" else empty) <+>
+      text "print" <> (if have_chevron then text " >>" else empty) <+>
       hcat (punctuate comma (map pretty es)) <>
       if trail_comma then comma else empty
    pretty (Exec { exec_expr = e, exec_globals_locals = gls }) = 
@@ -168,9 +164,9 @@ instance Pretty (RaiseExpr a) where
    pretty (RaiseV3 e) = 
       maybe empty (\ (x, fromE) -> pretty x <+> (maybe empty (\f -> text "from" <+> pretty f) fromE)) e
    pretty (RaiseV2 exp) = 
-      maybe empty (\ (e1, next1) -> pretty e1 <> comma <+>
-      maybe empty (\ (e2, next2) -> pretty e2 <> comma <+>
-      maybe empty (\ e3 -> pretty e3) next2) next1) exp
+      maybe empty (\ (e1, next1) -> pretty e1 <> 
+      maybe empty (\ (e2, next2) -> comma <+> pretty e2 <> 
+      maybe empty (\ e3 -> comma <+> pretty e3) next2) next1) exp
 
 instance Pretty (Decorator a) where
    pretty (Decorator { decorator_name = name, decorator_args = args })
@@ -217,10 +213,10 @@ instance Pretty (CompIter a) where
 
 instance Pretty (Expr a) where
    pretty (Var { var_ident = i }) = pretty i
-   pretty (Int { int_value = i }) = pretty i
-   pretty (LongInt { int_value = i }) = pretty i <> char 'L'
-   pretty (Float { float_value = d }) = pretty d
-   pretty (Imaginary { imaginary_value = i }) = pretty i <> char 'j' 
+   pretty (Int { expr_literal = str }) = text str 
+   pretty (LongInt { expr_literal = str }) = text str 
+   pretty (Float { expr_literal = str }) = text str 
+   pretty (Imaginary { expr_literal = str }) = text str 
    pretty (Bool { bool_value = b}) = pretty b
    pretty None {} = text "None"
    pretty Ellipsis {} = text "..."
@@ -241,6 +237,7 @@ instance Pretty (Expr a) where
    pretty (UnaryOp { operator = op, op_arg = e }) = pretty op <+> pretty e
    pretty (Lambda { lambda_args = args, lambda_body = body })
       = text "lambda" <+> commaList args <> colon <+> pretty body
+   pretty (Tuple { tuple_exprs = [] }) = text "()" 
    pretty (Tuple { tuple_exprs = es }) = commaList es
    pretty (Yield { yield_expr = e })
       = text "yield" <+> pretty e

@@ -14,7 +14,6 @@
 module Language.Python.Common.Pretty (module TextPP, module Language.Python.Common.Pretty) where
 
 import Text.PrettyPrint as TextPP
-import qualified Data.ByteString.Char8 as BS
 
 --------------------------------------------------------------------------------
 

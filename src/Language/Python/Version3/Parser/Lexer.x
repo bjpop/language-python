@@ -23,7 +23,6 @@ import qualified Data.Map as Map
 import Control.Monad (liftM)
 import Data.List (foldl')
 import Numeric (readHex, readOct)
-import qualified Data.ByteString.Char8 as BS (pack)
 }
 
 -- character sets
@@ -78,12 +77,12 @@ tokens :-
 -- will not be applied because the rule for the literal will always
 -- match a longer sequence of characters. 
 
--- \# ($not_eol_char)* ;  -- skip comments 
-\# ($not_eol_char)* { token CommentToken tail } 
+\# ($not_eol_char)* { token (\ span lit val -> CommentToken span lit) id } 
 $white_no_nl+  ;  -- skip whitespace 
 
 -- \\ @eol_pattern ; -- line join 
-\\ @eol_pattern { endOfLine lexToken } -- line join 
+-- \\ @eol_pattern { endOfLine lexToken } -- line join 
+\\ @eol_pattern { lineJoin } -- line join 
 
 <0> {
    @float_number { token FloatToken readFloat }
@@ -98,25 +97,25 @@ $white_no_nl+  ;  -- skip whitespace
 -- String literals 
 
 <0> {
-   ' @short_str_item_single* ' { mkString 1 1 stringToken }
-   @raw_str_prefix ' @short_str_item_single* ' { mkString 2 1 rawStringToken }
-   @byte_str_prefix ' @short_byte_str_item_single* ' { mkString 2 1 byteStringToken }
-   @raw_byte_str_prefix ' @short_byte_str_item_single* ' { mkString 3 1 rawByteStringToken }
+   ' @short_str_item_single* ' { mkString stringToken }
+   @raw_str_prefix ' @short_str_item_single* ' { mkString rawStringToken }
+   @byte_str_prefix ' @short_byte_str_item_single* ' { mkString byteStringToken }
+   @raw_byte_str_prefix ' @short_byte_str_item_single* ' { mkString rawByteStringToken }
 
-   \" @short_str_item_double* \" { mkString 1 1 stringToken }
-   @raw_str_prefix \" @short_str_item_double* \" { mkString 2 1 rawStringToken }
-   @byte_str_prefix \" @short_byte_str_item_double* \" { mkString 2 1 byteStringToken }
-   @raw_byte_str_prefix \" @short_byte_str_item_double* \" { mkString 3 1 rawByteStringToken }
+   \" @short_str_item_double* \" { mkString stringToken }
+   @raw_str_prefix \" @short_str_item_double* \" { mkString rawStringToken }
+   @byte_str_prefix \" @short_byte_str_item_double* \" { mkString byteStringToken }
+   @raw_byte_str_prefix \" @short_byte_str_item_double* \" { mkString rawByteStringToken }
 
-   ''' @long_str_item_single* ''' { mkString 3 3 stringToken }
-   @raw_str_prefix ''' @long_str_item_single* ''' { mkString 4 3 rawStringToken }
-   @byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString 4 3 byteStringToken }
-   @raw_byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString 5 3 rawByteStringToken }
+   ''' @long_str_item_single* ''' { mkString stringToken }
+   @raw_str_prefix ''' @long_str_item_single* ''' { mkString rawStringToken }
+   @byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString byteStringToken }
+   @raw_byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString rawByteStringToken }
 
-   \"\"\" @long_str_item_double* \"\"\" { mkString 3 3 stringToken }
-   @raw_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString 4 3 rawStringToken }
-   @byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString 4 3 byteStringToken }
-   @raw_byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString 5 3 rawByteStringToken }
+   \"\"\" @long_str_item_double* \"\"\" { mkString stringToken }
+   @raw_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString rawStringToken }
+   @byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString byteStringToken }
+   @raw_byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString rawByteStringToken }
 }
 
 -- NOTE: we pass lexToken into some functions as an argument.
@@ -136,7 +135,6 @@ $white_no_nl+  ;  -- skip whitespace
 
 -- beginning of line
 <bol> {
-   -- @eol_pattern                        ; 
    @eol_pattern                         { endOfLine lexToken } 
    ()                                   { indentation lexToken dedent BOL }
 }
@@ -243,9 +241,10 @@ lexCont cont = do
       tok <- lexToken
       case tok of
          CommentToken {} -> do
+            addComment tok
             lexLoop
+         LineJoinToken {} -> lexLoop
          _other -> cont tok
-
 
 -- a keyword or an identifier (the syntax overlaps)
 keywordOrIdent :: String -> SrcSpan -> P Token

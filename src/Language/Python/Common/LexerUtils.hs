@@ -17,7 +17,6 @@ import Control.Monad (liftM)
 import Control.Monad.Error.Class (throwError)
 import Data.List (foldl')
 import Data.Map as Map hiding (null, map)
-import qualified Data.ByteString.Char8 as BS (pack)
 import Numeric (readHex, readOct)
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.ParserMonad hiding (location)
@@ -30,6 +29,9 @@ data BO = BOF | BOL
 
 type StartCode = Int
 type Action = SrcSpan -> Int -> String -> P Token 
+
+lineJoin :: Action
+lineJoin span _len _str = return $ LineJoinToken span
 
 endOfLine :: P Token -> Action
 endOfLine lexToken span _len _str = do
@@ -80,15 +82,11 @@ indentation lexToken dedentCode bo span _len _str = do
 symbolToken :: (SrcSpan -> Token) -> Action 
 symbolToken mkToken location _ _ = return (mkToken location)
 
-{-
-token_fail :: String -> Action 
-token_fail message location _ _ 
-   = failP location [ "Lexical Error !", message]
--}
-
-token :: (SrcSpan -> a -> Token) -> (String -> a) -> Action 
+token :: (SrcSpan -> String -> a -> Token) -> (String -> a) -> Action 
 token mkToken read location len str 
-   = return $ mkToken location (read $ take len str)
+   = return $ mkToken location literal (read literal) 
+   where
+   literal = take len str
 
 -- special tokens for the end of file and end of line
 endOfFileToken :: Token
@@ -127,23 +125,21 @@ readFloatRest [] = []
 readFloatRest ['.'] = ".0"
 readFloatRest (c:cs) = c : readFloatRest cs
 
-mkString :: Int -> Int -> (SrcSpan -> String -> Token) -> Action
-mkString leftSkip rightSkip toToken loc len str = do
-   let contentLen = len - (leftSkip + rightSkip)
-   let contents = take contentLen $ drop leftSkip str
-   return $ toToken loc contents 
+mkString :: (SrcSpan -> String -> Token) -> Action
+mkString toToken loc len str = do
+   return $ toToken loc (take len str)
 
 stringToken :: SrcSpan -> String -> Token
-stringToken loc str = StringToken loc $ unescapeString str
+stringToken loc str = StringToken loc str
 
 rawStringToken :: SrcSpan -> String -> Token
-rawStringToken loc str = StringToken loc $ unescapeRawString str
+rawStringToken loc str = StringToken loc str
 
 byteStringToken :: SrcSpan -> String -> Token
-byteStringToken loc str = ByteStringToken loc $ BS.pack $ unescapeString str
+byteStringToken loc str = ByteStringToken loc $ str
 
 rawByteStringToken :: SrcSpan -> String -> Token
-rawByteStringToken loc str = ByteStringToken loc $ BS.pack $ unescapeRawString str
+rawByteStringToken loc str = ByteStringToken loc $ str
 
 openParen :: (SrcSpan -> Token) -> Action
 openParen mkToken loc _len _str = do

@@ -16,7 +16,6 @@ module Language.Python.Common.Token ( Token (..), debugTokenStr) where
 
 import Language.Python.Common.Pretty
 import Language.Python.Common.SrcLocation (SrcSpan (..), SrcLocation (..), Location (location), Span(getSpan))
-import qualified Data.ByteString.Char8 as BS (ByteString, unpack)
 import Data.Data
 
 -- | Lexical tokens.
@@ -25,20 +24,21 @@ data Token
    = IndentToken { token_span :: !SrcSpan }                       -- ^ Indentation: increase.
    | DedentToken { token_span :: !SrcSpan }                       -- ^ Indentation: decrease.
    | NewlineToken { token_span :: !SrcSpan }                      -- ^ Newline.
+   | LineJoinToken { token_span :: !SrcSpan }                     -- ^ Line join (backslash at end of line).
 
    -- Comment
-   | CommentToken { token_span :: !SrcSpan, token_comment :: !String } -- ^ Single line comment.
+   | CommentToken { token_span :: !SrcSpan, token_literal :: !String } -- ^ Single line comment.
 
    -- Identifiers 
-   | IdentifierToken { token_span :: !SrcSpan, token_identifier :: !String }            -- ^ Identifier.
+   | IdentifierToken { token_span :: !SrcSpan, token_literal :: !String }            -- ^ Identifier.
 
    -- Literals
-   | StringToken { token_span :: !SrcSpan, token_string :: !String }                    -- ^ Literal: string.
-   | ByteStringToken { token_span :: !SrcSpan, token_byte_string :: !BS.ByteString }    -- ^ Literal: byte string.
-   | IntegerToken { token_span :: !SrcSpan, token_integer :: !Integer }                 -- ^ Literal: integer.
-   | LongIntegerToken { token_span :: !SrcSpan, token_integer :: !Integer }             -- ^ Literal: long integer. Version 2 only.
-   | FloatToken { token_span :: !SrcSpan, token_double :: !Double }                     -- ^ Literal: floating point.
-   | ImaginaryToken { token_span :: !SrcSpan, token_double :: !Double }                 -- ^ Literal: imaginary number.
+   | StringToken { token_span :: !SrcSpan, token_literal :: !String }                   -- ^ Literal: string.
+   | ByteStringToken { token_span :: !SrcSpan, token_literal :: !String }    -- ^ Literal: byte string.
+   | IntegerToken { token_span :: !SrcSpan, token_literal :: !String, token_integer :: !Integer }                 -- ^ Literal: integer.
+   | LongIntegerToken { token_span :: !SrcSpan, token_literal :: !String, token_integer :: !Integer }             -- ^ Literal: long integer. Version 2 only.
+   | FloatToken { token_span :: !SrcSpan, token_literal :: !String, token_double :: !Double }                     -- ^ Literal: floating point.
+   | ImaginaryToken { token_span :: !SrcSpan, token_literal :: !String, token_double :: !Double }                 -- ^ Literal: imaginary number.
 
    -- Keywords
    | DefToken { token_span :: !SrcSpan }                          -- ^ Keyword: \'def\'. 
@@ -140,13 +140,17 @@ instance Span Token where
 debugTokenStr :: Token -> String
 debugTokenStr token =
    render (text (show $ toConstr token) <+> pretty (token_span token) <+>
-      case token of
-         CommentToken {}    -> quotes $ text $ token_comment token 
-         IdentifierToken {} -> text $ token_identifier token
-         StringToken {}     -> quotes $ text $ token_string token
-         ByteStringToken {} -> quotes $ text $ BS.unpack $ token_byte_string token 
-         IntegerToken {}    -> pretty $ token_integer token 
-         LongIntegerToken {} -> pretty (token_integer token) <> char 'L'
-         FloatToken {}      -> pretty $ token_double token
-         ImaginaryToken  {} -> pretty $ token_double token
-         other              -> empty)
+          if hasLiteral token then text (token_literal token) else empty)
+
+hasLiteral :: Token -> Bool
+hasLiteral token =
+   case token of
+      CommentToken {}     -> True 
+      IdentifierToken {}  -> True 
+      StringToken {}      -> True 
+      ByteStringToken {}  -> True 
+      IntegerToken {}     -> True 
+      LongIntegerToken {} -> True 
+      FloatToken {}       -> True 
+      ImaginaryToken  {}  -> True 
+      other               -> False
