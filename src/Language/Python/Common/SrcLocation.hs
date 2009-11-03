@@ -29,7 +29,10 @@ module Language.Python.Common.SrcLocation (
   decColumn,
   incLine,
   incTab,
-  endCol
+  endCol,
+  endRow,
+  startCol,
+  startRow
 ) where
 
 import Language.Python.Common.Pretty

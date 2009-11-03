@@ -31,7 +31,8 @@ type StartCode = Int
 type Action = SrcSpan -> Int -> String -> P Token 
 
 lineJoin :: Action
-lineJoin span _len _str = return $ LineJoinToken span
+lineJoin span _len _str = 
+   return $ LineJoinToken $ spanStartPoint span
 
 endOfLine :: P Token -> Action
 endOfLine lexToken span _len _str = do
