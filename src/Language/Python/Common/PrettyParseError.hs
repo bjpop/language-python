@@ -7,12 +7,13 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
+-- Pretty printing of parse errors. 
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.PrettyParseError where
 
 import Language.Python.Common.Pretty
-import Language.Python.Common.ParserMonad (ParseError (..))
+import Language.Python.Common.ParseError (ParseError (..))
 import Language.Python.Common.SrcLocation 
 import Language.Python.Common.PrettyToken
 

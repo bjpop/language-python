@@ -7,8 +7,10 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
--- Lexical tokens for the Python lexer. 
--- See: <http://www.python.org/doc/3.0/reference/lexical_analysis.html>
+-- Pretty printing of tokens. Note the output is intended for displaying in
+-- messages to the user, and may not be valid Python syntax. For instance
+-- the pretty printing is useful for displaying parser error messages, but
+-- not useful for producing concrete Python source.
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.PrettyToken where

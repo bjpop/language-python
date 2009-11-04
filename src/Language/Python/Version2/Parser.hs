@@ -9,7 +9,8 @@
 -- Portability : ghc
 --
 -- A parser for Python version 2.x programs. Parsers are provided for 
--- modules, statements, and expressions. 
+-- modules, statements, and expressions. The parsers produce comment tokens
+-- in addition to the abstract syntax tree.
 --
 -- See: 
 --
@@ -27,9 +28,7 @@ module Language.Python.Version2.Parser (
    -- * Parsing statements
    parseStmt,
    -- * Parsing expressions
-   parseExpr,
-   -- * Parse errors
-   ParseError) where
+   parseExpr) where
 
 import Language.Python.Version2.Parser.Parser (parseFileInput, parseSingleInput, parseEval)
 import Language.Python.Version2.Parser.Lexer (initStartCodeStack)

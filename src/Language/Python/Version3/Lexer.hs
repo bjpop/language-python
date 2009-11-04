@@ -8,16 +8,14 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
--- A lexer and set of tokens for Python version 3 programs. 
--- See: <http://www.python.org/doc/3.0/reference/lexical_analysis.html>.
+-- Lexical analysis for Python version 3.x programs. 
+-- See: <http://www.python.org/doc/3.1/reference/lexical_analysis.html>.
 -----------------------------------------------------------------------------
 
 module Language.Python.Version3.Lexer (
    -- * Lexical analysis
    lex, 
-   lexOneToken,
-   -- * Parse errors
-   ParseError) where
+   lexOneToken) where
 
 import Prelude hiding (lex)
 import Language.Python.Version3.Parser.Lexer (lexToken, initStartCodeStack)

@@ -1,9 +1,9 @@
 name:                language-python
-version:             0.1.2
+version:             0.2
 cabal-version:       >= 1.2
 synopsis:            Parsing and pretty printing of Python code. 
-description:         language-python is a Haskell library for parsing and pretty printing
-                     Python code. Currently it only supports Python version 3.0. 
+description:         language-python is a Haskell library for lexical analysis, parsing 
+                     and pretty printing Python code. It supports versions 2.x and 3.x of Python. 
 category:            Language
 license:             BSD3
 license-file:        LICENSE
@@ -23,6 +23,7 @@ Library
    build-tools:      happy, alex
    exposed-modules:
       Language.Python.Common
+      Language.Python.Common.ParseError
       Language.Python.Common.SrcLocation
       Language.Python.Common.Pretty
       Language.Python.Common.Token
@@ -36,6 +37,7 @@ Library
       Language.Python.Version2.Parser
       Language.Python.Version2.Lexer
       Language.Python.Common.PrettyParseError
+      Language.Python.Common.StringEscape
    other-modules:
       Language.Python.Common.ParserMonad
       Language.Python.Common.ParserUtils

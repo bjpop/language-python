@@ -7,7 +7,7 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
--- A wrapper module for the python version 2.x parser/lexer. 
+-- A convenient re-export of the parser and lexer for version 2.x of Python. 
 --
 -- See: 
 --
@@ -19,9 +19,12 @@
 -- the various Python top-levels, which correspond to the parsers provided here.
 -----------------------------------------------------------------------------
 
-module Language.Python.Version2 (module Parser, module Lexer, module Token, module AST) where
+module Language.Python.Version2 (
+   -- * The parser
+   module Language.Python.Version2.Parser, 
+   -- * The lexer
+   module Language.Python.Version2.Lexer 
+   ) where
 
-import Language.Python.Version2.Parser as Parser 
-import Language.Python.Version2.Lexer as Lexer hiding (ParseError)
-import Language.Python.Common.Token as Token
-import Language.Python.Common.AST as AST
+import Language.Python.Version2.Parser 
+import Language.Python.Version2.Lexer 

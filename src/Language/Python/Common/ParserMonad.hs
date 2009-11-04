@@ -47,6 +47,7 @@ module Language.Python.Common.ParserMonad
 
 import Language.Python.Common.SrcLocation (SrcLocation (..), SrcSpan (..), Span (..))
 import Language.Python.Common.Token (Token (..))
+import Language.Python.Common.ParseError (ParseError (..))
 import Control.Applicative ((<$>))
 import Control.Monad.State.Class
 import Control.Monad.State.Strict as State
@@ -55,17 +56,6 @@ import Control.Monad.Error.Class
 import Control.Monad.Identity as Identity
 import Control.Monad.Trans as Trans
 import Language.Python.Common.Pretty
-
-data ParseError  
-   = UnexpectedToken Token 
-   | UnexpectedChar Char SrcLocation  
-   | StrError String 
-   deriving (Eq, Ord, Show)
-
--- XXX should probably use extensible exceptions
-instance Error ParseError where
-   noMsg = StrError ""
-   strMsg = StrError 
 
 internalError :: String -> P a 
 internalError = throwError . StrError 

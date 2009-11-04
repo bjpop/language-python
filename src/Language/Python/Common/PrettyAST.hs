@@ -7,10 +7,10 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
--- Pretty printing of the Python abstract syntax (version 2 and 3). 
+-- Pretty printing of the Python abstract syntax (version 2.x and 3.x). 
 -----------------------------------------------------------------------------
 
-module Language.Python.Common.PrettyAST where
+module Language.Python.Common.PrettyAST () where
 
 import Language.Python.Common.Pretty
 import Language.Python.Common.AST 

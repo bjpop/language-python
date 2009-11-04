@@ -8,13 +8,11 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
--- Source location information for the Python parser. 
--- XXX We will probably move to source spans at some point.
+-- Source location information for the Python lexer and parser. This module
+-- provides single-point locations and spans, and conversions between them.
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.SrcLocation (
-  -- * Projection of locations from values 
-  Location (..),
   -- * Construction 
   SrcLocation (..),
   SrcSpan (..),
@@ -30,6 +28,7 @@ module Language.Python.Common.SrcLocation (
   incLine,
   incTab,
   endCol,
+  -- * Projection of components of a span
   endRow,
   startCol,
   startRow
@@ -52,17 +51,12 @@ data SrcLocation =
 instance Pretty SrcLocation where
    pretty = pretty . getSpan
 
--- | Types which have a source location.
-class Location a where
-   -- | Project the location from a value.
-   location :: a -> SrcLocation 
-   -- | By default a value has no location. 
-   location x = NoLocation
-
+-- | Types which have a span.
 class Span a where
    getSpan :: a -> SrcSpan
    getSpan x = SpanEmpty
 
+-- | Create a new span which encloses two spanned things.
 spanning :: (Span a, Span b) => a -> b -> SrcSpan
 spanning x y = combineSrcSpans (getSpan x) (getSpan y)
 
@@ -124,13 +118,16 @@ Inspired heavily by compiler/basicTypes/SrcLoc.lhs
 A SrcSpan delimits a portion of a text file.  
 -}
 
+-- | Source location spanning a contiguous section of a file.
 data SrcSpan
+    -- | A span which starts and ends on the same line.
   = SpanCoLinear
     { span_filename     :: !String
     , span_row          :: {-# UNPACK #-} !Int
     , span_start_column :: {-# UNPACK #-} !Int
     , span_end_column   :: {-# UNPACK #-} !Int
     }
+    -- | A span which starts and ends on different lines.
   | SpanMultiLine
     { span_filename     :: !String
     , span_start_row    :: {-# UNPACK #-} !Int
@@ -138,11 +135,13 @@ data SrcSpan
     , span_end_row      :: {-# UNPACK #-} !Int
     , span_end_column   :: {-# UNPACK #-} !Int
     }
+    -- | A span which is actually just one point in the file.
   | SpanPoint
     { span_filename :: !String
     , span_row      :: {-# UNPACK #-} !Int
     , span_column   :: {-# UNPACK #-} !Int
     }
+    -- | No span information.
   | SpanEmpty 
    deriving (Eq,Ord,Show,Typeable,Data)
 
@@ -169,7 +168,7 @@ instance Span SrcLocation where
         }
    getSpan NoLocation = SpanEmpty 
 
--- make a point span from the start of a span
+-- | Make a point span from the start of a span
 spanStartPoint :: SrcSpan -> SrcSpan
 spanStartPoint SpanEmpty = SpanEmpty
 spanStartPoint span = 
@@ -179,6 +178,8 @@ spanStartPoint span =
    , span_column = startCol span
    }
 
+-- | Make a span from two locations. Assumption: either the
+-- arguments are the same, or the left one preceeds the right one.
 mkSrcSpan :: SrcLocation -> SrcLocation -> SrcSpan
 mkSrcSpan NoLocation _ = SpanEmpty
 mkSrcSpan _ NoLocation = SpanEmpty 
@@ -216,24 +217,28 @@ combineSrcSpans start end
   col2 = endCol end
   file = span_filename start
 
+-- | Get the row of the start of a span.
 startRow :: SrcSpan -> Int
 startRow (SpanCoLinear { span_row = row }) = row
 startRow (SpanMultiLine { span_start_row = row }) = row
 startRow (SpanPoint { span_row = row }) = row
 startRow SpanEmpty = error "startRow called on empty span"
 
+-- | Get the row of the end of a span.
 endRow :: SrcSpan -> Int
 endRow (SpanCoLinear { span_row = row }) = row
 endRow (SpanMultiLine { span_end_row = row }) = row
 endRow (SpanPoint { span_row = row }) = row
 endRow SpanEmpty = error "endRow called on empty span"
 
+-- | Get the column of the start of a span.
 startCol :: SrcSpan -> Int
 startCol (SpanCoLinear { span_start_column = col }) = col 
 startCol (SpanMultiLine { span_start_column = col }) = col 
 startCol (SpanPoint { span_column = col }) = col 
 startCol SpanEmpty = error "startCol called on empty span"
 
+-- | Get the column of the end of a span.
 endCol :: SrcSpan -> Int
 endCol (SpanCoLinear { span_end_column = col }) = col 
 endCol (SpanMultiLine { span_end_column = col }) = col 

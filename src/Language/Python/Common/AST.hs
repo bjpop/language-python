@@ -8,18 +8,20 @@
 -- Stability   : experimental
 -- Portability : ghc
 --
--- Representation of the Python version 2 abstract syntax. 
+-- Representation of the Python abstract syntax tree (AST). The representation is
+-- a superset of versions 2.x and 3.x of Python. In many cases they are 
+-- identical. The documentation in this module indicates where they are
+-- different.
 --
--- See: 
---
--- * <http://www.python.org/doc/2.6/reference/index.html> for an overview of the language. 
---
--- * <http://www.python.org/doc/2.6/reference/grammar.html> for the full grammar.
+-- All the data types have a (polymorphic) parameter which allows the AST to
+-- be annotated by an arbitrary type (for example source locations). Specialised
+-- instances of the types are provided for source spans. For example @Module a@ is
+-- the type of modules, and @ModuleSpan@ is the type of modules annoted with source
+-- span information.
 --
 -- Note: there are cases where the AST is more liberal than the formal grammar
 -- of the language. Therefore some care must be taken when constructing
--- Python programs using the raw AST. XXX At some point we should provide
--- smart constructors which ensure syntactic correctness of the AST.
+-- Python programs using the raw AST. 
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.AST ( 
@@ -64,14 +66,15 @@ import Data.Data
 
 --------------------------------------------------------------------------------
 
+-- | Convenient access to annotations in annotated types. 
 class Annotated t where
+   -- | Given an annotated type, project out its annotation value.
    annot :: t annot -> annot
 
 -- | Identifier.
 data Ident annot = Ident { ident_string :: !String, ident_annot :: annot }
    deriving (Eq,Ord,Show,Typeable,Data)
 
--- | Identifier, annotated with source span.
 type IdentSpan = Ident SrcSpan
 
 instance Span IdentSpan where
@@ -80,31 +83,42 @@ instance Span IdentSpan where
 instance Annotated Ident where
    annot = ident_annot
 
--- | A module (Python source file). See <http://www.python.org/doc/3.0/reference/toplevel_components.html>.
+-- | A module (Python source file). 
+--
+--    * Version 2.6 <http://www.python.org/doc/2.6/reference/toplevel_components.html>
+-- 
+--    * Version 3.1 <http://www.python.org/doc/3.1/reference/toplevel_components.html> 
+-- 
 newtype Module annot = Module [Statement annot] -- ^ A module is just a sequence of top-level statements.
    deriving (Eq,Ord,Show,Typeable,Data)
 
--- | Module, annotated with source span.
 type ModuleSpan = Module SrcSpan
 
 -- | A block of statements. A suite is a group of statements controlled by a clause, 
--- for example, the body of a loop. See <http://www.python.org/doc/3.0/reference/compound_stmts.html>.
+-- for example, the body of a loop. 
+--
+--    * Version 2.6 <http://www.python.org/doc/2.6/reference/compound_stmts.html>
+-- 
+--    * Version 3.1 <http://www.python.org/doc/3.1/reference/compound_stmts.html>
+--
 type Suite annot = [Statement annot] 
 
--- | Suite, annotated with source span.
 type SuiteSpan = Suite SrcSpan
 
 -- | A compound name constructed with the dot operator.
 type DottedName annot = [Ident annot]
 
--- | Dotted Name, annotated with source span.
 type DottedNameSpan = DottedName SrcSpan 
 
 -- | An entity imported using the \'import\' keyword.
--- See <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-import-statement>.
+-- 
+--    * Version 2.6 <http://www.python.org/doc/2.6/reference/simple_stmts.html#the-import-statement>
+--
+--    * Version 3.1 <http://www.python.org/doc/3.1/reference/simple_stmts.html#the-import-statement> 
+--
 data ImportItem annot = 
    ImportItem 
-   { import_item_name :: DottedName annot -- ^ The name of module to import.
+   { import_item_name :: DottedName annot   -- ^ The name of module to import.
    , import_as_name :: Maybe (Ident annot)  -- ^ An optional name to refer to the entity (the \'as\' name). 
    , import_item_annot :: annot
    }
@@ -119,10 +133,14 @@ instance Annotated ImportItem where
    annot = import_item_annot 
 
 -- | An entity imported using the \'from ... import\' construct.
--- See <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-import-statement>
+--
+--    * Version 2.6 <http://www.python.org/doc/2.6/reference/simple_stmts.html#the-import-statement>
+-- 
+--    * Version 3.1 <http://www.python.org/doc/3.1/reference/simple_stmts.html#the-import-statement>
+--
 data FromItem annot = 
    FromItem 
-   { from_item_name :: Ident annot -- ^ The name of the entity imported. 
+   { from_item_name :: Ident annot       -- ^ The name of the entity imported. 
    , from_as_name :: Maybe (Ident annot) -- ^ An optional name to refer to the entity (the \'as\' name).
    , from_item_annot :: annot
    }
@@ -169,11 +187,18 @@ instance Annotated ImportRelative where
 
 -- | Statements.
 --
---  See:
+--    * Simple statements:
 --
--- * <http://www.python.org/doc/3.0/reference/simple_stmts.html>
+--       * Version 2.6 <http://www.python.org/doc/2.6/reference/simple_stmts.html>
+-- 
+--       * Version 3.1 <http://www.python.org/doc/3.1/reference/simple_stmts.html>
 --
--- * <http://www.python.org/doc/3.0/reference/compound_stmts.html>
+--    * Compound statements:
+--
+--       * Version 2.6 <http://www.python.org/doc/2.6/reference/compound_stmts.html>
+--
+--       * Version 3.1 <http://www.python.org/doc/3.1/reference/compound_stmts.html>
+--
 data Statement annot 
    -- | Import statement.
    = Import 
@@ -186,14 +211,14 @@ data Statement annot
      , from_items :: FromItems annot -- ^ Items to import.
      , stmt_annot :: annot
      }
-   -- | While loop. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-while-statement>.
+   -- | While loop. 
    | While 
      { while_cond :: Expr annot -- ^ Loop condition.
      , while_body :: Suite annot -- ^ Loop body.
      , while_else :: Suite annot -- ^ Else clause.
      , stmt_annot :: annot
      }
-   -- | For loop. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-for-statement>.
+   -- | For loop. 
    | For 
      { for_targets :: [Expr annot] -- ^ Loop variables.
      , for_generator :: Expr annot -- ^ Loop generator. 
@@ -201,7 +226,7 @@ data Statement annot
      , for_else :: Suite annot -- ^ Else clause.
      , stmt_annot :: annot
      }
-   -- | Function definition. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#function-definitions>.
+   -- | Function definition. 
    | Fun 
      { fun_name :: Ident annot -- ^ Function name.
      , fun_args :: [Parameter annot] -- ^ Function parameter list.
@@ -209,26 +234,26 @@ data Statement annot
      , fun_body :: Suite annot -- ^ Function body.
      , stmt_annot :: annot 
      }
-   -- | Class definition. See <http://www.python.org/doc/3.0/reference/compound_stmts.html#class-definitions>.
+   -- | Class definition. 
    | Class 
      { class_name :: Ident annot -- ^ Class name.
      , class_args :: [Argument annot] -- ^ Class argument list. In version 2.x this is only ArgExprs. 
      , class_body :: Suite annot -- ^ Class body.
      , stmt_annot :: annot
      }
-   -- | Conditional statement (if-elif-else). See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-if-statement>.  
+   -- | Conditional statement (if-elif-else). 
    | Conditional 
      { cond_guards :: [(Expr annot, Suite annot)] -- ^ Sequence of if-elif conditional clauses.
      , cond_else :: Suite annot -- ^ Possibly empty unconditional else clause.
      , stmt_annot :: annot
      }
-   -- | Assignment statement. See <http://www.python.org/doc/3.0/reference/simple_stmts.html#assignment-statements>.
+   -- | Assignment statement. 
    | Assign 
-     { assign_to :: [Expr annot] -- ^ Entity to assign to. XXX perhaps this should not be a list.
+     { assign_to :: [Expr annot] -- ^ Entity to assign to. 
      , assign_expr :: Expr annot -- ^ Expression to evaluate.
      , stmt_annot :: annot
      }
-   -- | Augmented assignment statement. See <http://www.python.org/doc/3.0/reference/simple_stmts.html#augmented-assignment-statements>.
+   -- | Augmented assignment statement. 
    | AugmentedAssign 
      { aug_assign_to :: Expr annot -- ^ Entity to assign to.
      , aug_assign_op :: AssignOp annot -- ^ Assignment operator (for example \'+=\').
@@ -241,12 +266,12 @@ data Statement annot
      , decorated_def :: Statement annot -- ^ Function or class definition to be decorated.
      , stmt_annot :: annot 
      }
-   -- | Return statement (may only occur syntactically nested in a function definition). See <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-return-statement>.
+   -- | Return statement (may only occur syntactically nested in a function definition). 
    | Return 
      { return_expr :: Maybe (Expr annot) -- ^ Optional expression to evaluate and return to caller.
      , stmt_annot :: annot 
      }
-   -- | Try statement (exception handling). See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-try-statement>.
+   -- | Try statement (exception handling). 
    | Try 
      { try_body :: Suite annot -- ^ Try clause.
      , try_excepts :: [Handler annot] -- ^ Exception handlers.
@@ -254,66 +279,59 @@ data Statement annot
      , try_finally :: Suite annot -- ^ Possibly empty finally clause.
      , stmt_annot :: annot
      }
-   -- | Raise statement (exception throwing). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-raise-statement>
+   -- | Raise statement (exception throwing). 
    | Raise 
      { raise_expr :: RaiseExpr annot 
      , stmt_annot :: annot
      }
-   -- | With statement (context management). See <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-with-statement>. And also see: <http://www.python.org/dev/peps/pep-0343/>.
+   -- | With statement (context management). 
    | With 
      { with_context :: [(Expr annot, Maybe (Expr annot))] -- ^ Context expression(s) (yields a context manager).
      , with_body :: Suite annot -- ^ Suite to be managed.
      , stmt_annot :: annot
      }
-   -- | Pass statement (null operation). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-pass-statement>
+   -- | Pass statement (null operation). 
    | Pass { stmt_annot :: annot }
-   -- | Break statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition within that loop). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-break-statement>.
+   -- | Break statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition within that loop). 
    | Break { stmt_annot :: annot }
-   -- | Continue statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition or finally clause within that loop). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-continue-statement>.
+   -- | Continue statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition or finally clause within that loop). 
    | Continue { stmt_annot :: annot }
-   -- | Del statement (delete). See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-del-statement>. 
+   -- | Del statement (delete). 
    | Delete 
      { del_exprs :: [Expr annot] -- ^ Items to delete.
      , stmt_annot :: annot 
      }
-   -- | Expression statement. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#expression-statements>. 
+   -- | Expression statement. 
    | StmtExpr { stmt_expr :: Expr annot, stmt_annot :: annot }
-   -- | Global declaration. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-global-statement>. 
+   -- | Global declaration. 
    | Global 
      { global_vars :: [Ident annot] -- ^ Variables declared global in the current block.
      , stmt_annot :: annot
      }
-   -- | Nonlocal declaration. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-nonlocal-statement>.
+   -- | Nonlocal declaration. /Version 3.x only/. 
    | NonLocal 
      { nonLocal_vars :: [Ident annot] -- ^ Variables declared nonlocal in the current block (their binding comes from bound the nearest enclosing scope).
      , stmt_annot :: annot
      }
-   -- | Assertion. See: <http://www.python.org/doc/3.0/reference/simple_stmts.html#the-assert-statement>.
+   -- | Assertion. 
    | Assert 
      { assert_exprs :: [Expr annot] -- ^ Expressions being asserted.
      , stmt_annot :: annot
      }
-   -- | Print statement. Version 2 only. See <http://docs.python.org/reference/simple_stmts.html#the-print-statement>
+   -- | Print statement. /Version 2 only/. 
    | Print 
      { print_chevron :: Bool -- ^ Optional chevron (>>)
      , print_exprs :: [Expr annot] -- ^ Arguments to print
      , print_trailing_comma :: Bool -- ^ Does it end in a comma?
      , stmt_annot :: annot 
      }
-   -- | Exec statement. Version 2 only. See <http://docs.python.org/reference/simple_stmts.html#grammar-token-exec_stmt> 
+   -- | Exec statement. /Version 2 only/. 
    | Exec
-     { exec_expr :: Expr annot
-     , exec_globals_locals :: Maybe (Expr annot, Maybe (Expr annot))
+     { exec_expr :: Expr annot -- ^ Expression to exec.
+     , exec_globals_locals :: Maybe (Expr annot, Maybe (Expr annot)) -- ^ Global and local environments to evaluate the expression within.
      , stmt_annot :: annot 
      }
    deriving (Eq,Ord,Show,Typeable,Data)
-
-data RaiseExpr annot
-   = RaiseV3 (Maybe (Expr annot, Maybe (Expr annot))) -- ^ Optional expression to evaluate, and optional \'from\' clause.
-   | RaiseV2 (Maybe (Expr annot, (Maybe (Expr annot, Maybe (Expr annot)))))
-   deriving (Eq,Ord,Show,Typeable,Data)
-
-type RaiseExprSpan = RaiseExpr SrcSpan
 
 type StatementSpan = Statement SrcSpan
 
@@ -322,6 +340,14 @@ instance Span StatementSpan where
 
 instance Annotated Statement where
    annot = stmt_annot 
+
+-- | The argument for a @raise@ statement.
+data RaiseExpr annot
+   = RaiseV3 (Maybe (Expr annot, Maybe (Expr annot))) -- ^ Optional expression to evaluate, and optional \'from\' clause. /Version 3 only/.
+   | RaiseV2 (Maybe (Expr annot, (Maybe (Expr annot, Maybe (Expr annot))))) -- ^ /Version 2 only/.
+   deriving (Eq,Ord,Show,Typeable,Data)
+
+type RaiseExprSpan = RaiseExpr SrcSpan
 
 -- | Decorator.
 data Decorator annot = 
@@ -342,11 +368,18 @@ instance Annotated Decorator where
 
 -- | Formal parameter of function definitions and lambda expressions.
 -- 
--- See:
+-- * Version 2.6: 
 --
--- * <http://www.python.org/doc/3.0/reference/compound_stmts.html#function-definitions>
+-- * <http://www.python.org/doc/2.6/reference/compound_stmts.html#function-definitions>
 --
--- * <http://www.python.org/doc/3.0/reference/expressions.html#calls>
+-- * <http://www.python.org/doc/2.6/reference/expressions.html#calls>
+--
+-- * Version 3.1: 
+--
+-- * <http://www.python.org/doc/3.1/reference/compound_stmts.html#function-definitions>
+--
+-- * <http://www.python.org/doc/3.1/reference/expressions.html#calls>
+--
 data Parameter annot
    -- | Ordinary named parameter.
    = Param 
@@ -369,10 +402,10 @@ data Parameter annot
      }
    -- | Marker for the end of positional parameters (not a parameter itself).
    | EndPositional { param_annot :: annot }
-   -- | Tuple unpack. Version 2 only.
+   -- | Tuple unpack. /Version 2 only/.
    | UnPackTuple 
-     { param_unpack_tuple :: ParamTuple annot
-     , param_default :: Maybe (Expr annot)
+     { param_unpack_tuple :: ParamTuple annot -- ^ The tuple to unpack.
+     , param_default :: Maybe (Expr annot) -- ^ Optional default value.
      , param_annot :: annot
      }
    deriving (Eq,Ord,Show,Typeable,Data)
@@ -385,9 +418,10 @@ instance Span ParameterSpan where
 instance Annotated Parameter where
    annot = param_annot 
 
+-- | Tuple unpack parameter. /Version 2 only/.
 data ParamTuple annot
-   = ParamTupleName { param_tuple_name :: Ident annot, param_tuple_annot :: annot }
-   | ParamTuple { param_tuple :: [ParamTuple annot], param_tuple_annot :: annot } 
+   = ParamTupleName { param_tuple_name :: Ident annot, param_tuple_annot :: annot } -- ^ A variable name.
+   | ParamTuple { param_tuple :: [ParamTuple annot], param_tuple_annot :: annot } -- ^ A (possibly nested) tuple parameter.
    deriving (Eq,Ord,Show,Typeable,Data)
 
 type ParamTupleSpan = ParamTuple SrcSpan
@@ -422,7 +456,7 @@ instance Span ArgumentSpan where
 instance Annotated Argument where
    annot = arg_annot 
 
--- | Exception handler. See: <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-try-statement>.
+-- | Exception handler. 
 data Handler annot
    = Handler 
      { handler_clause :: ExceptClause annot
@@ -439,7 +473,7 @@ instance Span HandlerSpan where
 instance Annotated Handler where
    annot = handler_annot 
 
--- | Exception clause. See: <http://www.python.org/doc/3.0/reference/compound_stmts.html#the-try-statement>.
+-- | Exception clause. 
 data ExceptClause annot
    = ExceptClause 
      -- NB: difference with version 3 (has NAME as target, but looks like bug in grammar)
@@ -456,7 +490,7 @@ instance Span ExceptClauseSpan where
 instance Annotated ExceptClause where
    annot = except_clause_annot 
 
--- | Comprehension. See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries> 
+-- | Comprehension. In version 3.x this can be used for lists, sets, dictionaries and generators. 
 data Comprehension e annot
    = Comprehension 
      { comprehension_expr :: e
@@ -473,7 +507,7 @@ instance Span (ComprehensionSpan e) where
 instance Annotated (Comprehension e) where
    annot = comprehension_annot 
 
--- | Comprehension \'for\' component. See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>
+-- | Comprehension \'for\' component. 
 data CompFor annot = 
    CompFor 
    { comp_for_exprs :: [Expr annot]
@@ -491,7 +525,7 @@ instance Span CompForSpan where
 instance Annotated CompFor where
    annot = comp_for_annot 
 
--- | Comprehension guard. See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>.
+-- | Comprehension guard. 
 data CompIf annot = 
    CompIf 
    { comp_if :: Expr annot
@@ -508,7 +542,7 @@ instance Span CompIfSpan where
 instance Annotated CompIf where
    annot = comp_if_annot 
 
--- | Comprehension iterator (either a \'for\' or an \'if\'). See: <http://www.python.org/doc/3.0/reference/expressions.html#displays-for-lists-sets-and-dictionaries>.
+-- | Comprehension iterator (either a \'for\' or an \'if\'). 
 data CompIter annot 
    = IterFor { comp_iter_for :: CompFor annot, comp_iter_annot :: annot }
    | IterIf { comp_iter_if :: CompIf annot, comp_iter_annot :: annot }
@@ -522,15 +556,18 @@ instance Span CompIterSpan where
 instance Annotated CompIter where
    annot = comp_iter_annot 
 
--- | Expression.
+-- | Expressions.
 -- 
--- See: <http://www.python.org/doc/3.0/reference/expressions.html>.
+-- * Version 2.6 <http://www.python.org/doc/2.6/reference/expressions.html>.
+-- 
+-- * Version 3.1 <http://www.python.org/doc/3.1/reference/expressions.html>.
+-- 
 data Expr annot
    -- | Variable.
    = Var { var_ident :: Ident annot, expr_annot :: annot }
    -- | Literal integer.
    | Int { int_value :: Integer, expr_literal :: String, expr_annot :: annot }
-   -- | Long literal integer. Version 2 only.
+   -- | Long literal integer. /Version 2 only/.
    | LongInt { int_value :: Integer, expr_literal :: String, expr_annot :: annot }
    -- | Literal floating point number.
    | Float { float_value :: Double, expr_literal :: String, expr_annot :: annot }
@@ -546,17 +583,17 @@ data Expr annot
    | ByteStrings { byte_string_strings :: [String], expr_annot :: annot }
    -- | Literal strings (to be concatentated together).
    | Strings { strings_strings :: [String], expr_annot :: annot }
-   -- | Function call. See: <http://www.python.org/doc/3.0/reference/expressions.html#calls>.
+   -- | Function call. 
    | Call 
      { call_fun :: Expr annot -- ^ Expression yielding a callable object (such as a function).
      , call_args :: [Argument annot] -- ^ Call arguments.
      , expr_annot :: annot
      }
-   -- | Subscription, for example \'x [y]\'. See: <http://www.python.org/doc/3.0/reference/expressions.html#id5>.
+   -- | Subscription, for example \'x [y]\'. 
    | Subscript { subscriptee :: Expr annot, subscript_exprs :: [Expr annot], expr_annot :: annot }
-   -- | Slicing, for example \'w [x:y:z]\'. See: <http://www.python.org/doc/3.0/reference/expressions.html#id6>.
+   -- | Slicing, for example \'w [x:y:z]\'. 
    | SlicedExpr { slicee :: Expr annot, slices :: [Slice annot], expr_annot :: annot } 
-   -- | Conditional expresison. See: <http://www.python.org/doc/3.0/reference/expressions.html#boolean-operations>. 
+   -- | Conditional expresison. 
    | CondExpr 
      { ce_true_branch :: Expr annot -- ^ Expression to evaluate if condition is True.
      , ce_condition :: Expr annot -- ^ Boolean condition.
@@ -567,34 +604,34 @@ data Expr annot
    | BinaryOp { operator :: Op annot, left_op_arg :: Expr annot, right_op_arg :: Expr annot, expr_annot :: annot }
    -- | Unary operator application.
    | UnaryOp { operator :: Op annot, op_arg :: Expr annot, expr_annot :: annot }
-   -- | Anonymous function definition (lambda). See: <http://www.python.org/doc/3.0/reference/expressions.html#id15>.
+   -- | Anonymous function definition (lambda). 
    | Lambda { lambda_args :: [Parameter annot], lambda_body :: Expr annot, expr_annot :: annot }
-   -- | N-ary tuple of arity greater than 0. The list should not be empty.
+   -- | Tuple. Can be empty. 
    | Tuple { tuple_exprs :: [Expr annot], expr_annot :: annot }
-   -- | Generator yield. See: <http://www.python.org/doc/3.0/reference/expressions.html#yield-expressions>.
+   -- | Generator yield. 
    | Yield 
      { yield_expr :: Maybe (Expr annot) -- ^ Optional expression to yield.
      , expr_annot :: annot
      }
-   -- | Generator. See: <http://www.python.org/doc/3.0/reference/expressions.html#generator-expressions>.
+   -- | Generator. 
    | Generator { gen_comprehension :: Comprehension (Expr annot) annot, expr_annot :: annot }
-   -- | List comprehension. See: <http://www.python.org/doc/3.0/reference/expressions.html#list-displays>.
+   -- | List comprehension. 
    | ListComp { list_comprehension :: Comprehension (Expr annot) annot, expr_annot :: annot }
-   -- | List. See: <http://www.python.org/doc/3.0/reference/expressions.html#list-displays>.
+   -- | List. 
    | List { list_exprs :: [Expr annot], expr_annot :: annot }
-   -- | Dictionary. See: <http://www.python.org/doc/3.0/reference/expressions.html#dictionary-displays>.
+   -- | Dictionary. 
    | Dictionary { dict_mappings :: [(Expr annot, Expr annot)], expr_annot :: annot }
-   -- | Dictionary comprehension. See: <http://www.python.org/doc/3.0/reference/expressions.html#dictionary-displays>.
+   -- | Dictionary comprehension. /Version 3 only/. 
    | DictComp { dict_comprehension :: Comprehension (Expr annot, Expr annot) annot, expr_annot :: annot }
-   -- | Set. See: <http://www.python.org/doc/3.0/reference/expressions.html#set-displays>.
+   -- | Set. 
    | Set { set_exprs :: [Expr annot], expr_annot :: annot } 
-   -- | Set comprehension. <http://www.python.org/doc/3.0/reference/expressions.html#set-displays>.
+   -- | Set comprehension. /Version 3 only/. 
    | SetComp { set_comprehension :: Comprehension (Expr annot) annot, expr_annot :: annot }
-   -- | Starred expression. 
+   -- | Starred expression. /Version 3 only/.
    | Starred { starred_expr :: Expr annot, expr_annot :: annot }
    -- | Parenthesised expression.
    | Paren { paren_expr :: Expr annot, expr_annot :: annot }
-   -- | String conversion (backquoted expression). Version 2 only. See: <http://docs.python.org/reference/expressions.html#grammar-token-string_conversion>.
+   -- | String conversion (backquoted expression). Version 2 only. 
    | StringConversion { backquoted_expr :: Expr annot, expr_anot :: annot }
    deriving (Eq,Ord,Show,Typeable,Data)
 
@@ -606,6 +643,7 @@ instance Span ExprSpan where
 instance Annotated Expr where
    annot = expr_annot 
 
+-- | Slice compenent.
 data Slice annot
    = SliceProper 
      { slice_lower :: Maybe (Expr annot)
