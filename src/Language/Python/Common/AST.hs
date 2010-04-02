@@ -590,7 +590,7 @@ data Expr annot
      , expr_annot :: annot
      }
    -- | Subscription, for example \'x [y]\'. 
-   | Subscript { subscriptee :: Expr annot, subscript_exprs :: [Expr annot], expr_annot :: annot }
+   | Subscript { subscriptee :: Expr annot, subscript_expr :: Expr annot, expr_annot :: annot }
    -- | Slicing, for example \'w [x:y:z]\'. 
    | SlicedExpr { slicee :: Expr annot, slices :: [Slice annot], expr_annot :: annot } 
    -- | Conditional expresison. 

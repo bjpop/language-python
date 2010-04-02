@@ -44,7 +44,7 @@ instance Span Trailer where
   getSpan = trailer_span
 
 data Subscript
-   = SubscriptExpr { subscript_expr :: ExprSpan, subscript_span :: SrcSpan }
+   = SubscriptExpr { subscription :: ExprSpan, subscript_span :: SrcSpan }
    | SubscriptSlice 
      { subscript_slice_span1 :: Maybe ExprSpan
      , subscript_slice_span2 :: Maybe ExprSpan
@@ -69,10 +69,14 @@ subscriptToSlice (SubscriptSliceEllipsis span)
    = SliceEllipsis span
 
 subscriptToExpr :: Subscript -> ExprSpan
-subscriptToExpr sub@(SubscriptExpr {}) = subscript_expr sub 
--- this should never happen:
-subscriptToExpr (SubscriptSlice {}) 
-   = error "subscriptToExpr applied to a proper slice"
+subscriptToExpr (SubscriptExpr { subscription = s }) = s
+subscriptToExpr other = error "subscriptToExpr applied to non subscript"
+
+subscriptsToExpr :: [Subscript] -> ExprSpan
+subscriptsToExpr subs
+   | length subs > 1 = Tuple (map subscriptToExpr subs) (getSpan subs)
+   | length subs == 1 = subscriptToExpr $ head subs
+   | otherwise = error "subscriptsToExpr: empty subscript list"
 
 {-
    = TrailerCall { trailer_call_args :: [ArgumentSpan], trailer_span :: SrcSpan }
@@ -91,7 +95,7 @@ addTrailer
       | any isProperSlice subs
            = SlicedExpr e (map subscriptToSlice subs) (spanning e trail) 
       | otherwise 
-           = Subscript e (map subscriptToExpr subs) (spanning e trail) 
+           = Subscript e (subscriptsToExpr subs) (spanning e trail) 
    trail e trail@(TrailerDot { trailer_dot_ident = ident, dot_span = ds })
       = BinaryOp (AST.Dot ds) e (Var ident (getSpan ident)) (spanning e trail)
 

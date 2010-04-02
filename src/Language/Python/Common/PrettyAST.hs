@@ -223,8 +223,8 @@ instance Pretty (Expr a) where
    pretty (ByteStrings { byte_string_strings = bs }) = hcat (map pretty bs)
    pretty (Strings { strings_strings = ss }) = hcat (map prettyString ss)
    pretty (Call { call_fun = f, call_args = args }) = pretty f <> prettyParenList args
-   pretty (Subscript { subscriptee = e, subscript_exprs = subs })
-      = pretty e <> brackets (commaList subs)
+   pretty (Subscript { subscriptee = e, subscript_expr = sub })
+      = pretty e <> brackets (pretty sub)
    pretty (SlicedExpr { slicee = e, slices = ss })
       = pretty e <> brackets (commaList ss) 
    pretty (CondExpr { ce_true_branch = trueBranch, ce_condition = cond, ce_false_branch = falseBranch })
