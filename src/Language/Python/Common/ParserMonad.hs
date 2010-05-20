@@ -74,6 +74,7 @@ data ParseState =
    , lastEOL :: !SrcSpan      -- location of the most recent end-of-line encountered
    , comments :: [Token]      -- accumulated comments 
    }
+   deriving Show
 
 initToken :: Token
 initToken = NewlineToken SpanEmpty 

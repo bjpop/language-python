@@ -27,6 +27,7 @@ Library
       Language.Python.Common.SrcLocation
       Language.Python.Common.Pretty
       Language.Python.Common.Token
+      Language.Python.Common.ParserMonad
       Language.Python.Common.PrettyToken
       Language.Python.Common.AST
       Language.Python.Common.PrettyAST
@@ -39,7 +40,6 @@ Library
       Language.Python.Common.PrettyParseError
       Language.Python.Common.StringEscape
    other-modules:
-      Language.Python.Common.ParserMonad
       Language.Python.Common.ParserUtils
       Language.Python.Common.LexerUtils
       Language.Python.Version3.Parser.Parser

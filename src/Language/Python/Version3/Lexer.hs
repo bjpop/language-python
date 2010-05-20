@@ -15,7 +15,9 @@
 module Language.Python.Version3.Lexer (
    -- * Lexical analysis
    lex, 
-   lexOneToken) where
+   lexOneToken,
+   lexer,
+   initLexState ) where
 
 import Prelude hiding (lex)
 import Language.Python.Version3.Parser.Lexer (lexToken, initStartCodeStack)
@@ -24,15 +26,16 @@ import Language.Python.Common.SrcLocation (initialSrcLocation)
 import Language.Python.Common.ParserMonad 
        (ParseState (input), P, runParser, execParser, ParseError, initialState)
 
+initLexState :: String -> String -> ParseState
+initLexState input srcName = 
+   initialState (initialSrcLocation srcName) input initStartCodeStack
+
 -- | Parse a string into a list of Python Tokens, or return an error. 
 lex :: String -- ^ The input stream (python source code). 
     -> String -- ^ The name of the python source (filename or input device).
     -> Either ParseError [Token] -- ^ An error or a list of tokens.
 lex input srcName =
-   execParser lexer state
-   where
-   initLoc = initialSrcLocation srcName
-   state = initialState initLoc input initStartCodeStack
+   execParser lexer $ initLexState input srcName
 
 -- | Try to lex the first token in an input string. Return either a parse error
 -- or a pair containing the next token and the rest of the input after the token.
@@ -44,9 +47,9 @@ lexOneToken source srcName =
       Left err -> Left err
       Right (tok, state) -> Right (tok, input state)
    where
-   initLoc = initialSrcLocation srcName
-   state = initialState initLoc source initStartCodeStack
+   state = initLexState source srcName 
 
+-- | Lex a sequence of tokens.
 lexer :: P [Token]
 lexer = loop []
    where
