@@ -185,7 +185,7 @@ mkSrcSpan NoLocation _ = SpanEmpty
 mkSrcSpan _ NoLocation = SpanEmpty 
 mkSrcSpan loc1 loc2
   | line1 == line2 = 
-       if col1 == col2
+       if col2 <= col1 
           then SpanPoint file line1 col1
           else SpanCoLinear file line1 col1 col2
   | otherwise = 

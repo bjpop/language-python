@@ -47,7 +47,8 @@ bolEndOfLine lexToken bol span len inp = do
 dedentation :: P Token -> Action
 dedentation lexToken span _len _str = do
    topIndent <- getIndent
-   case compare (endCol span) topIndent of
+   -- case compare (endCol span) topIndent of
+   case compare (startCol span) topIndent of
       EQ -> do popStartCode
                lexToken 
       LT -> do popIndent
@@ -69,16 +70,18 @@ indentation lexToken dedentCode bo span _len _str = do
       then lexToken
       else do 
          topIndent <- getIndent
-         case compare (endCol span) topIndent of
+         -- case compare (endCol span) topIndent of
+         case compare (startCol span) topIndent of
             EQ -> case bo of
                      BOF -> lexToken
                      BOL -> newlineToken   
             LT -> do pushStartCode dedentCode 
                      newlineToken 
-            GT -> do pushIndent (endCol span)
-                     return indentToken 
+            -- GT -> do pushIndent (endCol span)
+            GT -> do pushIndent (startCol span)
+                     return indentToken
    where
-   indentToken = IndentToken span 
+   indentToken = IndentToken span
 
 symbolToken :: (SrcSpan -> Token) -> Action 
 symbolToken mkToken location _ _ = return (mkToken location)
