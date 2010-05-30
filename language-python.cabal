@@ -1,6 +1,6 @@
 name:                language-python
 version:             0.3.0
-cabal-version:       >= 1.2
+cabal-version:       >= 1.6
 synopsis:            Parsing and pretty printing of Python code. 
 description:         language-python is a Haskell library for lexical analysis, parsing 
                      and pretty printing Python code. It supports versions 2.x and 3.x of Python. 
