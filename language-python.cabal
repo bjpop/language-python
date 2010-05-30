@@ -8,9 +8,9 @@ category:            Language
 license:             BSD3
 license-file:        LICENSE
 copyright:           (c) 2008-2010 Bernard James Pope
-author:              Bernard James Pope 
-maintainer:          bjpop@csse.unimelb.edu.au
-homepage:            http://projects.haskell.org/language-python/
+author:              Bernard James Pope (Bernie Pope)
+maintainer:          florbitous@gmail.com
+homepage:            http://github.com/bjpop/language-python 
 build-depends:       base
 build-type:          Simple
 stability:           experimental
