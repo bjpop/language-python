@@ -18,7 +18,12 @@ extra-source-files:  src/Language/Python/Version3/Parser/Parser.y
                      src/Language/Python/Version3/Parser/Lexer.x 
 
 Library
-   hs-source-dirs:   src
+   -- work around the memory usage bug in ghc 6.12.x
+   if impl(ghc < 6.12) || impl(ghc > 6.12)
+      hs-source-dirs: src ghc_normal
+   else 
+      hs-source-dirs: src ghc_6_12
+
    build-depends:    base == 4.*, containers < 0.4, pretty == 1.0.*, array < 0.4, transformers == 0.2.*, 
                      monads-tf == 0.1.*
    build-tools:      happy, alex
