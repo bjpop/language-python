@@ -16,6 +16,8 @@ build-type:          Simple
 stability:           experimental
 extra-source-files:  src/Language/Python/Version3/Parser/Parser.y 
                      src/Language/Python/Version3/Parser/Lexer.x 
+                     ghc_6_12-13/Language/Python/Common/AST.hs 
+                     ghc_normal/Language/Python/Common/AST.hs 
 
 Library
    -- work around the memory usage bug in ghc 6.12.x
