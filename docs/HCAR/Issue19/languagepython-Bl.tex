@@ -1,0 +1,24 @@
+% languagepython-Bl.tex
+\begin{hcarentry}[new]{language-python}
+\label{language-python}
+\report{Bernie Pope}%11/10
+\status{stable}
+\makeheader
+
+Language-python is a Haskell library for lexical analysis,
+parsing, and pretty printing Python code. It supports versions 2.x
+and 3.x of Python. The parser is implemented using the happy
+parser generator, and the alex lexer generator.
+It supports source accurate span information and optional parsing of
+comments. A separate package called language-python-colour is available
+on Hackage which demonstrates the use of the library to render
+Python source in coloured XHTML.
+the library is also used for the syntactic analysis component of the berp
+Python compiler~\cref{berp}.
+
+\FurtherReading
+\begin{compactitem}
+\item \url{http://hackage.haskell.org/package/language-python}
+\item \url{http://github.com/bjpop/language-python}
+\end{compactitem}
+\end{hcarentry}

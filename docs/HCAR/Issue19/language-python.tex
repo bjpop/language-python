@@ -1,0 +1,32 @@
+\documentclass{scrreprt}
+\usepackage{paralist}
+\usepackage{graphicx}
+\usepackage[final]{hcar}
+
+\begin{document}
+
+\begin{hcarentry}{language-python}
+\report{Bernie Pope}
+\status{stable}
+%\participants{}% optional
+\makeheader
+
+Language-python is a Haskell library for lexical analysis,
+parsing and pretty printing Python code. It supports versions 2.x
+and 3.x of Python. The parser is implemented using the happy
+parser generator, and the alex lexer generator.
+It supports source accurate span information and optional parsing of
+comments. A separate package called language-python-colour is available
+on Hackage which demonstrates the use of the library to render
+Python source in coloured XHTML.
+It is also used for the syntactic analysis component of the berp
+Python compiler.
+
+\FurtherReading
+The latest version of language-python, 0.3.2, is available on Hackage.
+The source code repository can be browsed or downloaded from Github:
+\url{http://github.com/bjpop/language-python}.
+
+\end{hcarentry}
+
+\end{document}
