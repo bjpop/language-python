@@ -59,6 +59,7 @@ $not_double_quote = [. \n] # \"
 @two_double_quotes = \"\" $not_double_quote
 @byte_str_prefix = b | B
 @raw_str_prefix = r | R
+@unicode_str_prefix = u | U
 @raw_byte_str_prefix = @byte_str_prefix @raw_str_prefix
 @backslash_pair = \\ (\\|'|\"|@eol_pattern|$short_str_char)
 @backslash_pair_bs = \\ (\\|'|\"|@eol_pattern|$short_byte_str_char)
@@ -100,28 +101,32 @@ $white_no_nl+  ;  -- skip whitespace
    0 (b | B) $bin_digit+ (l | L) { token LongIntegerToken (readBinary.init) }
 }
 
--- String literals 
+-- String literals
 
 <0> {
    ' @short_str_item_single* ' { mkString stringToken }
    @raw_str_prefix ' @short_str_item_single* ' { mkString rawStringToken }
    @byte_str_prefix ' @short_byte_str_item_single* ' { mkString byteStringToken }
    @raw_byte_str_prefix ' @short_byte_str_item_single* ' { mkString rawByteStringToken }
+   @unicode_str_prefix ' @short_str_item_single* ' { mkString unicodeStringToken }
 
    \" @short_str_item_double* \" { mkString stringToken }
    @raw_str_prefix \" @short_str_item_double* \" { mkString rawStringToken }
    @byte_str_prefix \" @short_byte_str_item_double* \" { mkString byteStringToken }
    @raw_byte_str_prefix \" @short_byte_str_item_double* \" { mkString rawByteStringToken }
+   @unicode_str_prefix \" @short_str_item_double* \" { mkString unicodeStringToken }
 
    ''' @long_str_item_single* ''' { mkString stringToken }
    @raw_str_prefix ''' @long_str_item_single* ''' { mkString rawStringToken }
    @byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString byteStringToken }
    @raw_byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString rawByteStringToken }
+   @unicode_str_prefix ''' @long_str_item_single* ''' { mkString unicodeStringToken }
 
    \"\"\" @long_str_item_double* \"\"\" { mkString stringToken }
    @raw_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString rawStringToken }
    @byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString byteStringToken }
    @raw_byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString rawByteStringToken }
+   @unicode_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString unicodeStringToken }
 }
 
 -- NOTE: we pass lexToken into some functions as an argument.

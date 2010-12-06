@@ -116,6 +116,7 @@ import Data.Maybe (maybeToList)
    'return'        { ReturnToken {} }
    'string'        { StringToken {} }
    'try'           { TryToken {} }
+   'unicodestring' { UnicodeStringToken {} }
    'while'         { WhileToken {} }
    'with'          { WithToken {} }
    'yield'         { YieldToken {} }
@@ -766,6 +767,7 @@ atom
    | 'imaginary'                    { AST.Imaginary (token_double $1) (token_literal $1) (getSpan $1) }
    | many1('string')                { AST.Strings (map token_literal $1) (getSpan $1) }
    | many1('bytestring')            { AST.ByteStrings (map token_literal $1) (getSpan $1) }
+   | many1('unicodestring')         { AST.UnicodeStrings (map token_literal $1) (getSpan $1) }
 
 -- listmaker: test ( list_for | (',' test)* [','] )
 

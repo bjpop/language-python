@@ -222,6 +222,7 @@ instance Pretty (Expr a) where
    pretty Ellipsis {} = text "..."
    pretty (ByteStrings { byte_string_strings = bs }) = hcat (map pretty bs)
    pretty (Strings { strings_strings = ss }) = hcat (map prettyString ss)
+   pretty (UnicodeStrings { unicodestrings_strings = ss }) = hcat (map prettyString ss)
    pretty (Call { call_fun = f, call_args = args }) = pretty f <> prettyParenList args
    pretty (Subscript { subscriptee = e, subscript_expr = sub })
       = pretty e <> brackets (pretty sub)

@@ -45,6 +45,7 @@ data Token
    -- Literals
    | StringToken { token_span :: !SrcSpan, token_literal :: !String }                   -- ^ Literal: string.
    | ByteStringToken { token_span :: !SrcSpan, token_literal :: !String }    -- ^ Literal: byte string.
+   | UnicodeStringToken { token_span :: !SrcSpan, token_literal :: !String } -- ^ Literal: unicode string, version 2 only.
    | IntegerToken { token_span :: !SrcSpan, token_literal :: !String, token_integer :: !Integer }                 -- ^ Literal: integer.
    | LongIntegerToken { token_span :: !SrcSpan, token_literal :: !String, token_integer :: !Integer }             -- ^ Literal: long integer. /Version 2 only/.
    | FloatToken { token_span :: !SrcSpan, token_literal :: !String, token_double :: !Double }                     -- ^ Literal: floating point.

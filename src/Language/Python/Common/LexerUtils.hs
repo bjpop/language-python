@@ -134,16 +134,19 @@ mkString toToken loc len str = do
    return $ toToken loc (take len str)
 
 stringToken :: SrcSpan -> String -> Token
-stringToken loc str = StringToken loc str
+stringToken = StringToken
 
 rawStringToken :: SrcSpan -> String -> Token
-rawStringToken loc str = StringToken loc str
+rawStringToken = StringToken
 
 byteStringToken :: SrcSpan -> String -> Token
-byteStringToken loc str = ByteStringToken loc $ str
+byteStringToken = ByteStringToken
+
+unicodeStringToken :: SrcSpan -> String -> Token
+unicodeStringToken = UnicodeStringToken
 
 rawByteStringToken :: SrcSpan -> String -> Token
-rawByteStringToken loc str = ByteStringToken loc $ str
+rawByteStringToken = ByteStringToken
 
 openParen :: (SrcSpan -> Token) -> Action
 openParen mkToken loc _len _str = do

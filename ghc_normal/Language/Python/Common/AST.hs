@@ -583,6 +583,8 @@ data Expr annot
    | ByteStrings { byte_string_strings :: [String], expr_annot :: annot }
    -- | Literal strings (to be concatentated together).
    | Strings { strings_strings :: [String], expr_annot :: annot }
+   -- | Unicode literal strings (to be concatentated together). Version 2 only.
+   | UnicodeStrings { unicodestrings_strings :: [String], expr_annot :: annot }
    -- | Function call. 
    | Call 
      { call_fun :: Expr annot -- ^ Expression yielding a callable object (such as a function).
