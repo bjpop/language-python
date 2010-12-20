@@ -238,8 +238,11 @@ instance Pretty (Expr a) where
    pretty (UnaryOp { operator = op, op_arg = e }) = pretty op <+> pretty e
    pretty (Lambda { lambda_args = args, lambda_body = body })
       = text "lambda" <+> commaList args <> colon <+> pretty body
-   pretty (Tuple { tuple_exprs = [] }) = text "()" 
-   pretty (Tuple { tuple_exprs = es }) = commaList es
+   pretty (Tuple { tuple_exprs = es }) =
+      case es of
+         [] -> text "()"
+         [e] -> pretty e <> comma
+         _ -> commaList es
    pretty (Yield { yield_expr = e })
       = text "yield" <+> pretty e
    pretty (List { list_exprs = es }) = brackets (commaList es)
