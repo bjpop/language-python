@@ -19,6 +19,10 @@ extra-source-files:  src/Language/Python/Version3/Parser/Parser.y
                      ghc_6_12-13/Language/Python/Common/AST.hs 
                      ghc_normal/Language/Python/Common/AST.hs 
 
+flag test
+  description: Build testsuite
+  default: False
+
 Library
    -- work around the memory usage bug in ghc 6.12.x
    if impl(ghc < 6.12) || impl(ghc >= 6.14)

@@ -1,0 +1,30 @@
+Notes about the development of language-python
+----------------------------------------------
+
+Testing
+-------
+
+How to test the parser? What to test for?
+
+Idea: round trip parsing:
+
+   parseAndPrint < test.py > out_1.py
+
+It may not be the case that test.py == out_1.py, using string equality on the
+contents of the python files. Even the ASTs might be different (eg
+parenthesising, line numbers).
+
+So we run printAndParse on the output:
+
+   parseAndPrint < out_1.py > out_2.py
+
+Hypothesis: out_1.py and out_2.py will be identical source files: we've
+reached a fixed point. If they are not equal then there is a bug in either
+the parser or the pretty printer or both.
+
+Issues: this combines testing of the parser and pretty printer. It may
+be desirable to test them in isolation - but is it worth the extra
+effort?
+
+It is harder to test the parser in isolation because its output is an
+AST. Constructing expected ASTs is tedious, even for small programs.
