@@ -14,6 +14,7 @@ homepage:            http://github.com/bjpop/language-python
 build-depends:       base
 build-type:          Simple
 stability:           experimental
+source-repository:   https://github.com/bjpop/language-python
 extra-source-files:  src/Language/Python/Version3/Parser/Parser.y 
                      src/Language/Python/Version3/Parser/Lexer.x 
                      ghc_6_12-13/Language/Python/Common/AST.hs 
