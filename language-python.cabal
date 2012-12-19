@@ -14,12 +14,14 @@ homepage:            http://github.com/bjpop/language-python
 build-depends:       base
 build-type:          Simple
 stability:           experimental
-source-repository:   https://github.com/bjpop/language-python
 extra-source-files:  src/Language/Python/Version3/Parser/Parser.y 
                      src/Language/Python/Version3/Parser/Lexer.x 
                      ghc_6_12-13/Language/Python/Common/AST.hs 
                      ghc_normal/Language/Python/Common/AST.hs 
 
+source-repository head
+   type: git
+   location: https://github.com/bjpop/language-python
 
 Library
    -- work around the memory usage bug in ghc 6.12.x
