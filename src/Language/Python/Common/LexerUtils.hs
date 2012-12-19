@@ -17,6 +17,8 @@ import Control.Monad (liftM)
 import Control.Monad.Error.Class (throwError)
 import Data.List (foldl')
 import Data.Map as Map hiding (null, map)
+import Data.Word (Word8)
+import Data.Char (ord)
 import Numeric (readHex, readOct)
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.ParserMonad hiding (location)
@@ -190,6 +192,12 @@ alexGetChar (loc, input)
    nextChar = head input
    rest = tail input 
    nextLoc = moveChar nextChar loc
+
+mapFst :: (a -> b) -> (a, c) -> (b, c)
+mapFst f (a, c) = (f a, c)
+
+alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
+alexGetByte = fmap (mapFst (fromIntegral . ord)) . alexGetChar
 
 moveChar :: Char -> SrcLocation -> SrcLocation 
 moveChar '\n' = incLine 1 
