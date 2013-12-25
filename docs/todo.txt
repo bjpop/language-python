@@ -1,0 +1,49 @@
+Leaving backslashes in escaped raw strings
+
+According to documentation of both Python 2.7.6 and 3.3:
+"Even in a raw string, string quotes can be escaped with a backslash, but the backslash remains in the string"
+
+In Python r"\"" interprets as \" , but
+unescapeRawString "\\"" is " .
+
+--------------------------------------------------------------------------------
+
+Escaped triple quotes
+
+Parser does not support escaped triple quotes:
+
+\"""
+
+--------------------------------------------------------------------------------
+
+'rb' specifier for raw bytestrings
+
+The parser does not support the 'rb' specifier for raw byte strings, but apparently does support the 'br' form.
+
+--------------------------------------------------------------------------------
+
+unicode characters
+
+The parser doesn't support unicode characters. The original reason was because it was not supported by the Alex lexer generator. However, it seems Alex does now support unicode, so this issue should be revisited:
+
+http://www.haskell.org/alex/doc/html/api.html#encoding
+
+--------------------------------------------------------------------------------
+
+pretty printer forces very long lines
+
+The Pretty instances for the AST allow few newlines, especially in expressions. Why not use sep instead of hsep in the definition of commaList?
+
+(edited to include links for identifiers)
+
+--------------------------------------------------------------------------------
+
+Parser fails at EOF without newline
+
+parseStmt and parseModule fail when there is no newline at the end of input. This differs from the cpython behaviour:
+
+Prelude Language.Python.Version2.Parser> parseStmt "print 42" ""
+Left (UnexpectedToken (EOFToken {token_span = SpanEmpty}))
+Even though the Python grammar in fact requires a newline, I think the cpython lexer implicitly inserts a newline at EOF when there is none. Also I think it would be nice at least for parseStmt to succeed (at the very least, it is at first quite hard to see why it fails)
+
+--------------------------------------------------------------------------------
