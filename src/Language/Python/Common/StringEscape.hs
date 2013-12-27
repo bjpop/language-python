@@ -29,6 +29,8 @@ module Language.Python.Common.StringEscape (
 import Numeric (readHex, readOct)
 
 -- | Convert escaped sequences of characters into /real/ characters in a normal Python string.
+
+-- XXX does not handle escaped unicode literals
 unescapeString :: String -> String
 unescapeString ('\\':'\\':cs) = '\\' : unescapeString cs -- Backslash (\)
 unescapeString ('\\':'\'':cs) = '\'' : unescapeString cs -- Single quote (')
@@ -48,15 +50,31 @@ unescapeString ('\\':'x':rest@(h:_))
 unescapeString (c:cs) = c : unescapeString cs 
 unescapeString [] = []
 
+{-
+-- | This function is a placeholder for unescaping characters in raw strings. 
+-- The Python documentation explicitly says that 
+-- "When an 'r' or 'R' prefix is present, a character following a backslash is included 
+-- in the string without change, and all backslashes are left in the string."
+-- However it also says that When an 'r' or 'R' prefix is used in conjunction with
+-- a 'u' or 'U' prefix, then the \uXXXX and \UXXXXXXXX escape sequences are processed
+-- while all other backslashes are left in the string. Currently the function is the identity
+-- but it ought to process unicode escape sequences.
+-}
+
+-- XXX does not handle escaped unicode literals
+unescapeRawString :: String -> String
+unescapeRawString = id
+
+{-
 -- | Convert escaped sequences of characters into /real/ characters in a raw Python string.
 -- Note: despite their name, Python raw strings do allow a small set of character escapings,
 -- namely the single and double quote characters and the line continuation marker.
-unescapeRawString :: String -> String
 unescapeRawString ('\\':'\'':cs) = '\'' : unescapeRawString cs -- Single quote (')
 unescapeRawString ('\\':'"':cs) = '"' : unescapeRawString cs -- Double quote (")
 unescapeRawString ('\\':'\n':cs) = unescapeRawString cs -- line continuation
 unescapeRawString (c:cs) = c : unescapeRawString cs
 unescapeRawString [] = []
+-}
 
 {- 
    This is a bit complicated because Python allows between 1 and 3 octal
