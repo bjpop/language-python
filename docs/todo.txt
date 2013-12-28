@@ -1,13 +1,5 @@
 --------------------------------------------------------------------------------
 
-Escaped triple quotes
-
-Parser does not support escaped triple quotes:
-
-\"""
-
---------------------------------------------------------------------------------
-
 unicode characters
 
 The parser doesn't support unicode characters. The original reason was because it was not supported by the Alex lexer generator. However, it seems Alex does now support unicode, so this issue should be revisited:
