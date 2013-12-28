@@ -227,12 +227,23 @@ lexToken = do
   startCode <- getStartCode
   case alexScan (location, input) startCode of
     AlexEOF -> do
-       depth <- getIndentStackDepth
-       if depth <= 1
-          then return endOfFileToken
-          else do
-             popIndent
-             return dedentToken
+       -- Ensure there is a newline token before the EOF
+       previousToken <- getLastToken
+       case previousToken of
+          NewlineToken {} -> do
+             -- Ensure that there is sufficient dedent
+             -- tokens for the outstanding indentation
+             -- levels
+             depth <- getIndentStackDepth
+             if depth <= 1
+                then return endOfFileToken
+                else do
+                   popIndent
+                   return dedentToken
+          other -> do
+             let insertedNewlineToken = NewlineToken $ mkSrcSpan location location
+             setLastToken insertedNewlineToken
+             return insertedNewlineToken
     AlexError _ -> lexicalError
     AlexSkip (nextLocation, rest) len -> do
        setLocation nextLocation
