@@ -30,11 +30,15 @@ Library
    else 
       hs-source-dirs: src ghc_6_12-13
 
+   if (impl(ghc < 7.8))
+     build-depends: array == 0.4.*
+   else
+     build-depends: array == 0.5.*
+
    build-depends:
       base == 4.*,
       containers == 0.5.*,
       pretty == 1.1.*,
-      array == 0.4.*,
       transformers == 0.3.*,
       monads-tf == 0.1.*
    build-tools:      happy, alex
