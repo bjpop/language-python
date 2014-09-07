@@ -35,7 +35,7 @@ Library
       containers == 0.5.*,
       pretty == 1.1.*,
       array >= 0.4 && < 0.6,
-      transformers == 0.3.*,
+      transformers >= 0.3 && < 0.5,
       monads-tf == 0.1.*
    build-tools:      happy, alex
    exposed-modules:
