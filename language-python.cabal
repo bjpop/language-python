@@ -1,5 +1,5 @@
 name:                language-python
-version:             0.4.0
+version:             0.4.1
 cabal-version:       >= 1.6
 synopsis:            Parsing and pretty printing of Python code. 
 description:         language-python is a Haskell library for lexical analysis, parsing 
@@ -7,7 +7,7 @@ description:         language-python is a Haskell library for lexical analysis, 
 category:            Language
 license:             BSD3
 license-file:        LICENSE
-copyright:           (c) 2008-2012 Bernard James Pope
+copyright:           (c) 2008-2014 Bernard James Pope
 author:              Bernard James Pope (Bernie Pope)
 maintainer:          florbitous@gmail.com
 homepage:            http://github.com/bjpop/language-python 
