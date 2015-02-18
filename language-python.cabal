@@ -11,7 +11,6 @@ copyright:           (c) 2008-2014 Bernard James Pope
 author:              Bernard James Pope (Bernie Pope)
 maintainer:          florbitous@gmail.com
 homepage:            http://github.com/bjpop/language-python 
-build-depends:       base
 build-type:          Simple
 stability:           experimental
 extra-source-files:  src/Language/Python/Version3/Parser/Parser.y 
