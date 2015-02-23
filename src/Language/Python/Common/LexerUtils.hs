@@ -23,6 +23,9 @@ import Numeric (readHex, readOct)
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.ParserMonad hiding (location)
 import Language.Python.Common.SrcLocation 
+import Codec.Binary.UTF8.String as UTF8 (encode)
+
+type Byte = Word8
 
 -- Beginning of. BOF = beginning of file, BOL = beginning of line
 data BO = BOF | BOL
@@ -106,13 +109,13 @@ newlineToken = do
 
 -- Test if we are at the end of the line or file
 atEOLorEOF :: a -> AlexInput -> Int -> AlexInput -> Bool
-atEOLorEOF _user _inputBeforeToken _tokenLength (_loc, inputAfterToken) 
+atEOLorEOF _user _inputBeforeToken _tokenLength (_loc, _bs, inputAfterToken) 
    = null inputAfterToken || nextChar == '\n' || nextChar == '\r'
    where
    nextChar = head inputAfterToken 
 
 notEOF :: a -> AlexInput -> Int -> AlexInput -> Bool
-notEOF _user _inputBeforeToken _tokenLength (_loc, inputAfterToken) 
+notEOF _user _inputBeforeToken _tokenLength (_loc, _bs, inputAfterToken) 
    = not (null inputAfterToken)
 
 readBinary :: String -> Integer
@@ -179,25 +182,36 @@ matchParen _ _ = False
 -- -----------------------------------------------------------------------------
 -- Functionality required by Alex 
 
-type AlexInput = (SrcLocation, String)
+type AlexInput = (SrcLocation,  -- current src location
+                 [Byte],        -- byte buffer for next character
+                 String)        -- input string
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar _ = error "alexInputPrevChar not used"
 
+-- byte buffer should be empty here
 alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
-alexGetChar (loc, input) 
+alexGetChar (loc, [], input) 
    | null input  = Nothing
-   | otherwise = Just (nextChar, (nextLoc, rest))
+   | otherwise = seq nextLoc (Just (nextChar, (nextLoc, [], rest)))
    where
    nextChar = head input
    rest = tail input 
    nextLoc = moveChar nextChar loc
+alexGetChar (loc, _:_, _) = error "alexGetChar called with non-empty byte buffer"
 
-mapFst :: (a -> b) -> (a, c) -> (b, c)
-mapFst f (a, c) = (f a, c)
+-- mapFst :: (a -> b) -> (a, c) -> (b, c)
+-- mapFst f (a, c) = (f a, c)
 
-alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte = fmap (mapFst (fromIntegral . ord)) . alexGetChar
+alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
+-- alexGetByte = fmap (mapFst (fromIntegral . ord)) . alexGetChar
+alexGetByte (loc, b:bs, input) = Just (b, (loc, bs, input))
+alexGetByte (loc, [], []) = Nothing
+alexGetByte (loc, [], nextChar:rest) =
+   seq nextLoc (Just (byte, (nextLoc, restBytes, rest)))
+   where
+   nextLoc = moveChar nextChar loc
+   byte:restBytes = UTF8.encode [nextChar]
 
 moveChar :: Char -> SrcLocation -> SrcLocation 
 moveChar '\n' = incLine 1 

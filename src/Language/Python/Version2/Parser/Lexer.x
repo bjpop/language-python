@@ -225,7 +225,7 @@ lexToken = do
   location <- getLocation
   input <- getInput
   startCode <- getStartCode
-  case alexScan (location, input) startCode of
+  case alexScan (location, [], input) startCode of
     AlexEOF -> do
        -- Ensure there is a newline token before the EOF
        previousToken <- getLastToken
@@ -245,11 +245,11 @@ lexToken = do
              setLastToken insertedNewlineToken
              return insertedNewlineToken
     AlexError _ -> lexicalError
-    AlexSkip (nextLocation, rest) len -> do
+    AlexSkip (nextLocation, _bytes, rest) len -> do
        setLocation nextLocation
        setInput rest
        lexToken
-    AlexToken (nextLocation, rest) len action -> do
+    AlexToken (nextLocation, _bytes, rest) len action -> do
        setLocation nextLocation
        setInput rest
        token <- action (mkSrcSpan location $ decColumn 1 nextLocation) len input

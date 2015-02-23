@@ -117,6 +117,7 @@ import Data.Maybe (maybeToList)
    'string'        { StringToken {} }
    'True'          { TrueToken {} }
    'try'           { TryToken {} }
+   'unicodestring' { UnicodeStringToken {} }
    'while'         { WhileToken {} }
    'with'          { WithToken {} }
    'yield'         { YieldToken {} }
@@ -779,6 +780,7 @@ atom : '(' yield_or_testlist_comp ')' { $2 (spanning $1 $3) }
      | 'imaginary'                    { AST.Imaginary (token_double $1) (token_literal $1) (getSpan $1) }
      | many1('string')                { AST.Strings (map token_literal $1) (getSpan $1) }
      | many1('bytestring')            { AST.ByteStrings (map token_literal $1) (getSpan $1) }
+     | many1('unicodestring')         { AST.UnicodeStrings (map token_literal $1) (getSpan $1) }
      | '...'                          { AST.Ellipsis (getSpan $1) }
      | 'None'                         { AST.None (getSpan $1) }
      | 'True'                         { AST.Bool Prelude.True (getSpan $1) }

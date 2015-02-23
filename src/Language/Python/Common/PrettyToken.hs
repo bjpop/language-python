@@ -24,6 +24,7 @@ instance Pretty Token where
         IndentToken {} -> text "indentation"
         DedentToken {} -> text "dedentation"
         NewlineToken {} -> text "end of line" 
+        LineJoinToken {} -> text "line join"
         CommentToken { token_literal = str } -> 
            text "comment:" <+> prettyPrefix 10 str
         IdentifierToken { token_literal = str } ->
@@ -32,6 +33,8 @@ instance Pretty Token where
            text "string:" <+> prettyPrefix 10 str
         ByteStringToken { token_literal = str } ->
            text "byte string:" <+> prettyPrefix 10 str
+        UnicodeStringToken { token_literal = str } ->
+           text "unicode string:" <+> prettyPrefix 10 str
         IntegerToken { token_literal = str } ->
            text "integer:" <+> text str 
         LongIntegerToken { token_literal = str } ->
@@ -123,4 +126,3 @@ instance Pretty Token where
         NotEqualsToken {} -> text "!="
         NotEqualsV2Token {} -> text "<>"
         EOFToken {} -> text "end of input"
-        LineJoinToken {} -> text "line join"
