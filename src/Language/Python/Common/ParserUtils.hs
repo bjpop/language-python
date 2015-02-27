@@ -164,8 +164,10 @@ makeSet e (Left compFor) = SetComp (Comprehension e compFor (spanning e compFor)
 makeSet e (Right es) = Set (e:es)
 
 makeDictionary :: (ExprSpan, ExprSpan) -> Either CompForSpan [(ExprSpan,ExprSpan)] -> SrcSpan -> ExprSpan
-makeDictionary e (Left compFor) = DictComp (Comprehension e compFor (spanning e compFor))
-makeDictionary e (Right es) = Dictionary (e:es)
+makeDictionary mapping@(key, val) (Left compFor) =
+   DictComp (Comprehension (DictMappingPair key val) compFor (spanning mapping compFor))
+makeDictionary (key, val) (Right es) =
+   Dictionary (DictMappingPair key val: map (\(e1, e2) -> DictMappingPair e1 e2) es)
 
 fromEither :: Either a a -> a
 fromEither (Left x) = x

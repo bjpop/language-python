@@ -853,8 +853,9 @@ testlistrev
 
 -- dictmaker: test ':' test (',' test ':' test)* [',']
 
-dictmaker :: { [(ExprSpan, ExprSpan)] }
-dictmaker: sepOptEndBy(pair(test,right(':',test)), ',') { $1 }
+dictmaker :: { [DictMappingPairSpan ] }
+dictmaker: sepOptEndBy(pair(test,right(':',test)), ',')
+   { map (\(e1, e2) -> DictMappingPair e1 e2) $1 }
 
 -- classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 

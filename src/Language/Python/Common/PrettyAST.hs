@@ -245,13 +245,20 @@ instance Pretty (Expr a) where
          _ -> commaList es
    pretty (Yield { yield_expr = e })
       = text "yield" <+> pretty e
+   pretty (Generator { gen_comprehension = gc }) = parens $ pretty gc
+   pretty (ListComp { list_comprehension = lc }) = brackets $ pretty lc
    pretty (List { list_exprs = es }) = brackets (commaList es)
    pretty (Dictionary { dict_mappings = mappings })
-      = braces (hsep (punctuate comma $ map (\ (e1,e2) -> pretty e1 <> colon <> pretty e2) mappings))
+      = braces (hsep (punctuate comma $ map pretty mappings))
+   pretty (DictComp { dict_comprehension = dc }) = braces $ pretty dc
    pretty (Set { set_exprs = es }) = braces $ commaList es
-   pretty (ListComp { list_comprehension = lc }) = brackets $ pretty lc
-   pretty (Generator { gen_comprehension = gc }) = parens $ pretty gc
+   pretty (SetComp { set_comprehension = sc }) = braces $ pretty sc
    pretty (Paren { paren_expr = e }) = parens $ pretty e
+   pretty (StringConversion { backquoted_expr = e }) = char '`' <> pretty e <> char '`'
+   pretty (Starred { starred_expr = e }) = char '*' <> pretty e
+
+instance Pretty (DictMappingPair a) where
+   pretty (DictMappingPair key val) = pretty key <> colon <+> pretty val
 
 instance Pretty (Slice a) where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })
