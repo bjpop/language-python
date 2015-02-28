@@ -853,7 +853,7 @@ testlistrev
 
 -- dictmaker: test ':' test (',' test ':' test)* [',']
 
-dictmaker :: { [DictMappingPairSpan ] }
+dictmaker :: { [DictMappingPairSpan] }
 dictmaker: sepOptEndBy(pair(test,right(':',test)), ',')
    { map (\(e1, e2) -> DictMappingPair e1 e2) $1 }
 

@@ -44,6 +44,7 @@ module Language.Python.Common.AST (
    , Op (..), OpSpan
    , Argument (..), ArgumentSpan
    , Slice (..), SliceSpan
+   , DictMappingPair (..), DictMappingPairSpan
    -- * Imports
    , ImportItem (..), ImportItemSpan
    , FromItem (..), FromItemSpan
@@ -622,9 +623,9 @@ data Expr annot
    -- | List. 
    | List { list_exprs :: [Expr annot], expr_annot :: annot }
    -- | Dictionary. 
-   | Dictionary { dict_mappings :: [(Expr annot, Expr annot)], expr_annot :: annot }
+   | Dictionary { dict_mappings :: [DictMappingPair annot], expr_annot :: annot }
    -- | Dictionary comprehension. /Version 3 only/. 
-   | DictComp { dict_comprehension :: Comprehension (Expr annot, Expr annot) annot, expr_annot :: annot }
+   | DictComp { dict_comprehension :: Comprehension (DictMappingPair annot) annot, expr_annot :: annot }
    -- | Set. 
    | Set { set_exprs :: [Expr annot], expr_annot :: annot } 
    -- | Set comprehension. /Version 3 only/. 
@@ -644,6 +645,12 @@ instance Span ExprSpan where
 
 instance Annotated Expr where
    annot = expr_annot 
+
+data DictMappingPair annot =
+   DictMappingPair (Expr annot) (Expr annot)
+   deriving (Eq,Ord,Show,Typeable,Data)
+
+type DictMappingPairSpan = DictMappingPair SrcSpan 
 
 -- | Slice compenent.
 data Slice annot
