@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, TypeSynonymInstances, CPP, DeriveDataTypeable, DeriveFunctor, StandaloneDeriving #-}
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances, CPP, DeriveDataTypeable, DeriveFunctor #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Version2.Syntax.AST 
