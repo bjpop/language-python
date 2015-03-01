@@ -78,12 +78,6 @@ subscriptsToExpr subs
    | length subs == 1 = subscriptToExpr $ head subs
    | otherwise = error "subscriptsToExpr: empty subscript list"
 
-{-
-   = TrailerCall { trailer_call_args :: [ArgumentSpan], trailer_span :: SrcSpan }
-   | TrailerSubscript { trailer_subs :: [Subscript], trailer_span :: SrcSpan }
-   | TrailerDot { trailer_dot_ident :: IdentSpan, dot_span :: SrcSpan, trailer_span :: SrcSpan }
--}
-
 addTrailer :: ExprSpan -> [Trailer] -> ExprSpan
 addTrailer
    = foldl' trail
