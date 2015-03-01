@@ -231,11 +231,10 @@ instance Pretty (Expr a) where
    pretty (CondExpr { ce_true_branch = trueBranch, ce_condition = cond, ce_false_branch = falseBranch })
       = pretty trueBranch <+> text "if" <+> pretty cond <+> text "else" <+> pretty falseBranch
    pretty (BinaryOp { operator = op, left_op_arg = left, right_op_arg = right })
-      = pretty left <> (if isDot op then dot else space <> pretty op <> space) <> pretty right
-      where
-      isDot (Dot {}) = True
-      isDot _other = False
+      = pretty left <+> pretty op <+> pretty right
    pretty (UnaryOp { operator = op, op_arg = e }) = pretty op <+> pretty e
+   pretty (Dot { dot_expr = e, dot_attribute = a }) =
+      pretty e <> dot <> pretty a 
    pretty (Lambda { lambda_args = args, lambda_body = body })
       = text "lambda" <+> commaList args <> colon <+> pretty body
    pretty (Tuple { tuple_exprs = es }) =
@@ -297,7 +296,6 @@ instance Pretty (Op a) where
    pretty (FloorDivide {}) = text "//"
    pretty (Invert {}) = text "~"
    pretty (Modulo {}) = text "%"
-   pretty (Dot {}) = dot
 
 instance Pretty (AssignOp a) where
    pretty (PlusAssign {}) = text "+="

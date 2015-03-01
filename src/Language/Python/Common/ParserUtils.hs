@@ -91,7 +91,7 @@ addTrailer
       | otherwise 
            = Subscript e (subscriptsToExpr subs) (spanning e trail) 
    trail e trail@(TrailerDot { trailer_dot_ident = ident, dot_span = ds })
-      = BinaryOp (AST.Dot ds) e (Var ident (getSpan ident)) (spanning e trail)
+      = Dot { dot_expr = e, dot_attribute = ident, expr_annot = spanning e trail }
 
 makeTupleOrExpr :: [ExprSpan] -> Maybe Token -> ExprSpan
 makeTupleOrExpr [e] Nothing = e
@@ -193,14 +193,6 @@ makePrint chevron Nothing span = AST.Print chevron [] False span
 makePrint chevron (Just (args, last_comma)) span =
    AST.Print chevron args (isJust last_comma) span
    
-{-
-makeRelative :: Int -> ImportRelativeSpan -> SrcSpan -> ImportRelativeSpan
-makeRelative dots importRelative span
-   = importRelative { import_relative_dots = dots + oldDots, import_relative_annot = span }
-   where
-   oldDots = import_relative_dots importRelative
--}
-
 makeRelative :: [Either Token DottedNameSpan] -> ImportRelativeSpan
 makeRelative items =
    ImportRelative ndots maybeName (getSpan items) 

@@ -608,6 +608,8 @@ data Expr annot
    | BinaryOp { operator :: Op annot, left_op_arg :: Expr annot, right_op_arg :: Expr annot, expr_annot :: annot }
    -- | Unary operator application.
    | UnaryOp { operator :: Op annot, op_arg :: Expr annot, expr_annot :: annot }
+   -- Dot operator (attribute selection)
+   | Dot { dot_expr :: Expr annot, dot_attribute :: Ident annot, expr_annot :: annot }
    -- | Anonymous function definition (lambda). 
    | Lambda { lambda_args :: [Parameter annot], lambda_body :: Expr annot, expr_annot :: annot }
    -- | Tuple. Can be empty. 
@@ -717,7 +719,6 @@ data Op annot
    | FloorDivide { op_annot :: annot } -- ^ \'\/\/\'
    | Invert { op_annot :: annot } -- ^ \'~\' (bitwise inversion of its integer argument)
    | Modulo { op_annot :: annot } -- ^ \'%\'
-   | Dot { op_annot :: annot } -- ^ \'.\'
    deriving (Eq,Ord,Show,Typeable,Data)
 
 type OpSpan = Op SrcSpan
