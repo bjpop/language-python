@@ -145,21 +145,21 @@ makeTupleParam p@(ParamTupleName {}) optDefault =
 makeTupleParam p@(ParamTuple { param_tuple_annot = span }) optDefault =
    UnPackTuple p optDefault span 
 
-makeComprehension :: ExprSpan -> CompForSpan -> ComprehensionSpan ExprSpan
-makeComprehension e for = Comprehension e for (spanning e for)
+makeComprehension :: ExprSpan -> CompForSpan -> ComprehensionSpan
+makeComprehension e for = Comprehension (ComprehensionExpr e) for (spanning e for)
 
-makeListForm :: SrcSpan -> Either ExprSpan (ComprehensionSpan ExprSpan) -> ExprSpan
+makeListForm :: SrcSpan -> Either ExprSpan ComprehensionSpan -> ExprSpan
 makeListForm span (Left tuple@(Tuple {})) = List (tuple_exprs tuple) span
 makeListForm span (Left other) = List [other] span 
 makeListForm span (Right comprehension) = ListComp comprehension span
 
 makeSet :: ExprSpan -> Either CompForSpan [ExprSpan] -> SrcSpan -> ExprSpan
-makeSet e (Left compFor) = SetComp (Comprehension e compFor (spanning e compFor))
+makeSet e (Left compFor) = SetComp (Comprehension (ComprehensionExpr e) compFor (spanning e compFor))
 makeSet e (Right es) = Set (e:es)
 
 makeDictionary :: (ExprSpan, ExprSpan) -> Either CompForSpan [(ExprSpan,ExprSpan)] -> SrcSpan -> ExprSpan
 makeDictionary mapping@(key, val) (Left compFor) =
-   DictComp (Comprehension (DictMappingPair key val) compFor (spanning mapping compFor))
+   DictComp (Comprehension (ComprehensionDict (DictMappingPair key val)) compFor (spanning mapping compFor))
 makeDictionary (key, val) (Right es) =
    Dictionary (DictMappingPair key val: map (\(e1, e2) -> DictMappingPair e1 e2) es)
 
@@ -184,7 +184,7 @@ makeReturn :: Token -> Maybe ExprSpan -> StatementSpan
 makeReturn t1 Nothing = AST.Return Nothing (getSpan t1)
 makeReturn t1 expr@(Just e) = AST.Return expr (spanning t1 e)
 
-makeParenOrGenerator :: Either ExprSpan (ComprehensionSpan ExprSpan) -> SrcSpan -> ExprSpan
+makeParenOrGenerator :: Either ExprSpan ComprehensionSpan -> SrcSpan -> ExprSpan
 makeParenOrGenerator (Left e) span = Paren e span
 makeParenOrGenerator (Right comp) span = Generator comp span
 

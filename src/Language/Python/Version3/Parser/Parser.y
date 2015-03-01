@@ -804,7 +804,7 @@ yield_or_testlist_comp
 
 -- testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
 
-testlist_comp :: { Either ExprSpan (ComprehensionSpan ExprSpan) }
+testlist_comp :: { Either ExprSpan ComprehensionSpan }
 testlist_comp
    : testlist_star_expr { Left $1 }
    | or(test,star_expr) comp_for { Right (makeComprehension $1 $2) }

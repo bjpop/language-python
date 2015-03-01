@@ -781,7 +781,7 @@ dict_or_set_atom
    : '{' '}' { Dictionary [] (spanning $1 $2) }
    | '{' dictorsetmaker '}' { $2 (spanning $1 $3) }
 
-testlistfor :: { Either ExprSpan (ComprehensionSpan ExprSpan) }
+testlistfor :: { Either ExprSpan ComprehensionSpan }
 testlistfor
    : testlist { Left $1 }
    | test list_for { Right (makeComprehension $1 $2) }
@@ -794,7 +794,7 @@ yield_or_testlist_gexp
 
 -- testlist_gexp: test ( gen_for | (',' test)* [','] )
 
-testlist_gexp :: { Either ExprSpan (ComprehensionSpan ExprSpan) }
+testlist_gexp :: { Either ExprSpan ComprehensionSpan }
 testlist_gexp
    : testlist { Left $1 }
    | test gen_for { Right (makeComprehension $1 $2) }

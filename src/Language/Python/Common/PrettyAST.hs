@@ -195,9 +195,13 @@ instance Pretty (Argument a) where
    pretty (ArgKeyword { arg_keyword = ident, arg_expr = e }) 
       = pretty ident <> equals <> pretty e
 
-instance Pretty t => Pretty (Comprehension t a) where
+instance Pretty (Comprehension a) where
    pretty (Comprehension { comprehension_expr = e, comprehension_for = for }) 
       = pretty e <+> pretty for 
+
+instance Pretty (ComprehensionExpr a) where
+   pretty (ComprehensionExpr e) = pretty e
+   pretty (ComprehensionDict d) = pretty d
 
 instance Pretty (CompFor a) where
    pretty (CompFor { comp_for_exprs = es, comp_in_expr = e, comp_for_iter = iter }) 
