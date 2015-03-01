@@ -243,8 +243,8 @@ instance Pretty (Expr a) where
          [] -> text "()"
          [e] -> pretty e <> comma
          _ -> commaList es
-   pretty (Yield { yield_expr = e })
-      = text "yield" <+> pretty e
+   pretty (Yield { yield_arg = arg })
+      = text "yield" <+> pretty arg 
    pretty (Generator { gen_comprehension = gc }) = parens $ pretty gc
    pretty (ListComp { list_comprehension = lc }) = brackets $ pretty lc
    pretty (List { list_exprs = es }) = brackets (commaList es)
@@ -256,6 +256,10 @@ instance Pretty (Expr a) where
    pretty (Paren { paren_expr = e }) = parens $ pretty e
    pretty (StringConversion { backquoted_expr = e }) = char '`' <> pretty e <> char '`'
    pretty (Starred { starred_expr = e }) = char '*' <> pretty e
+
+instance Pretty (YieldArg a) where
+   pretty (YieldFrom e _annot) = text "from" <+> pretty e
+   pretty (YieldExpr e) = pretty e
 
 instance Pretty (DictMappingPair a) where
    pretty (DictMappingPair key val) = pretty key <> colon <+> pretty val

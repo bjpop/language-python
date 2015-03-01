@@ -45,6 +45,7 @@ module Language.Python.Common.AST (
    , Argument (..), ArgumentSpan
    , Slice (..), SliceSpan
    , DictMappingPair (..), DictMappingPairSpan
+   , YieldArg (..), YieldArgSpan
    -- * Imports
    , ImportItem (..), ImportItemSpan
    , FromItem (..), FromItemSpan
@@ -613,7 +614,8 @@ data Expr annot
    | Tuple { tuple_exprs :: [Expr annot], expr_annot :: annot }
    -- | Generator yield. 
    | Yield 
-     { yield_expr :: Maybe (Expr annot) -- ^ Optional expression to yield.
+     -- { yield_expr :: Maybe (Expr annot) -- ^ Optional expression to yield.
+     { yield_arg :: Maybe (YieldArg annot) -- ^ Optional Yield argument.
      , expr_annot :: annot
      }
    -- | Generator. 
@@ -642,6 +644,17 @@ type ExprSpan = Expr SrcSpan
 
 instance Span ExprSpan where
    getSpan = annot 
+
+data YieldArg annot
+   = YieldFrom (Expr annot) annot -- ^ Yield from a generator (Version 3 only)
+   | YieldExpr (Expr annot) -- ^ Yield value of an expression
+   deriving (Eq,Ord,Show,Typeable,Data)
+
+type YieldArgSpan = YieldArg SrcSpan
+
+instance Span YieldArgSpan where
+   getSpan (YieldFrom _e span) = span
+   getSpan (YieldExpr e) = getSpan e
 
 instance Annotated Expr where
    annot = expr_annot 

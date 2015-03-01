@@ -951,10 +951,16 @@ testlist1: sepBy(test, ',') { makeTupleOrExpr $1 Nothing }
 -- yield_expr: 'yield' [testlist] 
 
 yield_expr :: { ExprSpan }
-yield_expr : 'yield' optional_testlist { AST.Yield $2 (spanning $1 $2) }
+yield_expr : 'yield' optional_yieldarg { AST.Yield $2 (spanning $1 $2) }
 
 optional_testlist :: { Maybe ExprSpan }
 optional_testlist: opt(testlist) { $1 }
+
+optional_yieldarg :: { Maybe YieldArgSpan }
+optional_yieldarg : opt(yieldarg) { $1 }
+
+yieldarg :: { YieldArgSpan }
+yieldarg: testlist { YieldExpr $1 }
 
 {
 -- Put additional Haskell code in here if needed.
