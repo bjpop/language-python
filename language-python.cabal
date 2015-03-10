@@ -1,5 +1,5 @@
 name:                language-python
-version:             0.5.0
+version:             0.5.1
 cabal-version:       >= 1.6
 synopsis:            Parsing and pretty printing of Python code. 
 description:         language-python is a Haskell library for lexical analysis, parsing 
@@ -15,6 +15,8 @@ build-type:          Simple
 stability:           experimental
 extra-source-files:  src/Language/Python/Version3/Parser/Parser.y 
                      src/Language/Python/Version3/Parser/Lexer.x 
+                     src/Language/Python/Version2/Parser/Parser.y 
+                     src/Language/Python/Version2/Parser/Lexer.x 
 
 source-repository head
    type: git
@@ -30,7 +32,7 @@ Library
       array >= 0.4 && < 0.6,
       transformers >= 0.3 && < 0.5,
       monads-tf == 0.1.*,
-      utf8-string == 1
+      utf8-string >= 1 && < 2
    build-tools: happy, alex
    exposed-modules:
       Language.Python.Common
