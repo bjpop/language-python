@@ -158,15 +158,16 @@ debugTokenString token =
 hasLiteral :: Token -> Bool
 hasLiteral token =
    case token of
-      CommentToken {}     -> True 
-      IdentifierToken {}  -> True 
-      StringToken {}      -> True 
-      ByteStringToken {}  -> True 
-      IntegerToken {}     -> True 
-      LongIntegerToken {} -> True 
-      FloatToken {}       -> True 
-      ImaginaryToken  {}  -> True 
-      other               -> False
+      CommentToken {}       -> True 
+      IdentifierToken {}    -> True 
+      StringToken {}        -> True 
+      ByteStringToken {}    -> True
+      UnicodeStringToken {} -> True
+      IntegerToken {}       -> True 
+      LongIntegerToken {}   -> True 
+      FloatToken {}         -> True 
+      ImaginaryToken  {}    -> True 
+      other                 -> False
 
 -- | Classification of tokens
 data TokenClass
@@ -191,7 +192,8 @@ classifyToken token =
       CommentToken {} -> Comment 
       IdentifierToken {} -> Identifier 
       StringToken {} -> String 
-      ByteStringToken {} -> String 
+      ByteStringToken {} -> String
+      UnicodeStringToken {} -> String
       IntegerToken {} -> Number 
       LongIntegerToken {} -> Number 
       FloatToken {} -> Number 
@@ -292,7 +294,8 @@ tokenString token =
       CommentToken {} -> token_literal token
       IdentifierToken {} -> token_literal token
       StringToken {} -> token_literal token
-      ByteStringToken {} -> token_literal token 
+      ByteStringToken {} -> token_literal token
+      UnicodeStringToken {} -> token_literal token
       IntegerToken {} -> token_literal token
       LongIntegerToken {} -> token_literal token
       FloatToken {} -> token_literal token
