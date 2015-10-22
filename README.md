@@ -15,6 +15,17 @@ language-python can be installed with cabal:
 
     cabal install language-python
 
+or, if you prefer, in a sandbox (recommended):
+
+    cabal sandbox init
+    cabal update
+    cabal install happy
+    cabal install alex
+    cabal install --dry-run
+    cabal install
+
+use `-jN` for `N` threads of parallel building in the `cabal install` step if you have a multi-core machine.
+
 Testing
 -------
 
