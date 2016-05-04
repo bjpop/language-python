@@ -204,10 +204,10 @@ eval_input : testlist many0('NEWLINE') {- No need to mention ENDMARKER -} { $1 }
 --  decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
 
 opt_paren_arg_list :: { [ArgumentSpan] }
-opt_paren_arg_list: opt(paren_arg_list) { concat (maybeToList $1) }
+opt_paren_arg_list: opt(paren_arg_list) { (concat (maybeToList (fmap fst $1))) }
 
-paren_arg_list :: { [ArgumentSpan] }
-paren_arg_list : '(' optional_arg_list ')' { $2 }
+paren_arg_list :: { ([ArgumentSpan], SrcSpan) }
+paren_arg_list : '(' optional_arg_list ')' { ($2, spanning $1 $3) }
 
 decorator :: { DecoratorSpan }
 decorator 
@@ -813,7 +813,7 @@ testlist_comp
 
 trailer :: { Trailer }
 trailer 
-   : paren_arg_list { TrailerCall $1 (getSpan $1) }
+   : paren_arg_list { TrailerCall (fst $1) (snd $1) }
    | '[' subscriptlist ']' { TrailerSubscript $2 (spanning $1 $3) } 
    | '.' NAME { TrailerDot $2 (getSpan $1) (spanning $1 $2) }
 
