@@ -58,6 +58,7 @@ instance Span Subscript where
 
 isProperSlice :: Subscript -> Bool
 isProperSlice (SubscriptSlice {}) = True
+isProperSlice (SubscriptSliceEllipsis {}) = True
 isProperSlice other = False
 
 subscriptToSlice :: Subscript -> SliceSpan

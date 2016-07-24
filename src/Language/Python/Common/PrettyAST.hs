@@ -109,6 +109,7 @@ instance Pretty (Statement a) where
               text "if" <+> pretty cond <> colon $+$ indent (prettySuite body) $+$ 
               prettyGuards xs $+$
               optionalKeywordSuite "else" optionalElse
+           [] -> error "Attempt to pretty print conditional statement with empty guards"
    -- XXX is the assign_to always a singleton?
    pretty (Assign { assign_to = pattern, assign_expr = e })
       = commaList pattern <+> equals <+> pretty e
@@ -271,6 +272,7 @@ instance Pretty (Slice a) where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })
       = pretty lower <> colon <> pretty upper <> (maybe empty (\s -> colon <> pretty s) stride)
    pretty (SliceExpr { slice_expr = e }) = pretty e
+   pretty (SliceEllipsis {}) = text "..."
 
 instance Pretty (Op a) where
    pretty (And {}) = text "and"

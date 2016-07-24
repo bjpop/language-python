@@ -64,6 +64,7 @@ import Data.Maybe (maybeToList)
    '!='            { NotEqualsToken {} }
    '<>'            { NotEqualsV2Token {} }
    '.'             { DotToken {} }
+   '...'           { EllipsisToken {} }
    '`'             { BackQuoteToken {} }
    '+='            { PlusAssignToken {} }
    '-='            { MinusAssignToken {} }
@@ -816,7 +817,8 @@ subscriptlist : sepOptEndBy(subscript, ',') { $1 }
 
 subscript :: { Subscript }
 subscript
-   : '.' '.' '.' { SubscriptSliceEllipsis (spanning $1 $3) }
+   -- : '.' '.' '.' { SubscriptSliceEllipsis (spanning $1 $3) }
+   : '...' { SubscriptSliceEllipsis (getSpan $1) }
    | test { SubscriptExpr $1 (getSpan $1) }
    | opt(test) ':' opt(test) opt(sliceop) 
      { SubscriptSlice $1 $3 $4 (spanning (spanning (spanning $1 $2) $3) $4) }
