@@ -13,9 +13,9 @@
 -- 
 -- See:
 -- 
---    * Version 2.6 <http://www.python.org/doc/2.6/reference/lexical_analysis.html#string-literals>
+--    * Version 2.6 <http://docs.python.org/2.6/reference/lexical_analysis.html#string-literals>
 --  
---    * Version 3.1 <http://www.python.org/doc/3.1/reference/lexical_analysis.html#string-and-bytes-literals> 
+--    * Version 3.1 <http://docs.python.org/3.1/reference/lexical_analysis.html#string-and-bytes-literals> 
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.StringEscape ( 

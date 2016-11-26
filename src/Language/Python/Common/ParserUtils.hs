@@ -209,7 +209,7 @@ makeRelative items =
    dots (EllipsisToken {}) = 3
 
 {-
-   See: http://www.python.org/doc/3.0/reference/expressions.html#calls
+   See: http://docs.python.org/3.0/reference/expressions.html#calls
 
    arglist: (argument ',')* (argument [',']
                          |'*' test (',' argument)* [',' '**' test]

@@ -88,9 +88,9 @@ instance Annotated Ident where
 
 -- | A module (Python source file). 
 --
---    * Version 2.6 <http://www.python.org/doc/2.6/reference/toplevel_components.html>
+--    * Version 2.6 <http://docs.python.org/2.6/reference/toplevel_components.html>
 -- 
---    * Version 3.1 <http://www.python.org/doc/3.1/reference/toplevel_components.html> 
+--    * Version 3.1 <http://docs.python.org/3.1/reference/toplevel_components.html> 
 -- 
 newtype Module annot = Module [Statement annot] -- ^ A module is just a sequence of top-level statements.
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
@@ -100,9 +100,9 @@ type ModuleSpan = Module SrcSpan
 -- | A block of statements. A suite is a group of statements controlled by a clause, 
 -- for example, the body of a loop. 
 --
---    * Version 2.6 <http://www.python.org/doc/2.6/reference/compound_stmts.html>
+--    * Version 2.6 <http://docs.python.org/2.6/reference/compound_stmts.html>
 -- 
---    * Version 3.1 <http://www.python.org/doc/3.1/reference/compound_stmts.html>
+--    * Version 3.1 <http://docs.python.org/3.1/reference/compound_stmts.html>
 --
 type Suite annot = [Statement annot] 
 
@@ -115,9 +115,9 @@ type DottedNameSpan = DottedName SrcSpan
 
 -- | An entity imported using the \'import\' keyword.
 -- 
---    * Version 2.6 <http://www.python.org/doc/2.6/reference/simple_stmts.html#the-import-statement>
+--    * Version 2.6 <http://docs.python.org/2.6/reference/simple_stmts.html#the-import-statement>
 --
---    * Version 3.1 <http://www.python.org/doc/3.1/reference/simple_stmts.html#the-import-statement> 
+--    * Version 3.1 <http://docs.python.org/3.1/reference/simple_stmts.html#the-import-statement> 
 --
 data ImportItem annot = 
    ImportItem 
@@ -137,9 +137,9 @@ instance Annotated ImportItem where
 
 -- | An entity imported using the \'from ... import\' construct.
 --
---    * Version 2.6 <http://www.python.org/doc/2.6/reference/simple_stmts.html#the-import-statement>
+--    * Version 2.6 <http://docs.python.org/2.6/reference/simple_stmts.html#the-import-statement>
 -- 
---    * Version 3.1 <http://www.python.org/doc/3.1/reference/simple_stmts.html#the-import-statement>
+--    * Version 3.1 <http://docs.python.org/3.1/reference/simple_stmts.html#the-import-statement>
 --
 data FromItem annot = 
    FromItem 
@@ -192,15 +192,15 @@ instance Annotated ImportRelative where
 --
 --    * Simple statements:
 --
---       * Version 2.6 <http://www.python.org/doc/2.6/reference/simple_stmts.html>
+--       * Version 2.6 <http://docs.python.org/2.6/reference/simple_stmts.html>
 -- 
---       * Version 3.1 <http://www.python.org/doc/3.1/reference/simple_stmts.html>
+--       * Version 3.1 <http://docs.python.org/3.1/reference/simple_stmts.html>
 --
 --    * Compound statements:
 --
---       * Version 2.6 <http://www.python.org/doc/2.6/reference/compound_stmts.html>
+--       * Version 2.6 <http://docs.python.org/2.6/reference/compound_stmts.html>
 --
---       * Version 3.1 <http://www.python.org/doc/3.1/reference/compound_stmts.html>
+--       * Version 3.1 <http://docs.python.org/3.1/reference/compound_stmts.html>
 --
 data Statement annot 
    -- | Import statement.
@@ -373,15 +373,15 @@ instance Annotated Decorator where
 -- 
 -- * Version 2.6: 
 --
--- * <http://www.python.org/doc/2.6/reference/compound_stmts.html#function-definitions>
+-- * <http://docs.python.org/2.6/reference/compound_stmts.html#function-definitions>
 --
--- * <http://www.python.org/doc/2.6/reference/expressions.html#calls>
+-- * <http://docs.python.org/2.6/reference/expressions.html#calls>
 --
 -- * Version 3.1: 
 --
--- * <http://www.python.org/doc/3.1/reference/compound_stmts.html#function-definitions>
+-- * <http://docs.python.org/3.1/reference/compound_stmts.html#function-definitions>
 --
--- * <http://www.python.org/doc/3.1/reference/expressions.html#calls>
+-- * <http://docs.python.org/3.1/reference/expressions.html#calls>
 --
 data Parameter annot
    -- | Ordinary named parameter.
@@ -573,9 +573,9 @@ instance Annotated CompIter where
 
 -- | Expressions.
 -- 
--- * Version 2.6 <http://www.python.org/doc/2.6/reference/expressions.html>.
+-- * Version 2.6 <http://docs.python.org/2.6/reference/expressions.html>.
 -- 
--- * Version 3.1 <http://www.python.org/doc/3.1/reference/expressions.html>.
+-- * Version 3.1 <http://docs.python.org/3.1/reference/expressions.html>.
 -- 
 data Expr annot
    -- | Variable.
