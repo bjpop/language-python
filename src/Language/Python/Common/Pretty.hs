@@ -48,6 +48,10 @@ perhaps (Just {}) doc = doc
 commaList :: Pretty a => [a] -> Doc
 commaList = hsep . punctuate comma . map pretty 
 
+-- | A list of things separated by equals signs.
+equalsList :: Pretty a => [a] -> Doc
+equalsList = hsep . punctuate (space <> equals) . map pretty
+
 instance Pretty Int where
   pretty = int
 
