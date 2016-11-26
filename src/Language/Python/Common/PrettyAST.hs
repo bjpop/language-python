@@ -112,7 +112,7 @@ instance Pretty (Statement a) where
            [] -> error "Attempt to pretty print conditional statement with empty guards"
    -- XXX is the assign_to always a singleton?
    pretty (Assign { assign_to = pattern, assign_expr = e })
-      = commaList pattern <+> equals <+> pretty e
+      = equalsList pattern <+> equals <+> pretty e
    pretty (AugmentedAssign { aug_assign_to = to_expr, aug_assign_op = op, aug_assign_expr = e})
       = pretty to_expr <+> pretty op <+> pretty e 
    pretty (Decorated { decorated_decorators = decs, decorated_def = stmt})
