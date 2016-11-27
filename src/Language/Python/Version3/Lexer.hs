@@ -9,7 +9,7 @@
 -- Portability : ghc
 --
 -- Lexical analysis for Python version 3.x programs. 
--- See: <http://www.python.org/doc/3.1/reference/lexical_analysis.html>.
+-- See: <http://docs.python.org/3.1/reference/lexical_analysis.html>.
 -----------------------------------------------------------------------------
 
 module Language.Python.Version3.Lexer (
