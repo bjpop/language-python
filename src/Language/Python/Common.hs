@@ -33,8 +33,8 @@ module Language.Python.Common (
 import Language.Python.Common.Pretty 
 import Language.Python.Common.Token 
 import Language.Python.Common.AST 
-import Language.Python.Common.PrettyAST 
-import Language.Python.Common.PrettyToken 
+import Language.Python.Common.PrettyAST ()
+import Language.Python.Common.PrettyToken ()
 import Language.Python.Common.SrcLocation 
-import Language.Python.Common.PrettyParseError 
+import Language.Python.Common.PrettyParseError ()
 import Language.Python.Common.ParseError

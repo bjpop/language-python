@@ -16,11 +16,8 @@ module Language.Python.Common.LexerUtils where
 import Control.Monad (liftM)
 import Control.Monad.Error.Class (throwError)
 import Data.List (foldl')
-import Data.Map as Map hiding (null, map, foldl')
 import Data.Word (Word8)
-import Data.Char (ord)
-import Numeric (readHex, readOct)
-import Language.Python.Common.Token as Token 
+import Language.Python.Common.Token as Token
 import Language.Python.Common.ParserMonad hiding (location)
 import Language.Python.Common.SrcLocation 
 import Codec.Binary.UTF8.String as UTF8 (encode)

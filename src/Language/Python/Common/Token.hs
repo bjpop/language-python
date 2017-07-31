@@ -25,7 +25,7 @@ module Language.Python.Common.Token (
    ) where
 
 import Language.Python.Common.Pretty
-import Language.Python.Common.SrcLocation (SrcSpan (..), SrcLocation (..), Span(getSpan))
+import Language.Python.Common.SrcLocation (SrcSpan (..), Span(getSpan))
 import Data.Data
 
 -- | Lexical tokens.

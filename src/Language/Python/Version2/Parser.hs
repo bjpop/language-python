@@ -35,7 +35,7 @@ import Language.Python.Version2.Parser.Lexer (initStartCodeStack)
 import Language.Python.Common.AST (ModuleSpan, StatementSpan, ExprSpan)
 import Language.Python.Common.Token (Token)
 import Language.Python.Common.SrcLocation (initialSrcLocation)
-import Language.Python.Common.ParserMonad (execParser, execParserKeepComments, ParseError, initialState)
+import Language.Python.Common.ParserMonad (execParserKeepComments, ParseError, initialState)
 
 -- | Parse a whole Python source file. Return comments in addition to the parsed module.
 parseModule :: String -- ^ The input stream (python module source code). 

@@ -12,7 +12,6 @@
 
 module Language.Python.Common.ParseError ( ParseError (..) ) where
 
-import Language.Python.Common.Pretty
 import Language.Python.Common.SrcLocation (SrcLocation)
 import Language.Python.Common.Token (Token)
 import Control.Monad.Error.Class
