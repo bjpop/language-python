@@ -101,7 +101,7 @@ instance Pretty (Statement a) where
       = text "def" <+> pretty (fun_name stmt) <> parens (commaList (fun_args stmt)) <+> 
         perhaps (fun_result_annotation stmt) (text "->") <+>
         pretty (fun_result_annotation stmt) <> colon $+$ indent (prettySuite (fun_body stmt)) 
-   pretty (AsyncFun { fun_def = fd }) = text "async" <+> pretty fd
+   pretty (AsyncFun { fun_def = fd }) = zeroWidthText "async " <+> pretty fd
    pretty stmt@(Class {})
       = text "class" <+> pretty (class_name stmt) <> prettyOptionalList (class_args stmt) <> 
         colon $+$ indent (prettySuite (class_body stmt)) 
@@ -129,7 +129,7 @@ instance Pretty (Statement a) where
    pretty (With { with_context = context, with_body = body })
       = text "with" <+> hcat (punctuate comma (map prettyWithContext context)) <+> colon $+$
         indent (prettySuite body)
-   pretty (AsyncWith { with_stmt = ws }) = text "async" <+> pretty ws
+   pretty (AsyncWith { with_stmt = ws }) = zeroWidthText "async " <+> pretty ws
    pretty Pass {} = text "pass"
    pretty Break {} = text "break"
    pretty Continue {} = text "continue"
