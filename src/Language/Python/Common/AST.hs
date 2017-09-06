@@ -229,6 +229,10 @@ data Statement annot
      , for_else :: Suite annot -- ^ Else clause.
      , stmt_annot :: annot
      }
+   | AsyncFor
+     { for_stmt :: Statement annot -- ^ For statement
+     , stmt_annot :: annot
+     }
    -- | Function definition. 
    | Fun 
      { fun_name :: Ident annot -- ^ Function name.
@@ -236,6 +240,10 @@ data Statement annot
      , fun_result_annotation :: Maybe (Expr annot) -- ^ Optional result annotation.
      , fun_body :: Suite annot -- ^ Function body.
      , stmt_annot :: annot 
+     }
+   | AsyncFun
+     { fun_def :: Statement annot -- ^ Function definition (Fun)
+     , stmt_annot :: annot
      }
    -- | Class definition. 
    | Class 
@@ -293,6 +301,10 @@ data Statement annot
      , with_body :: Suite annot -- ^ Suite to be managed.
      , stmt_annot :: annot
      }
+   | AsyncWith
+      { with_stmt :: Statement annot -- ^ With statement
+      , stmt_annot :: annot
+      }
    -- | Pass statement (null operation). 
    | Pass { stmt_annot :: annot }
    -- | Break statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition within that loop). 
@@ -635,6 +647,8 @@ data Expr annot
      }
    -- | Generator. 
    | Generator { gen_comprehension :: Comprehension annot, expr_annot :: annot }
+   -- | Await
+   | Await { await_expr :: Expr annot, expr_annot :: annot }
    -- | List comprehension. 
    | ListComp { list_comprehension :: Comprehension annot, expr_annot :: annot }
    -- | List. 

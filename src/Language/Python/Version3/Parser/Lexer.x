@@ -282,5 +282,6 @@ keywordNames =
    , ("as", AsToken), ("elif", ElifToken), ("if", IfToken), ("or", OrToken), ("yield", YieldToken)
    , ("assert", AssertToken), ("else", ElseToken), ("import", ImportToken), ("pass", PassToken)
    , ("break", BreakToken), ("except", ExceptToken), ("in", InToken), ("raise", RaiseToken)
+   , ("async", AsyncToken), ("await", AwaitToken)
    ]
 }

@@ -96,10 +96,12 @@ instance Pretty (Statement a) where
    pretty stmt@(For {})
       = text "for" <+> commaList (for_targets stmt) <+> text "in" <+> pretty (for_generator stmt) <> colon $+$
         indent (prettySuite (for_body stmt)) $+$ optionalKeywordSuite "else" (for_else stmt)
+   pretty (AsyncFor { for_stmt = fs }) = zeroWidthText "async " <> pretty fs
    pretty stmt@(Fun {})
       = text "def" <+> pretty (fun_name stmt) <> parens (commaList (fun_args stmt)) <+> 
         perhaps (fun_result_annotation stmt) (text "->") <+>
         pretty (fun_result_annotation stmt) <> colon $+$ indent (prettySuite (fun_body stmt)) 
+   pretty (AsyncFun { fun_def = fd }) = text "async" <+> pretty fd
    pretty stmt@(Class {})
       = text "class" <+> pretty (class_name stmt) <> prettyOptionalList (class_args stmt) <> 
         colon $+$ indent (prettySuite (class_body stmt)) 
@@ -127,6 +129,7 @@ instance Pretty (Statement a) where
    pretty (With { with_context = context, with_body = body })
       = text "with" <+> hcat (punctuate comma (map prettyWithContext context)) <+> colon $+$
         indent (prettySuite body)
+   pretty (AsyncWith { with_stmt = ws }) = text "async" <+> pretty ws
    pretty Pass {} = text "pass"
    pretty Break {} = text "break"
    pretty Continue {} = text "continue"
@@ -250,6 +253,7 @@ instance Pretty (Expr a) where
    pretty (Yield { yield_arg = arg })
       = text "yield" <+> pretty arg 
    pretty (Generator { gen_comprehension = gc }) = parens $ pretty gc
+   pretty (Await { await_expr = ae }) = text "await" <+> pretty ae
    pretty (ListComp { list_comprehension = lc }) = brackets $ pretty lc
    pretty (List { list_exprs = es }) = brackets (commaList es)
    pretty (Dictionary { dict_mappings = mappings })

@@ -65,6 +65,8 @@ instance Pretty Token where
         AsToken {} -> text "as"
         ElifToken {} -> text "elif"
         YieldToken {} -> text "yield"
+        AsyncToken {} -> text "async"
+        AwaitToken {} -> text "await"
         AssertToken {} -> text "assert"
         ImportToken {} -> text "import"
         PassToken {} -> text "pass"

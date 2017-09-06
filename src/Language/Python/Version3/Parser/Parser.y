@@ -81,6 +81,8 @@ import Data.Maybe (maybeToList)
    'and'           { AndToken {} }
    'as'            { AsToken {} }
    'assert'        { AssertToken {} }
+   'async'         { AsyncToken {} }
+   'await'         { AwaitToken {} }
    'break'         { BreakToken {} }
    'bytestring'    { ByteStringToken {} }
    'class'         { ClassToken {} }
@@ -223,8 +225,9 @@ decorators : many1(decorator) { $1 }
 
 decorated :: { StatementSpan }
 decorated 
-   : decorators or(classdef,funcdef) 
-     { makeDecorated $1 $2 } 
+   : decorators classdef { makeDecorated $1 $2 }
+   | decorators funcdef { makeDecorated $1 $2 }
+   | decorators async_funcdef { makeDecorated $1 $2 }
 
 -- funcdef: 'def' NAME parameters ['->' test] ':' suite 
 
@@ -515,7 +518,7 @@ assert_stmt :: { StatementSpan }
 assert_stmt : 'assert' sepBy(test,',') 
               { AST.Assert $2 (spanning $1 $2) }
 
--- compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated 
+-- compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt
 
 compound_stmt :: { StatementSpan }
 compound_stmt 
@@ -527,6 +530,7 @@ compound_stmt
    | funcdef    { $1 } 
    | classdef   { $1 }
    | decorated  { $1 }
+   | async_stmt { $1 }
 
 -- if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 
@@ -555,6 +559,20 @@ for_stmt :: { StatementSpan }
 for_stmt 
    : 'for' exprlist 'in' testlist ':' suite optional_else 
      { AST.For $2 $4 $6 $7 (spanning (spanning $1 $6) $7) }
+
+-- async_stmt: ASYNC (funcdef | with_stmt | for_stmt)
+
+async_stmt :: { StatementSpan }
+async_stmt
+   : 'async' funcdef { AST.AsyncFun $2 (spanning $1 $2) }
+   | 'async' with_stmt { AST.AsyncWith $2 (spanning $1 $2) }
+   | 'async' for_stmt { AST.AsyncFor $2 (spanning $1 $2) }
+
+-- async_fundef: ASYNC funcdef
+
+async_funcdef :: { StatementSpan }
+async_funcdef
+   : 'async' funcdef { AST.AsyncFun $2 (spanning $1 $2) }
 
 {- 
    try_stmt: ('try' ':' suite 
@@ -754,10 +772,14 @@ factor
 tilde_op :: { OpSpan }
 tilde_op: '~' { AST.Invert (getSpan $1) }
 
+-- await_expr: 'await' primary
+await_expr :: { ExprSpan }
+await_expr : 'await' atom { AST.Await $2 (spanning $1 $2) }
+
 -- power: atom trailer* ['**' factor]
 
 power :: { ExprSpan }
-power : atom many0(trailer) opt(pair(exponent_op, factor)) 
+power : or(await_expr, atom) many0(trailer) opt(pair(exponent_op, factor))
         { makeBinOp (addTrailer $1 $2) (maybeToList $3) } 
 
 exponent_op :: { OpSpan }
