@@ -949,7 +949,7 @@ comp_iter
 comp_for :: { CompForSpan }
 comp_for
    : 'for' exprlist 'in' or_test opt(comp_iter)
-     { CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+     { CompFor False $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- comp_if: 'if' old_trest [comp_iter]
 
@@ -967,7 +967,7 @@ list_iter
 -- list_for: 'for' exprlist 'in' testlist_safe [list_iter]
 list_for :: { CompForSpan }
 list_for: 'for' exprlist 'in' testlist_safe opt(list_iter)
-          { AST.CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+          { AST.CompFor False $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- list_if: 'if' old_test [list_iter]
 
@@ -985,7 +985,7 @@ gen_iter
 
 gen_for :: { CompForSpan }
 gen_for: 'for' exprlist 'in' or_test opt(gen_iter)
-          { AST.CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+          { AST.CompFor False $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- gen_if: 'if' old_test [gen_iter]
 

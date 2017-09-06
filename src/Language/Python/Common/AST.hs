@@ -537,7 +537,8 @@ instance Span ComprehensionExprSpan where
 -- | Comprehension \'for\' component. 
 data CompFor annot = 
    CompFor 
-   { comp_for_exprs :: [Expr annot]
+   { comp_for_async :: Bool
+   , comp_for_exprs :: [Expr annot]
    , comp_in_expr :: Expr annot
    , comp_for_iter :: Maybe (CompIter annot) 
    , comp_for_annot :: annot

@@ -20,7 +20,7 @@ import Language.Python.Common.ParserUtils
 import Language.Python.Common.ParserMonad
 import Language.Python.Common.SrcLocation
 import Data.Either (rights, either)
-import Data.Maybe (maybeToList)
+import Data.Maybe (isJust, maybeToList)
 }
 
 %name parseFileInput file_input 
@@ -970,8 +970,8 @@ comp_iter
 
 comp_for :: { CompForSpan }
 comp_for 
-   : 'for' exprlist 'in' or_test opt(comp_iter) 
-     { CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+   : opt('async') 'for' exprlist 'in' or_test opt(comp_iter)
+     { CompFor (isJust $1) $3 $5 $6 (spanning $1 (spanning (spanning $2 $5) $6)) }
 
 -- comp_if: 'if' test_nocond [comp_iter]
 

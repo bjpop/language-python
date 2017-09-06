@@ -208,8 +208,9 @@ instance Pretty (ComprehensionExpr a) where
    pretty (ComprehensionDict d) = pretty d
 
 instance Pretty (CompFor a) where
-   pretty (CompFor { comp_for_exprs = es, comp_in_expr = e, comp_for_iter = iter }) 
-      = text "for" <+> commaList es <+> text "in" <+> pretty e <+> pretty iter
+   pretty (CompFor { comp_for_async = ca, comp_for_exprs = es, comp_in_expr = e, comp_for_iter = iter })
+      = (text $ if ca then "async for" else "for") <+> commaList es
+      <+> text "in" <+> pretty e <+> pretty iter
 
 instance Pretty (CompIf a) where
    pretty (CompIf { comp_if = e, comp_if_iter = iter }) 
