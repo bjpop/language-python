@@ -748,6 +748,7 @@ data Op annot
    | Minus { op_annot :: annot } -- ^ \'-\'
    | Divide { op_annot :: annot } -- ^ \'\/\'
    | FloorDivide { op_annot :: annot } -- ^ \'\/\/\'
+   | MatrixMult { op_annot :: annot } -- ^ \'@\'
    | Invert { op_annot :: annot } -- ^ \'~\' (bitwise inversion of its integer argument)
    | Modulo { op_annot :: annot } -- ^ \'%\'
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
@@ -774,6 +775,7 @@ data AssignOp annot
    | LeftShiftAssign { assignOp_annot :: annot } -- ^ \'<<=\'
    | RightShiftAssign { assignOp_annot :: annot } -- ^ \'>>=\'
    | FloorDivAssign { assignOp_annot :: annot } -- ^ \'\/\/=\'
+   | MatrixMultAssign { assignOp_annot :: annot } -- ^ \'@=\'
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
 
 type AssignOpSpan = AssignOp SrcSpan

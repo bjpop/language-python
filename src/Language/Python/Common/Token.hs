@@ -119,6 +119,7 @@ data Token
    | LeftShiftAssignToken { token_span :: !SrcSpan }              -- ^ Delimiter: binary-left-shift assignment \'<<=\'.
    | RightShiftAssignToken { token_span :: !SrcSpan }             -- ^ Delimiter: binary-right-shift assignment \'>>=\'.
    | FloorDivAssignToken { token_span :: !SrcSpan }               -- ^ Delimiter: floor-divide assignment \'//=\'.
+   | MatrixMultAssignToken { token_span :: !SrcSpan }             -- ^ Delimiter: matrix multiplication assignment \'@=\'.
    | BackQuoteToken { token_span :: !SrcSpan }                    -- ^ Delimiter: back quote character \'`\'.
 
    -- Operators
@@ -263,6 +264,7 @@ classifyToken token =
       LeftShiftAssignToken {} -> Assignment 
       RightShiftAssignToken {} -> Assignment 
       FloorDivAssignToken {} -> Assignment 
+      MatrixMultAssignToken {} -> Assignment
       BackQuoteToken {} -> Punctuation 
       PlusToken {} -> Operator 
       MinusToken {} -> Operator 
@@ -367,6 +369,7 @@ tokenString token =
       LeftShiftAssignToken {} -> "<<="
       RightShiftAssignToken {} -> ">>="
       FloorDivAssignToken {} -> "//=" 
+      MatrixMultAssignToken {} -> "@="
       BackQuoteToken {} -> "`"
       PlusToken {} -> "+"
       MinusToken {} -> "-"

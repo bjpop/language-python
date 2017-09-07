@@ -76,6 +76,7 @@ import Data.Maybe (isJust, maybeToList)
    '<<='           { LeftShiftAssignToken {} }
    '>>='           { RightShiftAssignToken {} }
    '//='           { FloorDivAssignToken {} } 
+   '@='            { MatrixMultAssignToken {} }
    '@'             { AtToken {} }
    '->'            { RightArrowToken {} }
    'and'           { AndToken {} }
@@ -371,7 +372,7 @@ test_list_star_rev
 
 {- 
    augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
-            '<<=' | '>>=' | '**=' | '//=') 
+            '<<=' | '>>=' | '**=' | '//=' | '@=')
 -}
 
 augassign :: { AssignOpSpan }
@@ -388,6 +389,7 @@ augassign
    | '<<=' { AST.LeftShiftAssign (getSpan $1) }
    | '>>=' { AST.RightShiftAssign (getSpan $1) }
    | '//=' { AST.FloorDivAssign (getSpan $1) } 
+   | '@='  { AST.MatrixMultAssign (getSpan $1) }
 
 -- del_stmt: 'del' exprlist
 
@@ -761,6 +763,7 @@ mult_div_mod_op
    | '/'  { AST.Divide (getSpan $1) }
    | '%'  { AST.Modulo (getSpan $1) }
    | '//' { AST.FloorDivide (getSpan $1) }
+   | '@'  { AST.MatrixMult (getSpan $1) }
 
 -- factor: ('+'|'-'|'~') factor | power 
 

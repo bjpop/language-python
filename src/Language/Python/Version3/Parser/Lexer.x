@@ -201,6 +201,7 @@ $white_no_nl+  ;  -- skip whitespace
     "<<=" { symbolToken LeftShiftAssignToken }
     ">>=" { symbolToken RightShiftAssignToken }
     "//=" { symbolToken FloorDivAssignToken } 
+    "@="  { symbolToken MatrixMultAssignToken }
     ","   { symbolToken CommaToken }
     "@"   { symbolToken AtToken }
     \;    { symbolToken SemiColonToken }

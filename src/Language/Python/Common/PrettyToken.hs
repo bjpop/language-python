@@ -106,6 +106,7 @@ instance Pretty Token where
         LeftShiftAssignToken {} -> text "<<="
         RightShiftAssignToken {} -> text ">>="
         FloorDivAssignToken {} -> text "//="
+        MatrixMultAssignToken {} -> text "@="
         BackQuoteToken {} -> text "` (back quote)"
         PlusToken {} -> text "+"
         MinusToken {} -> text "-"

@@ -305,6 +305,7 @@ instance Pretty (Op a) where
    pretty (Minus {}) = text "-"
    pretty (Divide {}) = text "/"
    pretty (FloorDivide {}) = text "//"
+   pretty (MatrixMult {}) = text "@"
    pretty (Invert {}) = text "~"
    pretty (Modulo {}) = text "%"
 
@@ -321,3 +322,4 @@ instance Pretty (AssignOp a) where
    pretty (LeftShiftAssign {}) = text "<<="
    pretty (RightShiftAssign {}) = text ">>="
    pretty (FloorDivAssign {}) = text "//="
+   pretty (MatrixMultAssign {}) = text "@="
