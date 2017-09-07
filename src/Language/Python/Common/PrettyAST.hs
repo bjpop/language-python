@@ -270,8 +270,9 @@ instance Pretty (YieldArg a) where
    pretty (YieldFrom e _annot) = text "from" <+> pretty e
    pretty (YieldExpr e) = pretty e
 
-instance Pretty (DictMappingPair a) where
+instance Pretty (DictKeyDatumList a) where
    pretty (DictMappingPair key val) = pretty key <> colon <+> pretty val
+   pretty (DictUnpacking expr) = text "**" <> pretty expr
 
 instance Pretty (Slice a) where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })

@@ -158,11 +158,21 @@ makeSet :: ExprSpan -> Either CompForSpan [ExprSpan] -> SrcSpan -> ExprSpan
 makeSet e (Left compFor) = SetComp (Comprehension (ComprehensionExpr e) compFor (spanning e compFor))
 makeSet e (Right es) = Set (e:es)
 
-makeDictionary :: (ExprSpan, ExprSpan) -> Either CompForSpan [(ExprSpan,ExprSpan)] -> SrcSpan -> ExprSpan
-makeDictionary mapping@(key, val) (Left compFor) =
+-- The Either (ExprSpan, ExprSpan) ExprSpan refers to a (key, value) pair or a dictionary unpacking expression.
+makeDictionary :: Either (ExprSpan, ExprSpan) ExprSpan -> Either CompForSpan [Either (ExprSpan, ExprSpan) ExprSpan] -> SrcSpan -> ExprSpan
+makeDictionary (Left mapping@(key, val)) (Left compFor) =
    DictComp (Comprehension (ComprehensionDict (DictMappingPair key val)) compFor (spanning mapping compFor))
-makeDictionary (key, val) (Right es) =
-   Dictionary (DictMappingPair key val: map (\(e1, e2) -> DictMappingPair e1 e2) es)
+-- This is allowed by the grammar, but will produce a runtime syntax error:
+-- dict unpacking cannot be used in dict comprehension
+makeDictionary (Right unpacking) (Left compFor) =
+   DictComp (Comprehension (ComprehensionDict (DictUnpacking unpacking)) compFor (spanning unpacking compFor))
+makeDictionary item (Right es) = Dictionary $ toKeyDatumList <$> item : es
+
+
+toKeyDatumList :: Either (ExprSpan, ExprSpan) ExprSpan -> DictKeyDatumList SrcSpan
+toKeyDatumList (Left (key, value)) = DictMappingPair key value
+toKeyDatumList (Right unpacking) = DictUnpacking unpacking
+
 
 fromEither :: Either a a -> a
 fromEither (Left x) = x

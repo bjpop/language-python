@@ -44,7 +44,7 @@ module Language.Python.Common.AST (
    , Op (..), OpSpan
    , Argument (..), ArgumentSpan
    , Slice (..), SliceSpan
-   , DictMappingPair (..), DictMappingPairSpan
+   , DictKeyDatumList (..), DictKeyDatumListSpan
    , YieldArg (..), YieldArgSpan
    -- * Imports
    , ImportItem (..), ImportItemSpan
@@ -525,7 +525,7 @@ instance Annotated Comprehension where
 
 data ComprehensionExpr annot
    = ComprehensionExpr (Expr annot)
-   | ComprehensionDict (DictMappingPair annot) 
+   | ComprehensionDict (DictKeyDatumList annot)
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
 
 type ComprehensionExprSpan = ComprehensionExpr SrcSpan
@@ -655,7 +655,7 @@ data Expr annot
    -- | List. 
    | List { list_exprs :: [Expr annot], expr_annot :: annot }
    -- | Dictionary. 
-   | Dictionary { dict_mappings :: [DictMappingPair annot], expr_annot :: annot }
+   | Dictionary { dict_mappings :: [DictKeyDatumList annot], expr_annot :: annot }
    -- | Dictionary comprehension. /Version 3 only/. 
    | DictComp { dict_comprehension :: Comprehension annot, expr_annot :: annot }
    -- | Set. 
@@ -689,14 +689,16 @@ instance Span YieldArgSpan where
 instance Annotated Expr where
    annot = expr_annot 
 
-data DictMappingPair annot =
+data DictKeyDatumList annot =
    DictMappingPair (Expr annot) (Expr annot)
+   | DictUnpacking (Expr annot)
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
 
-type DictMappingPairSpan = DictMappingPair SrcSpan 
+type DictKeyDatumListSpan = DictKeyDatumList SrcSpan
 
-instance Span DictMappingPairSpan where
+instance Span DictKeyDatumListSpan where
    getSpan (DictMappingPair e1 e2) = spanning e1 e2
+   getSpan (DictUnpacking e) = getSpan e
 
 -- | Slice compenent.
 data Slice annot
