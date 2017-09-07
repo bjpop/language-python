@@ -147,6 +147,12 @@ rawStringToken = StringToken
 byteStringToken :: SrcSpan -> String -> Token
 byteStringToken = ByteStringToken
 
+formatStringToken :: SrcSpan -> String -> Token
+formatStringToken = StringToken
+
+formatRawStringToken :: SrcSpan -> String -> Token
+formatRawStringToken = StringToken
+
 unicodeStringToken :: SrcSpan -> String -> Token
 unicodeStringToken = UnicodeStringToken
 
