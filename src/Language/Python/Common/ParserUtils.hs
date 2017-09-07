@@ -102,20 +102,23 @@ makeTupleOrExpr es@(_:_) Nothing  = Tuple es (getSpan es)
 makeAssignmentOrExpr :: ExprSpan -> Either [ExprSpan] (AssignOpSpan, ExprSpan) -> StatementSpan
 makeAssignmentOrExpr e (Left es) 
    = makeNormalAssignment e es
-   where
-   makeNormalAssignment :: ExprSpan -> [ExprSpan] -> StatementSpan
-   makeNormalAssignment e [] = StmtExpr e (getSpan e)
-   makeNormalAssignment e es 
-      = AST.Assign (e : front) (head back) (spanning e es)
-      where
-      (front, back) = splitAt (len - 1) es
-      len = length es 
-makeAssignmentOrExpr e1 (Right (op, e2)) 
-   = makeAugAssignment e1 op e2
-   where
-   makeAugAssignment :: ExprSpan -> AssignOpSpan -> ExprSpan -> StatementSpan
-   makeAugAssignment e1 op e2
-      = AST.AugmentedAssign e1 op e2 (spanning e1 e2)
+makeAssignmentOrExpr e (Right ope2)
+   = makeAugAssignment e ope2
+
+makeAugAssignment :: ExprSpan -> (AssignOpSpan, ExprSpan) -> StatementSpan
+makeAugAssignment e1 (op, e2)
+  = AST.AugmentedAssign e1 op e2 (spanning e1 e2)
+
+makeNormalAssignment :: ExprSpan -> [ExprSpan] -> StatementSpan
+makeNormalAssignment e [] = StmtExpr e (getSpan e)
+makeNormalAssignment e es
+  = AST.Assign (e : front) (head back) (spanning e es)
+  where
+  (front, back) = splitAt (len - 1) es
+  len = length es
+
+makeAnnAssignment :: ExprSpan -> (ExprSpan, Maybe ExprSpan) -> StatementSpan
+makeAnnAssignment ae (annotation, ato) = AST.AnnotatedAssign annotation ato ae (spanning ae ato)
 
 makeTry :: Token -> SuiteSpan -> ([HandlerSpan], [StatementSpan], [StatementSpan]) -> StatementSpan
 makeTry t1 body (handlers, elses, finally)

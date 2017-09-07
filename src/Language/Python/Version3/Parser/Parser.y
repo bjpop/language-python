@@ -339,12 +339,15 @@ small_stmt
    | nonlocal_stmt { $1 }
    | assert_stmt   { $1 }
 
--- expr_stmt: testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
+{- expr_stmt: testlist_star_expr (annassign | augassign (yield_expr|testlist) |
+                        ('=' (yield_expr|testlist_star_expr))*)
+-}
 
 expr_stmt :: { StatementSpan }
-expr_stmt 
-   : testlist_star_expr either(many_assign, augassign_yield_or_test_list) 
-   { makeAssignmentOrExpr $1 $2 }
+expr_stmt
+   : testlist_star_expr many_assign { makeNormalAssignment $1 $2 }
+   | testlist_star_expr augassign_yield_or_test_list { makeAugAssignment $1 $2 }
+   | testlist_star_expr annassign { makeAnnAssignment $1 $2 }
 
 many_assign :: { [ExprSpan] }
 many_assign : many0(right('=', yield_or_test_list_star)) { $1 }
@@ -390,6 +393,11 @@ augassign
    | '>>=' { AST.RightShiftAssign (getSpan $1) }
    | '//=' { AST.FloorDivAssign (getSpan $1) } 
    | '@='  { AST.MatrixMultAssign (getSpan $1) }
+
+-- annassign: ':' test ['=' test]
+
+annassign :: { (ExprSpan, Maybe ExprSpan) }
+annassign : ':' test opt(right('=', test)) { ($2, $3) }
 
 -- del_stmt: 'del' exprlist
 

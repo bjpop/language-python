@@ -271,6 +271,12 @@ data Statement annot
      , aug_assign_expr :: Expr annot  -- ^ Expression to evaluate.
      , stmt_annot :: annot
      }
+   | AnnotatedAssign
+    { ann_assign_annotation :: Expr annot
+    , ann_assign_to :: Maybe (Expr annot)
+    , ann_assign_expr :: Expr annot
+    , stmt_annot :: annot
+    }
    -- | Decorated definition of a function or class.
    | Decorated 
      { decorated_decorators :: [Decorator annot] -- ^ Decorators.
