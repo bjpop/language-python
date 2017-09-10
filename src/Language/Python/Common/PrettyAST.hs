@@ -119,7 +119,7 @@ instance Pretty (Statement a) where
    pretty (AugmentedAssign { aug_assign_to = to_expr, aug_assign_op = op, aug_assign_expr = e})
       = pretty to_expr <+> pretty op <+> pretty e
    pretty (AnnotatedAssign { ann_assign_annotation = ann_annotate, ann_assign_to = ann_to, ann_assign_expr = ann_expr})
-      = pretty ann_expr <+> text ":" <+> pretty ann_annotate <+> fromMaybe empty (((text "=" <+>) . pretty) <$> ann_to)
+      = pretty ann_to <+> text ":" <+> pretty ann_annotate <+> fromMaybe empty (((text "=" <+>) . pretty) <$> ann_expr)
    pretty (Decorated { decorated_decorators = decs, decorated_def = stmt})
       = vcat (map pretty decs) $+$ pretty stmt
    pretty (Return { return_expr = e }) = text "return" <+> pretty e

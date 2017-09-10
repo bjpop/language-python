@@ -273,8 +273,8 @@ data Statement annot
      }
    | AnnotatedAssign
     { ann_assign_annotation :: Expr annot
-    , ann_assign_to :: Maybe (Expr annot)
-    , ann_assign_expr :: Expr annot
+    , ann_assign_to :: Expr annot
+    , ann_assign_expr :: Maybe (Expr annot)
     , stmt_annot :: annot
     }
    -- | Decorated definition of a function or class.

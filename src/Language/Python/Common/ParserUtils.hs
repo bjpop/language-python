@@ -118,7 +118,7 @@ makeNormalAssignment e es
   len = length es
 
 makeAnnAssignment :: ExprSpan -> (ExprSpan, Maybe ExprSpan) -> StatementSpan
-makeAnnAssignment ae (annotation, ato) = AST.AnnotatedAssign annotation ato ae (spanning ae ato)
+makeAnnAssignment ato (annotation, ae) = AST.AnnotatedAssign annotation ato ae (spanning ae ato)
 
 makeTry :: Token -> SuiteSpan -> ([HandlerSpan], [StatementSpan], [StatementSpan]) -> StatementSpan
 makeTry t1 body (handlers, elses, finally)
