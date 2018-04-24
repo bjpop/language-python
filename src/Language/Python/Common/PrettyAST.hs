@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Version2.Syntax.PrettyAST
@@ -11,6 +12,10 @@
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.PrettyAST () where
+
+#if __GLASGOW_HASKELL__ >= 803
+import Prelude hiding ((<>))
+#endif
 
 import Language.Python.Common.Pretty
 import Language.Python.Common.AST 
