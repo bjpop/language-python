@@ -34,6 +34,10 @@ module Language.Python.Common.SrcLocation (
   startRow
 ) where
 
+#if __GLASGOW_HASKELL__ >= 803
+import Prelude hiding ((<>))
+#endif
+
 import Language.Python.Common.Pretty
 import Data.Data
 

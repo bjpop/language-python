@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Common.Pretty
@@ -12,6 +12,10 @@
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.Pretty (module TextPP, module Language.Python.Common.Pretty) where
+
+#if __GLASGOW_HASKELL__ >= 803
+import Prelude hiding ((<>))
+#endif
 
 import Text.PrettyPrint as TextPP
 
