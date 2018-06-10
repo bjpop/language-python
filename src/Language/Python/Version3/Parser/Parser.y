@@ -20,7 +20,7 @@ import Language.Python.Common.ParserUtils
 import Language.Python.Common.ParserMonad
 import Language.Python.Common.SrcLocation
 import Data.Either (rights, either)
-import Data.Maybe (maybeToList)
+import Data.Maybe (isJust, maybeToList)
 }
 
 %name parseFileInput file_input 
@@ -76,11 +76,14 @@ import Data.Maybe (maybeToList)
    '<<='           { LeftShiftAssignToken {} }
    '>>='           { RightShiftAssignToken {} }
    '//='           { FloorDivAssignToken {} } 
+   '@='            { MatrixMultAssignToken {} }
    '@'             { AtToken {} }
    '->'            { RightArrowToken {} }
    'and'           { AndToken {} }
    'as'            { AsToken {} }
    'assert'        { AssertToken {} }
+   'async'         { AsyncToken {} }
+   'await'         { AwaitToken {} }
    'break'         { BreakToken {} }
    'bytestring'    { ByteStringToken {} }
    'class'         { ClassToken {} }
@@ -223,8 +226,9 @@ decorators : many1(decorator) { $1 }
 
 decorated :: { StatementSpan }
 decorated 
-   : decorators or(classdef,funcdef) 
-     { makeDecorated $1 $2 } 
+   : decorators classdef { makeDecorated $1 $2 }
+   | decorators funcdef { makeDecorated $1 $2 }
+   | decorators async_funcdef { makeDecorated $1 $2 }
 
 -- funcdef: 'def' NAME parameters ['->' test] ':' suite 
 
@@ -335,12 +339,15 @@ small_stmt
    | nonlocal_stmt { $1 }
    | assert_stmt   { $1 }
 
--- expr_stmt: testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
+{- expr_stmt: testlist_star_expr (annassign | augassign (yield_expr|testlist) |
+                        ('=' (yield_expr|testlist_star_expr))*)
+-}
 
 expr_stmt :: { StatementSpan }
-expr_stmt 
-   : testlist_star_expr either(many_assign, augassign_yield_or_test_list) 
-   { makeAssignmentOrExpr $1 $2 }
+expr_stmt
+   : testlist_star_expr many_assign { makeNormalAssignment $1 $2 }
+   | testlist_star_expr augassign_yield_or_test_list { makeAugAssignment $1 $2 }
+   | testlist_star_expr annassign { makeAnnAssignment $1 $2 }
 
 many_assign :: { [ExprSpan] }
 many_assign : many0(right('=', yield_or_test_list_star)) { $1 }
@@ -368,7 +375,7 @@ test_list_star_rev
 
 {- 
    augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
-            '<<=' | '>>=' | '**=' | '//=') 
+            '<<=' | '>>=' | '**=' | '//=' | '@=')
 -}
 
 augassign :: { AssignOpSpan }
@@ -385,6 +392,12 @@ augassign
    | '<<=' { AST.LeftShiftAssign (getSpan $1) }
    | '>>=' { AST.RightShiftAssign (getSpan $1) }
    | '//=' { AST.FloorDivAssign (getSpan $1) } 
+   | '@='  { AST.MatrixMultAssign (getSpan $1) }
+
+-- annassign: ':' test ['=' test]
+
+annassign :: { (ExprSpan, Maybe ExprSpan) }
+annassign : ':' test opt(right('=', test)) { ($2, $3) }
 
 -- del_stmt: 'del' exprlist
 
@@ -515,7 +528,7 @@ assert_stmt :: { StatementSpan }
 assert_stmt : 'assert' sepBy(test,',') 
               { AST.Assert $2 (spanning $1 $2) }
 
--- compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated 
+-- compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt
 
 compound_stmt :: { StatementSpan }
 compound_stmt 
@@ -527,6 +540,7 @@ compound_stmt
    | funcdef    { $1 } 
    | classdef   { $1 }
    | decorated  { $1 }
+   | async_stmt { $1 }
 
 -- if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 
@@ -555,6 +569,20 @@ for_stmt :: { StatementSpan }
 for_stmt 
    : 'for' exprlist 'in' testlist ':' suite optional_else 
      { AST.For $2 $4 $6 $7 (spanning (spanning $1 $6) $7) }
+
+-- async_stmt: ASYNC (funcdef | with_stmt | for_stmt)
+
+async_stmt :: { StatementSpan }
+async_stmt
+   : 'async' funcdef { AST.AsyncFun $2 (spanning $1 $2) }
+   | 'async' with_stmt { AST.AsyncWith $2 (spanning $1 $2) }
+   | 'async' for_stmt { AST.AsyncFor $2 (spanning $1 $2) }
+
+-- async_fundef: ASYNC funcdef
+
+async_funcdef :: { StatementSpan }
+async_funcdef
+   : 'async' funcdef { AST.AsyncFun $2 (spanning $1 $2) }
 
 {- 
    try_stmt: ('try' ':' suite 
@@ -743,6 +771,7 @@ mult_div_mod_op
    | '/'  { AST.Divide (getSpan $1) }
    | '%'  { AST.Modulo (getSpan $1) }
    | '//' { AST.FloorDivide (getSpan $1) }
+   | '@'  { AST.MatrixMult (getSpan $1) }
 
 -- factor: ('+'|'-'|'~') factor | power 
 
@@ -754,10 +783,14 @@ factor
 tilde_op :: { OpSpan }
 tilde_op: '~' { AST.Invert (getSpan $1) }
 
+-- await_expr: 'await' primary
+await_expr :: { ExprSpan }
+await_expr : 'await' atom { AST.Await $2 (spanning $1 $2) }
+
 -- power: atom trailer* ['**' factor]
 
 power :: { ExprSpan }
-power : atom many0(trailer) opt(pair(exponent_op, factor)) 
+power : or(await_expr, atom) many0(trailer) opt(pair(exponent_op, factor))
         { makeBinOp (addTrailer $1 $2) (maybeToList $3) } 
 
 exponent_op :: { OpSpan }
@@ -865,25 +898,29 @@ testlistrev
    : test { [$1] }
    | testlistrev ',' test { $3 : $1 }
 
-{- 
-   dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
-                   (test (comp_for | (',' test)* [','])) )
+{-
+   dictorsetmaker: ( ((test ':' test | '**' expr)
+                       (comp_for | (',' (test ':' test | '**' expr))* [','])) |
+                      ((test | star_expr)
+                       (comp_for | (',' (test | star_expr))* [','])) )
 -}
 
 dictorsetmaker :: { SrcSpan -> ExprSpan }
 dictorsetmaker
-   : test ':' test dict_rest { makeDictionary ($1, $3) $4 } 
-   | test set_rest { makeSet $1 $2 } 
+   : test ':' test dict_rest { makeDictionary (Left ($1, $3)) $4 }
+   | '**' expr dict_rest { makeDictionary (Right $2) $3 }
+   | test set_rest { makeSet $1 $2 }
 
-dict_rest :: { Either CompForSpan [(ExprSpan, ExprSpan)] }
+dict_rest :: { Either CompForSpan [Either (ExprSpan, ExprSpan) ExprSpan] }
 dict_rest 
    : comp_for { Left $1 }
    | zero_or_more_dict_mappings_rev opt_comma { Right (reverse $1) }
 
-zero_or_more_dict_mappings_rev :: { [(ExprSpan, ExprSpan)] }
+zero_or_more_dict_mappings_rev :: { [Either (ExprSpan, ExprSpan) ExprSpan] }
 zero_or_more_dict_mappings_rev
    : {- empty -} { [] }
-   | zero_or_more_dict_mappings_rev ',' test ':' test { ($3,$5) : $1 }
+   | zero_or_more_dict_mappings_rev ',' test ':' test { Left ($3,$5) : $1 }
+   | zero_or_more_dict_mappings_rev ',' '**' expr { Right $4 : $1 }
 
 set_rest :: { Either CompForSpan [ExprSpan] }
 set_rest
@@ -948,8 +985,8 @@ comp_iter
 
 comp_for :: { CompForSpan }
 comp_for 
-   : 'for' exprlist 'in' or_test opt(comp_iter) 
-     { CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+   : opt('async') 'for' exprlist 'in' or_test opt(comp_iter)
+     { CompFor (isJust $1) $3 $5 $6 (spanning $1 (spanning (spanning $2 $5) $6)) }
 
 -- comp_if: 'if' test_nocond [comp_iter]
 

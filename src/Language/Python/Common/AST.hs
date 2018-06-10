@@ -44,7 +44,7 @@ module Language.Python.Common.AST (
    , Op (..), OpSpan
    , Argument (..), ArgumentSpan
    , Slice (..), SliceSpan
-   , DictMappingPair (..), DictMappingPairSpan
+   , DictKeyDatumList (..), DictKeyDatumListSpan
    , YieldArg (..), YieldArgSpan
    -- * Imports
    , ImportItem (..), ImportItemSpan
@@ -229,6 +229,10 @@ data Statement annot
      , for_else :: Suite annot -- ^ Else clause.
      , stmt_annot :: annot
      }
+   | AsyncFor
+     { for_stmt :: Statement annot -- ^ For statement
+     , stmt_annot :: annot
+     }
    -- | Function definition. 
    | Fun 
      { fun_name :: Ident annot -- ^ Function name.
@@ -236,6 +240,10 @@ data Statement annot
      , fun_result_annotation :: Maybe (Expr annot) -- ^ Optional result annotation.
      , fun_body :: Suite annot -- ^ Function body.
      , stmt_annot :: annot 
+     }
+   | AsyncFun
+     { fun_def :: Statement annot -- ^ Function definition (Fun)
+     , stmt_annot :: annot
      }
    -- | Class definition. 
    | Class 
@@ -263,6 +271,12 @@ data Statement annot
      , aug_assign_expr :: Expr annot  -- ^ Expression to evaluate.
      , stmt_annot :: annot
      }
+   | AnnotatedAssign
+    { ann_assign_annotation :: Expr annot
+    , ann_assign_to :: Expr annot
+    , ann_assign_expr :: Maybe (Expr annot)
+    , stmt_annot :: annot
+    }
    -- | Decorated definition of a function or class.
    | Decorated 
      { decorated_decorators :: [Decorator annot] -- ^ Decorators.
@@ -293,6 +307,10 @@ data Statement annot
      , with_body :: Suite annot -- ^ Suite to be managed.
      , stmt_annot :: annot
      }
+   | AsyncWith
+      { with_stmt :: Statement annot -- ^ With statement
+      , stmt_annot :: annot
+      }
    -- | Pass statement (null operation). 
    | Pass { stmt_annot :: annot }
    -- | Break statement (may only occur syntactically nested in a for or while loop, but not nested in a function or class definition within that loop). 
@@ -513,7 +531,7 @@ instance Annotated Comprehension where
 
 data ComprehensionExpr annot
    = ComprehensionExpr (Expr annot)
-   | ComprehensionDict (DictMappingPair annot) 
+   | ComprehensionDict (DictKeyDatumList annot)
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
 
 type ComprehensionExprSpan = ComprehensionExpr SrcSpan
@@ -525,7 +543,8 @@ instance Span ComprehensionExprSpan where
 -- | Comprehension \'for\' component. 
 data CompFor annot = 
    CompFor 
-   { comp_for_exprs :: [Expr annot]
+   { comp_for_async :: Bool
+   , comp_for_exprs :: [Expr annot]
    , comp_in_expr :: Expr annot
    , comp_for_iter :: Maybe (CompIter annot) 
    , comp_for_annot :: annot
@@ -635,12 +654,14 @@ data Expr annot
      }
    -- | Generator. 
    | Generator { gen_comprehension :: Comprehension annot, expr_annot :: annot }
+   -- | Await
+   | Await { await_expr :: Expr annot, expr_annot :: annot }
    -- | List comprehension. 
    | ListComp { list_comprehension :: Comprehension annot, expr_annot :: annot }
    -- | List. 
    | List { list_exprs :: [Expr annot], expr_annot :: annot }
    -- | Dictionary. 
-   | Dictionary { dict_mappings :: [DictMappingPair annot], expr_annot :: annot }
+   | Dictionary { dict_mappings :: [DictKeyDatumList annot], expr_annot :: annot }
    -- | Dictionary comprehension. /Version 3 only/. 
    | DictComp { dict_comprehension :: Comprehension annot, expr_annot :: annot }
    -- | Set. 
@@ -674,14 +695,16 @@ instance Span YieldArgSpan where
 instance Annotated Expr where
    annot = expr_annot 
 
-data DictMappingPair annot =
+data DictKeyDatumList annot =
    DictMappingPair (Expr annot) (Expr annot)
+   | DictUnpacking (Expr annot)
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
 
-type DictMappingPairSpan = DictMappingPair SrcSpan 
+type DictKeyDatumListSpan = DictKeyDatumList SrcSpan
 
-instance Span DictMappingPairSpan where
+instance Span DictKeyDatumListSpan where
    getSpan (DictMappingPair e1 e2) = spanning e1 e2
+   getSpan (DictUnpacking e) = getSpan e
 
 -- | Slice compenent.
 data Slice annot
@@ -733,6 +756,7 @@ data Op annot
    | Minus { op_annot :: annot } -- ^ \'-\'
    | Divide { op_annot :: annot } -- ^ \'\/\'
    | FloorDivide { op_annot :: annot } -- ^ \'\/\/\'
+   | MatrixMult { op_annot :: annot } -- ^ \'@\'
    | Invert { op_annot :: annot } -- ^ \'~\' (bitwise inversion of its integer argument)
    | Modulo { op_annot :: annot } -- ^ \'%\'
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
@@ -759,6 +783,7 @@ data AssignOp annot
    | LeftShiftAssign { assignOp_annot :: annot } -- ^ \'<<=\'
    | RightShiftAssign { assignOp_annot :: annot } -- ^ \'>>=\'
    | FloorDivAssign { assignOp_annot :: annot } -- ^ \'\/\/=\'
+   | MatrixMultAssign { assignOp_annot :: annot } -- ^ \'@=\'
    deriving (Eq,Ord,Show,Typeable,Data,Functor)
 
 type AssignOpSpan = AssignOp SrcSpan

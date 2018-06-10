@@ -18,7 +18,8 @@ import Prelude hiding ((<>))
 #endif
 
 import Language.Python.Common.Pretty
-import Language.Python.Common.AST 
+import Language.Python.Common.AST
+import Data.Maybe (isJust, fromMaybe)
 
 --------------------------------------------------------------------------------
 
@@ -101,10 +102,12 @@ instance Pretty (Statement a) where
    pretty stmt@(For {})
       = text "for" <+> commaList (for_targets stmt) <+> text "in" <+> pretty (for_generator stmt) <> colon $+$
         indent (prettySuite (for_body stmt)) $+$ optionalKeywordSuite "else" (for_else stmt)
+   pretty (AsyncFor { for_stmt = fs }) = zeroWidthText "async " <> pretty fs
    pretty stmt@(Fun {})
       = text "def" <+> pretty (fun_name stmt) <> parens (commaList (fun_args stmt)) <+> 
         perhaps (fun_result_annotation stmt) (text "->") <+>
         pretty (fun_result_annotation stmt) <> colon $+$ indent (prettySuite (fun_body stmt)) 
+   pretty (AsyncFun { fun_def = fd }) = zeroWidthText "async " <+> pretty fd
    pretty stmt@(Class {})
       = text "class" <+> pretty (class_name stmt) <> prettyOptionalList (class_args stmt) <> 
         colon $+$ indent (prettySuite (class_body stmt)) 
@@ -119,7 +122,9 @@ instance Pretty (Statement a) where
    pretty (Assign { assign_to = pattern, assign_expr = e })
       = equalsList pattern <+> equals <+> pretty e
    pretty (AugmentedAssign { aug_assign_to = to_expr, aug_assign_op = op, aug_assign_expr = e})
-      = pretty to_expr <+> pretty op <+> pretty e 
+      = pretty to_expr <+> pretty op <+> pretty e
+   pretty (AnnotatedAssign { ann_assign_annotation = ann_annotate, ann_assign_to = ann_to, ann_assign_expr = ann_expr})
+      = pretty ann_to <+> text ":" <+> pretty ann_annotate <+> fromMaybe empty (((text "=" <+>) . pretty) <$> ann_expr)
    pretty (Decorated { decorated_decorators = decs, decorated_def = stmt})
       = vcat (map pretty decs) $+$ pretty stmt
    pretty (Return { return_expr = e }) = text "return" <+> pretty e
@@ -132,6 +137,7 @@ instance Pretty (Statement a) where
    pretty (With { with_context = context, with_body = body })
       = text "with" <+> hcat (punctuate comma (map prettyWithContext context)) <+> colon $+$
         indent (prettySuite body)
+   pretty (AsyncWith { with_stmt = ws }) = zeroWidthText "async " <+> pretty ws
    pretty Pass {} = text "pass"
    pretty Break {} = text "break"
    pretty Continue {} = text "continue"
@@ -210,8 +216,9 @@ instance Pretty (ComprehensionExpr a) where
    pretty (ComprehensionDict d) = pretty d
 
 instance Pretty (CompFor a) where
-   pretty (CompFor { comp_for_exprs = es, comp_in_expr = e, comp_for_iter = iter }) 
-      = text "for" <+> commaList es <+> text "in" <+> pretty e <+> pretty iter
+   pretty (CompFor { comp_for_async = ca, comp_for_exprs = es, comp_in_expr = e, comp_for_iter = iter })
+      = (text $ if ca then "async for" else "for") <+> commaList es
+      <+> text "in" <+> pretty e <+> pretty iter
 
 instance Pretty (CompIf a) where
    pretty (CompIf { comp_if = e, comp_if_iter = iter }) 
@@ -255,6 +262,7 @@ instance Pretty (Expr a) where
    pretty (Yield { yield_arg = arg })
       = text "yield" <+> pretty arg 
    pretty (Generator { gen_comprehension = gc }) = parens $ pretty gc
+   pretty (Await { await_expr = ae }) = text "await" <+> pretty ae
    pretty (ListComp { list_comprehension = lc }) = brackets $ pretty lc
    pretty (List { list_exprs = es }) = brackets (commaList es)
    pretty (Dictionary { dict_mappings = mappings })
@@ -270,8 +278,9 @@ instance Pretty (YieldArg a) where
    pretty (YieldFrom e _annot) = text "from" <+> pretty e
    pretty (YieldExpr e) = pretty e
 
-instance Pretty (DictMappingPair a) where
+instance Pretty (DictKeyDatumList a) where
    pretty (DictMappingPair key val) = pretty key <> colon <+> pretty val
+   pretty (DictUnpacking expr) = text "**" <> pretty expr
 
 instance Pretty (Slice a) where
    pretty (SliceProper { slice_lower = lower, slice_upper = upper, slice_stride = stride })
@@ -305,6 +314,7 @@ instance Pretty (Op a) where
    pretty (Minus {}) = text "-"
    pretty (Divide {}) = text "/"
    pretty (FloorDivide {}) = text "//"
+   pretty (MatrixMult {}) = text "@"
    pretty (Invert {}) = text "~"
    pretty (Modulo {}) = text "%"
 
@@ -321,3 +331,4 @@ instance Pretty (AssignOp a) where
    pretty (LeftShiftAssign {}) = text "<<="
    pretty (RightShiftAssign {}) = text ">>="
    pretty (FloorDivAssign {}) = text "//="
+   pretty (MatrixMultAssign {}) = text "@="

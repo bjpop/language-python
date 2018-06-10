@@ -865,18 +865,18 @@ testlistrev
 
 dictorsetmaker :: { SrcSpan -> ExprSpan }
 dictorsetmaker
-   : test ':' test dict_rest { makeDictionary ($1, $3) $4 }
+   : test ':' test dict_rest { makeDictionary (Left ($1, $3)) $4 }
    | test set_rest { makeSet $1 $2 }
 
-dict_rest :: { Either CompForSpan [(ExprSpan, ExprSpan)] }
+dict_rest :: { Either CompForSpan [Either (ExprSpan, ExprSpan) ExprSpan] }
 dict_rest
    : comp_for { Left $1 }
    | zero_or_more_dict_mappings_rev opt_comma { Right (reverse $1) }
 
-zero_or_more_dict_mappings_rev :: { [(ExprSpan, ExprSpan)] }
+zero_or_more_dict_mappings_rev :: { [Either (ExprSpan, ExprSpan) ExprSpan] }
 zero_or_more_dict_mappings_rev
    : {- empty -} { [] }
-   | zero_or_more_dict_mappings_rev ',' test ':' test { ($3,$5) : $1 }
+   | zero_or_more_dict_mappings_rev ',' test ':' test { (Left ($3,$5)) : $1 }
 
 set_rest :: { Either CompForSpan [ExprSpan] }
 set_rest
@@ -949,7 +949,7 @@ comp_iter
 comp_for :: { CompForSpan }
 comp_for
    : 'for' exprlist 'in' or_test opt(comp_iter)
-     { CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+     { CompFor False $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- comp_if: 'if' old_trest [comp_iter]
 
@@ -967,7 +967,7 @@ list_iter
 -- list_for: 'for' exprlist 'in' testlist_safe [list_iter]
 list_for :: { CompForSpan }
 list_for: 'for' exprlist 'in' testlist_safe opt(list_iter)
-          { AST.CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+          { AST.CompFor False $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- list_if: 'if' old_test [list_iter]
 
@@ -985,7 +985,7 @@ gen_iter
 
 gen_for :: { CompForSpan }
 gen_for: 'for' exprlist 'in' or_test opt(gen_iter)
-          { AST.CompFor $2 $4 $5 (spanning (spanning $1 $4) $5) }
+          { AST.CompFor False $2 $4 $5 (spanning (spanning $1 $4) $5) }
 
 -- gen_if: 'if' old_test [gen_iter]
 

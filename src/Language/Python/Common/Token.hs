@@ -86,6 +86,8 @@ data Token
    | OrToken { token_span :: !SrcSpan }                           -- ^ Keyword: boolean disjunction \'or\'.
    -- Version 3.x only:
    | NonLocalToken { token_span :: !SrcSpan }                     -- ^ Keyword: \'nonlocal\' (Python 3.x only)
+   | AsyncToken { token_span :: !SrcSpan }                        -- ^ Keyword: \'async\' (Python 3.x only)
+   | AwaitToken { token_span :: !SrcSpan }                        -- ^ Keyword: \'await\' (Python 3.x only)
    -- Version 2.x only:
    | PrintToken { token_span :: !SrcSpan }                        -- ^ Keyword: \'print\'. (Python 2.x only)
    | ExecToken { token_span :: !SrcSpan }                         -- ^ Keyword: \'exec\'. (Python 2.x only)
@@ -117,6 +119,7 @@ data Token
    | LeftShiftAssignToken { token_span :: !SrcSpan }              -- ^ Delimiter: binary-left-shift assignment \'<<=\'.
    | RightShiftAssignToken { token_span :: !SrcSpan }             -- ^ Delimiter: binary-right-shift assignment \'>>=\'.
    | FloorDivAssignToken { token_span :: !SrcSpan }               -- ^ Delimiter: floor-divide assignment \'//=\'.
+   | MatrixMultAssignToken { token_span :: !SrcSpan }             -- ^ Delimiter: matrix multiplication assignment \'@=\'.
    | BackQuoteToken { token_span :: !SrcSpan }                    -- ^ Delimiter: back quote character \'`\'.
 
    -- Operators
@@ -220,6 +223,8 @@ classifyToken token =
       AsToken {} -> Keyword 
       ElifToken {} -> Keyword 
       YieldToken {} -> Keyword 
+      AsyncToken {} -> Keyword
+      AwaitToken {} -> Keyword
       AssertToken {} -> Keyword 
       ImportToken {} -> Keyword 
       PassToken {} -> Keyword 
@@ -259,6 +264,7 @@ classifyToken token =
       LeftShiftAssignToken {} -> Assignment 
       RightShiftAssignToken {} -> Assignment 
       FloorDivAssignToken {} -> Assignment 
+      MatrixMultAssignToken {} -> Assignment
       BackQuoteToken {} -> Punctuation 
       PlusToken {} -> Operator 
       MinusToken {} -> Operator 
@@ -322,6 +328,8 @@ tokenString token =
       AsToken {} -> "as"
       ElifToken {} -> "elif" 
       YieldToken {} -> "yield"
+      AsyncToken {} -> "async"
+      AwaitToken {} -> "await"
       AssertToken {} -> "assert" 
       ImportToken {} -> "import"
       PassToken {} -> "pass" 
@@ -361,6 +369,7 @@ tokenString token =
       LeftShiftAssignToken {} -> "<<="
       RightShiftAssignToken {} -> ">>="
       FloorDivAssignToken {} -> "//=" 
+      MatrixMultAssignToken {} -> "@="
       BackQuoteToken {} -> "`"
       PlusToken {} -> "+"
       MinusToken {} -> "-"

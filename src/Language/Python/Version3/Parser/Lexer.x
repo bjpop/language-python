@@ -60,7 +60,9 @@ $not_double_quote = [. \n] # \"
 @byte_str_prefix = b | B
 @raw_str_prefix = r | R
 @unicode_str_prefix = u | U
+@format_str_prefix = f | F
 @raw_byte_str_prefix = @byte_str_prefix @raw_str_prefix | @raw_str_prefix @byte_str_prefix
+@format_raw_str_prefix = @format_str_prefix @raw_str_prefix | @raw_str_prefix @format_str_prefix
 @backslash_pair = \\ (\\|'|\"|@eol_pattern|$short_str_char)
 @backslash_pair_bs = \\ (\\|'|\"|@eol_pattern|$short_byte_str_char)
 @short_str_item_single = $short_str_char|@backslash_pair|\"
@@ -100,26 +102,34 @@ $white_no_nl+  ;  -- skip whitespace
 <0> {
    ' @short_str_item_single* ' { mkString stringToken }
    @raw_str_prefix ' @short_str_item_single* ' { mkString rawStringToken }
+   @format_str_prefix ' @short_str_item_single* ' { mkString formatStringToken }
    @byte_str_prefix ' @short_byte_str_item_single* ' { mkString byteStringToken }
    @raw_byte_str_prefix ' @short_byte_str_item_single* ' { mkString rawByteStringToken }
+   @format_raw_str_prefix ' @short_str_item_single* ' { mkString formatRawStringToken }
    @unicode_str_prefix ' @short_str_item_single* ' { mkString unicodeStringToken }
 
    \" @short_str_item_double* \" { mkString stringToken }
    @raw_str_prefix \" @short_str_item_double* \" { mkString rawStringToken }
+   @format_str_prefix \" @short_str_item_double* \" { mkString formatStringToken }
    @byte_str_prefix \" @short_byte_str_item_double* \" { mkString byteStringToken }
    @raw_byte_str_prefix \" @short_byte_str_item_double* \" { mkString rawByteStringToken }
+   @format_raw_str_prefix \" @short_str_item_double* \" { mkString formatRawStringToken }
    @unicode_str_prefix \" @short_str_item_double* \" { mkString unicodeStringToken }
 
    ''' @long_str_item_single* ''' { mkString stringToken }
    @raw_str_prefix ''' @long_str_item_single* ''' { mkString rawStringToken }
+   @format_str_prefix ''' @long_str_item_single* ''' { mkString formatStringToken }
    @byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString byteStringToken }
    @raw_byte_str_prefix ''' @long_byte_str_item_single* ''' { mkString rawByteStringToken }
+   @format_raw_str_prefix ''' @long_str_item_single* ''' { mkString formatRawStringToken }
    @unicode_str_prefix ''' @long_str_item_single* ''' { mkString unicodeStringToken }
 
    \"\"\" @long_str_item_double* \"\"\" { mkString stringToken }
    @raw_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString rawStringToken }
+   @format_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString formatStringToken }
    @byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString byteStringToken }
    @raw_byte_str_prefix \"\"\" @long_byte_str_item_double* \"\"\" { mkString rawByteStringToken }
+   @format_raw_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString formatRawStringToken }
    @unicode_str_prefix \"\"\" @long_str_item_double* \"\"\" { mkString unicodeStringToken }
 }
 
@@ -201,6 +211,7 @@ $white_no_nl+  ;  -- skip whitespace
     "<<=" { symbolToken LeftShiftAssignToken }
     ">>=" { symbolToken RightShiftAssignToken }
     "//=" { symbolToken FloorDivAssignToken } 
+    "@="  { symbolToken MatrixMultAssignToken }
     ","   { symbolToken CommaToken }
     "@"   { symbolToken AtToken }
     \;    { symbolToken SemiColonToken }
@@ -282,5 +293,6 @@ keywordNames =
    , ("as", AsToken), ("elif", ElifToken), ("if", IfToken), ("or", OrToken), ("yield", YieldToken)
    , ("assert", AssertToken), ("else", ElseToken), ("import", ImportToken), ("pass", PassToken)
    , ("break", BreakToken), ("except", ExceptToken), ("in", InToken), ("raise", RaiseToken)
+   , ("async", AsyncToken), ("await", AwaitToken)
    ]
 }

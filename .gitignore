@@ -3,3 +3,6 @@ dist
 *.o
 .cabal-sandbox
 cabal.sandbox.config
+.idea
+language-python.iml
+.stack-work
