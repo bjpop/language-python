@@ -1,4 +1,8 @@
 {
+{-# LANGUAGE CPP #-}
+
+#undef __GLASGOW_HASKELL__
+#define __GLASGOW_HASKELL__ 709
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Version2.Parser.Parser 
