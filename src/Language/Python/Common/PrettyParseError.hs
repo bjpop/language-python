@@ -15,7 +15,7 @@ module Language.Python.Common.PrettyParseError where
 import Language.Python.Common.Pretty
 import Language.Python.Common.ParseError (ParseError (..))
 import Language.Python.Common.SrcLocation 
-import Language.Python.Common.PrettyToken
+import Language.Python.Common.PrettyToken()
 
 instance Pretty ParseError where
     pretty (UnexpectedToken t) = pretty (getSpan t) <+> text "unexpected token:" <+> pretty t
