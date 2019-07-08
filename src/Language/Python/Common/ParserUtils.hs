@@ -257,9 +257,11 @@ checkArguments args = do
          ArgKeyword {}
             | state `elem` [1,2] -> check 2 rest
             | state `elem` [3,4] -> check 4 rest
+            | otherwise -> error "state should always be in range 1..4 here"
          ArgVarArgsPos {}
             | state `elem` [1,2] -> check 3 rest
             | state `elem` [3,4] -> spanError arg "there must not be two *arguments in an argument list"
+            | otherwise -> error "state should always be in range 1..4 here"
          ArgVarArgsKeyword {} -> check 5 rest
 
 {-
@@ -293,9 +295,11 @@ checkParameters params = do
          UnPackTuple {}
             | state `elem` [1,3] -> check state rest
             | state == 2 -> check 3 rest 
+            | otherwise -> error "state should always be in range 1..3 here"
          Param {}
             | state `elem` [1,3] -> check state rest
             | state == 2 -> check 3 rest 
+            | otherwise -> error "state should always be in range 1..3 here"
          EndPositional {}
             | state == 1 -> check 2 rest
             | otherwise -> spanError param "there must not be two *parameters in a parameter list"
