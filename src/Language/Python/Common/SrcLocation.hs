@@ -104,6 +104,7 @@ decColumn n loc
 incColumn :: Int -> SrcLocation -> SrcLocation
 incColumn n loc@(Sloc { sloc_column = col })
    = loc { sloc_column = col + n }
+incColumn _ NoLocation = NoLocation
 
 -- | Increment the column of a location by one tab stop.
 incTab :: SrcLocation -> SrcLocation
@@ -111,11 +112,13 @@ incTab loc@(Sloc { sloc_column = col })
    = loc { sloc_column = newCol } 
    where
    newCol = col + 8 - (col - 1) `mod` 8
+incTab NoLocation = NoLocation
 
 -- | Increment the line number (row) of a location by one.
 incLine :: Int -> SrcLocation -> SrcLocation
 incLine n loc@(Sloc { sloc_row = row }) 
    = loc { sloc_column = 1, sloc_row = row + n }
+incLine _ NoLocation = NoLocation
 
 {-
 Inspired heavily by compiler/basicTypes/SrcLoc.lhs 
