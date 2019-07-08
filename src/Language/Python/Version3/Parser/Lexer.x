@@ -20,9 +20,6 @@ import Language.Python.Common.ParserMonad hiding (location)
 import Language.Python.Common.SrcLocation
 import Language.Python.Common.LexerUtils
 import qualified Data.Map as Map
-import Control.Monad (liftM)
-import Data.List (foldl')
-import Numeric (readHex, readOct)
 }
 
 -- character sets
