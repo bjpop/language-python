@@ -19,7 +19,7 @@ import Prelude hiding ((<>))
 
 import Language.Python.Common.Pretty
 import Language.Python.Common.AST
-import Data.Maybe (isJust, fromMaybe)
+import Data.Maybe (fromMaybe)
 
 --------------------------------------------------------------------------------
 
