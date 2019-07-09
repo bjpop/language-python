@@ -14,7 +14,6 @@
 module Language.Python.Common.LexerUtils where
 
 import Control.Monad (liftM)
-import Control.Monad.Error.Class (throwError)
 import Data.List (foldl')
 import Data.Word (Word8)
 import Language.Python.Common.Token as Token
