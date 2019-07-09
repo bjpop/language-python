@@ -122,6 +122,7 @@ readBinary
    toBinary = foldl' acc 0
    acc b '0' = 2 * b
    acc b '1' = 2 * b + 1
+   acc _ _ = error "Lexer ensures all digits passed to readBinary are 0 or 1."
 
 readFloat :: String -> Double
 readFloat str@('.':cs) = read ('0':readFloatRest str)
@@ -230,3 +231,4 @@ lexicalError = do
 
 readOctNoO :: String -> Integer
 readOctNoO (zero:rest) = read (zero:'O':rest)
+readOctNoO [] = error "Lexer ensures readOctNoO is never called on an empty string"

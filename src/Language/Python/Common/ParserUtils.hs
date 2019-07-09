@@ -98,6 +98,7 @@ makeTupleOrExpr :: [ExprSpan] -> Maybe Token -> ExprSpan
 makeTupleOrExpr [e] Nothing = e
 makeTupleOrExpr es@(_:_) (Just t) = Tuple es (spanning es t) 
 makeTupleOrExpr es@(_:_) Nothing  = Tuple es (getSpan es)
+makeTupleOrExpr [] _ = error "makeTupleOrExpr should never be called with an empty list"
 
 makeAssignmentOrExpr :: ExprSpan -> Either [ExprSpan] (AssignOpSpan, ExprSpan) -> StatementSpan
 makeAssignmentOrExpr e (Left es) 
@@ -188,6 +189,7 @@ makeDecorator t1 name args = Decorator name args (spanning t1 args)
 -- parser guarantees that the first list is non-empty
 makeDecorated :: [DecoratorSpan] -> StatementSpan -> StatementSpan
 makeDecorated ds@(d:_) def = Decorated ds def (spanning d def)
+makeDecorated [] _ = error "parser guarantees that makeDecorated's first argument is non-empty"
 
 -- suite can't be empty so it is safe to take span over it
 makeFun :: Token -> IdentSpan -> [ParameterSpan] -> Maybe ExprSpan -> SuiteSpan -> StatementSpan
@@ -220,6 +222,7 @@ makeRelative items =
    countDots count (Left token:rest) = countDots (count + dots token) rest 
    dots (DotToken {}) = 1
    dots (EllipsisToken {}) = 3
+   dots _ = error "Parser ensures dots is only called on DotToken or EllipsisToken."
 
 {-
    See: http://docs.python.org/3.0/reference/expressions.html#calls
@@ -254,9 +257,11 @@ checkArguments args = do
          ArgKeyword {}
             | state `elem` [1,2] -> check 2 rest
             | state `elem` [3,4] -> check 4 rest
+            | otherwise -> error "state should always be in range 1..4 here"
          ArgVarArgsPos {}
             | state `elem` [1,2] -> check 3 rest
             | state `elem` [3,4] -> spanError arg "there must not be two *arguments in an argument list"
+            | otherwise -> error "state should always be in range 1..4 here"
          ArgVarArgsKeyword {} -> check 5 rest
 
 {-
@@ -290,9 +295,11 @@ checkParameters params = do
          UnPackTuple {}
             | state `elem` [1,3] -> check state rest
             | state == 2 -> check 3 rest 
+            | otherwise -> error "state should always be in range 1..3 here"
          Param {}
             | state `elem` [1,3] -> check state rest
             | state == 2 -> check 3 rest 
+            | otherwise -> error "state should always be in range 1..3 here"
          EndPositional {}
             | state == 1 -> check 2 rest
             | otherwise -> spanError param "there must not be two *parameters in a parameter list"
