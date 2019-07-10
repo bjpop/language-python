@@ -43,6 +43,7 @@ module Language.Python.Common.ParserMonad
    , addComment
    , getComments
    , spanError
+   , throwError
    ) where
 
 import Language.Python.Common.SrcLocation (SrcLocation (..), SrcSpan (..), Span (..))
@@ -51,7 +52,6 @@ import Language.Python.Common.ParseError (ParseError (..))
 import Control.Applicative ((<$>))
 import Control.Monad.State.Class
 import Control.Monad.State.Strict as State
-import Control.Monad.Error as Error
 import Language.Python.Common.Pretty
 
 internalError :: String -> P a 
@@ -90,6 +90,9 @@ initialState initLoc inp scStack
    }
 
 type P a = StateT ParseState (Either ParseError) a
+
+throwError :: ParseError -> P a
+throwError = lift . Left
 
 execParser :: P a -> ParseState -> Either ParseError a
 execParser = evalStateT 

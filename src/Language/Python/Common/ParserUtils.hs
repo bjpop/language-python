@@ -15,7 +15,6 @@ module Language.Python.Common.ParserUtils where
 
 import Data.List (foldl')
 import Data.Maybe (isJust)
-import Control.Monad.Error.Class (throwError)
 import Language.Python.Common.AST as AST
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.ParserMonad hiding (location)
