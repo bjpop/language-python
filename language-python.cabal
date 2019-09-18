@@ -28,7 +28,7 @@ Library
    ghc-options: -fwarn-incomplete-patterns -fwarn-unused-imports -fwarn-warnings-deprecations
    build-depends:
       base == 4.*,
-      containers == 0.5.*,
+      containers == 0.6.*,
       pretty == 1.1.*,
       array >= 0.4 && < 0.6,
       transformers >= 0.3 && < 0.6,
