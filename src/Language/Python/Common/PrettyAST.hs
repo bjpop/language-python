@@ -254,9 +254,9 @@ instance Pretty (Expr a) where
       pretty e <> dot <> pretty a
    pretty (Lambda { lambda_args = args, lambda_body = body })
       = text "lambda" <+> commaList args <> colon <+> pretty body
-   pretty (Tuple { tuple_exprs = es }) =
+   pretty (Tuple { tuple_exprs = es }) = parens $
       case es of
-         [] -> text "()"
+         [] -> empty
          [e] -> pretty e <> comma
          _ -> commaList es
    pretty (Yield { yield_arg = arg })
