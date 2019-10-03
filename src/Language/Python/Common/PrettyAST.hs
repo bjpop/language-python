@@ -34,9 +34,7 @@ blankLine :: Doc
 blankLine = text []
 
 prettyString :: String -> Doc
-   -- XXX should handle the escaping properly
--- prettyString str = text (show str)
-prettyString str = text str
+prettyString str = text $ show str
 
 instance Pretty (Module a) where
    pretty (Module stmts) = vcat $ map pretty stmts
