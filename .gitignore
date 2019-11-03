@@ -6,3 +6,4 @@ cabal.sandbox.config
 .idea
 language-python.iml
 .stack-work
+dist-newstyle

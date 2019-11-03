@@ -35,3 +35,8 @@ If all goes well you should see a long list of test cases and a summary at the e
  Failed  0             0            
  Total   517           517       
 ```
+
+Pull requests
+-------------
+
+Pull requests are greatly appreciated. If you plan to submit a pull request, please test your code in the test suite first. New test cases are desirable, especially if you are fixing a bug or adding a new feature.
