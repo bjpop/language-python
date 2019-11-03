@@ -23,6 +23,7 @@ Testing
 Test cases are provided in a language-python-test. Test binaries can be built and run as below (cabal version 3.0.0.0 onwards):
 
 ```
+cabal install shelltestrunner
 cabal install --overwrite-policy=always language-python-test
 cd language-python-test/
 PATH=$HOME/.cabal/bin/:$PATH make test
