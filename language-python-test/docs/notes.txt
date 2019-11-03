@@ -1,0 +1,18 @@
+Notes about the design of language-python-test
+--------------------------------------------------------------------------------
+
+1. Why is this a separate package, and not included in the language-python
+   source tree?
+
+Mainly because of a limitation in the current Haskell cabal tool. It appears
+to be difficult to have a single cabal package which defines a library and an
+executable which depends on the library. While it seems to be possible, it is
+inconvenient because you seem to have to specify all depenencies twice.
+
+2. For roundtrip testing we will have three kinds of tests:
+    - those specific to version 2 of python
+    - those specific to version 3 of python
+    - those which are independent of the python version (should be tested by both)
+
+
+   

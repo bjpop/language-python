@@ -1,0 +1,39 @@
+name:                language-python-test
+version:             0.5.6
+cabal-version:       >= 1.6
+synopsis:            testing code for the language-python library
+description:         testing code for the language-python library
+category:            Language
+license:             BSD3
+license-file:        LICENSE
+copyright:           (c) 2014-2019 Bernard James Pope
+author:              Bernard James Pope (Bernie Pope)
+maintainer:          florbitous@gmail.com
+homepage:            http://github.com/bjpop/language-python-test
+build-type:          Simple
+stability:           experimental
+
+source-repository head
+   type: git
+   location: https://github.com/bjpop/language-python-test
+
+Executable language-python-roundtrip
+   hs-source-dirs:
+      ./src
+   main-is: RoundTrip.hs
+   other-modules:
+   build-depends:    base == 4.*, language-python == 0.5.6
+
+Executable language-python-tokens
+   hs-source-dirs:
+      ./src
+   main-is: Tokens.hs
+   other-modules:
+   build-depends:    base == 4.*, language-python == 0.5.6
+
+Executable language-python-parse-pretty
+   hs-source-dirs:
+      ./src
+   main-is: ParsePretty.hs
+   other-modules:
+   build-depends:    base == 4.*, language-python == 0.5.6

@@ -1,0 +1,2 @@
+s = b'''Hello
+World''' 
