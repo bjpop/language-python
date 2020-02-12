@@ -27,7 +27,7 @@ main = do
                if test then exitWith ExitSuccess else exitSuccess
       _other -> putStrLn "Incorrect command line. Expected: <2|3|n> inputFileName"
 
-check :: [Comparison] -> IO Bool 
+check :: [Comparison] -> IO Bool
 check [] = return True -- must have all been equal
 check (Equal:rest) = check rest
 check (NotEqual s1 s2:_rest) = do
