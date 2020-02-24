@@ -43,9 +43,9 @@ $not_single_quote = [. \n] # '
 $not_double_quote = [. \n] # \"
 
 -- macro definitions
-@exponent = (e | E) (\+ | \-)? $digit(_?digit+)*
-@fraction = \. $digit(_?digit+)*
-@int_part = $digit(_?digit+)*
+@exponent = (e | E) (\+ | \-)? $digit(_?$digit+)*
+@fraction = \. $digit(_?$digit+)*
+@int_part = $digit(_?$digit+)*
 @point_float = (@int_part? @fraction) | @int_part \.
 @exponent_float = (@int_part | @point_float) @exponent
 @float_number = @point_float | @exponent_float
