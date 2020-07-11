@@ -32,9 +32,9 @@ PATH=$HOME/.cabal/bin/:$PATH make test
 If all goes well you should see a long list of test cases and a summary at the end, that should look like the following:
 ```
          Test Cases    Total        
- Passed  517           517          
+ Passed  519           519          
  Failed  0             0            
- Total   517           517       
+ Total   519           519  
 ```
 
 Pull requests
