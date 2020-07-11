@@ -114,6 +114,11 @@ notEOF :: a -> AlexInput -> Int -> AlexInput -> Bool
 notEOF _user _inputBeforeToken _tokenLength (_loc, _bs, inputAfterToken) 
    = not (null inputAfterToken)
 
+delUnderscores :: String -> String
+delUnderscores []       = []
+delUnderscores ('_':xs) = delUnderscores xs
+delUnderscores (x  :xs) = x : delUnderscores xs
+
 readBinary :: String -> Integer
 readBinary 
    = toBinary . drop 2 
