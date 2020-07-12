@@ -3,6 +3,11 @@ Introduction
 
 A lexer, parser and pretty printing library for Python 2 and 3.
 
+Intended use case
+-----------------
+
+Generally speaking this library was written with the intention of parsing Python for the purposes of program transformation and compilation. It can also be used for Python code generation, but that is not the primary goal. As a consequence the "Abstract Syntax Tree" is not particularly abstract, and might be better described as a "Concrete Syntax Tree". 
+
 License
 -------
 
