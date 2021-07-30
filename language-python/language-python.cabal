@@ -47,10 +47,10 @@ Library
       Language.Python.Common.PrettyToken
       Language.Python.Common.AST
       Language.Python.Common.PrettyAST
+      Language.Python.Common.Quoter
       Language.Python.Version3
       Language.Python.Version3.Parser
       Language.Python.Version3.Lexer
-      Language.Python.Version3.Quoter
       Language.Python.Version2
       Language.Python.Version2.Parser
       Language.Python.Version2.Lexer
