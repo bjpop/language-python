@@ -7,6 +7,25 @@
 --
 -- Simple quasiquoters for converting python code into haskell expressions or patterns (it doesn't work for declarations and types). 
 -- Multi-line python quotations must be left aligned in the file. 
+-- Examples, that will yield :
+-- @
+-- binOpExpr = [pyExpr|x+y|]
+-- 
+-- [retStmt] = [pyStmt|return z|]
+-- 
+-- [py2Print] = [py2] = [py2Stmt|print somelist[1], "Hej there!"|]
+-- 
+-- pyMod = [pyModule|
+-- import something
+-- 
+-- def fun(a,b):
+--     c = a+b
+--     print(c)
+-- |]
+-- @
+-- Caution: This checks only for syntax of single quotes, not types or scopes or combinations of quotes.
+-- For example nothing keeps you from appending py2Print to pyMod. So this can be used to generate code,
+-- but checking validity is up to you.
 -----------------------------------------------------------------------------
 
 module Language.Python.Common.Quoter (
