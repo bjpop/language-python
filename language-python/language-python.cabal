@@ -13,10 +13,6 @@ maintainer:          florbitous@gmail.com
 homepage:            http://github.com/bjpop/language-python
 build-type:          Simple
 stability:           experimental
-extra-source-files:  src/Language/Python/Version3/Parser/Parser.y
-                     src/Language/Python/Version3/Parser/Lexer.x
-                     src/Language/Python/Version2/Parser/Parser.y
-                     src/Language/Python/Version2/Parser/Lexer.x
 tested-with: GHC ==7.8.4, GHC ==7.10.3, GHC ==8.0.2, GHC ==8.2.1, GHC ==8.6.3
 
 source-repository head
