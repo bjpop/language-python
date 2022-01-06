@@ -2,7 +2,7 @@ name:                language-python-test
 version:             0.5.8
 cabal-version:       >= 1.8
 synopsis:            testing code for the language-python library
-description:         testing code for the language-python library
+description:         A few executables to test the language-python library.
 category:            Language
 license:             BSD3
 license-file:        LICENSE
