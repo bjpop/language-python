@@ -1,6 +1,6 @@
 name:                language-python-test
 version:             0.5.8
-cabal-version:       >= 1.6
+cabal-version:       >= 1.8
 synopsis:            testing code for the language-python library
 description:         testing code for the language-python library
 category:            Language
