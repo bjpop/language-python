@@ -3,8 +3,7 @@ resolver: lts-10.2
 packages:
 - .
 
-extra-deps:
-- micro-recursion-schemes-5.0.2.2@sha256:3e7e4e3aa4b1bb1f6b72add2804602db1460dae541dc1c59d1b741477879be7d,1869
+extra-deps: []
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
