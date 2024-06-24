@@ -42,7 +42,9 @@ Library
       array >= 0.4 && < 0.6,
       transformers >= 0.3 && < 0.7,
       monads-tf == 0.1.*,
-      utf8-string >= 1 && < 2
+      utf8-string >= 1 && < 2,
+      template-haskell >=2.10
+
    build-tools: happy, alex
    exposed-modules:
       Language.Python.Common
@@ -54,6 +56,7 @@ Library
       Language.Python.Common.PrettyToken
       Language.Python.Common.AST
       Language.Python.Common.PrettyAST
+      Language.Python.Common.Quoter
       Language.Python.Version3
       Language.Python.Version3.Parser
       Language.Python.Version3.Lexer

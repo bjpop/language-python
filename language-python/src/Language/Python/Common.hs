@@ -27,7 +27,9 @@ module Language.Python.Common (
    -- * Parse errors
    module Language.Python.Common.ParseError,
    -- * Pretty printing parse errors
-   module Language.Python.Common.PrettyParseError -- this export is for Haddock
+   module Language.Python.Common.PrettyParseError, -- this export is for Haddock
+   -- * Quasiquoter
+   module Language.Python.Common.Quoter
   ) where
 
 import Language.Python.Common.Pretty 
@@ -38,3 +40,4 @@ import Language.Python.Common.PrettyToken ()
 import Language.Python.Common.SrcLocation 
 import Language.Python.Common.PrettyParseError ()
 import Language.Python.Common.ParseError
+import Language.Python.Common.Quoter

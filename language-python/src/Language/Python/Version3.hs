@@ -23,8 +23,8 @@ module Language.Python.Version3 (
    -- * The parser
    module Language.Python.Version3.Parser, 
    -- * The lexer
-   module Language.Python.Version3.Lexer 
+   module Language.Python.Version3.Lexer
    ) where
 
 import Language.Python.Version3.Parser 
-import Language.Python.Version3.Lexer 
+import Language.Python.Version3.Lexer
