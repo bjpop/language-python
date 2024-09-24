@@ -1,8 +1,12 @@
 {
 {-# LANGUAGE CPP #-}
 
+-- For legacy reasons
+#if __GLASGOW_HASKELL__ < 901 
 #undef __GLASGOW_HASKELL__
 #define __GLASGOW_HASKELL__ 709
+#endif
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Language.Python.Version3.Parser.Parser 
