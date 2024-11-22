@@ -43,7 +43,8 @@ Library
       transformers >= 0.3 && < 0.7,
       monads-tf == 0.1.*,
       utf8-string >= 1 && < 2
-   build-tools: happy, alex
+   build-tools: happy >= 1.20, alex
+   build-tool-depends: happy:happy
    exposed-modules:
       Language.Python.Common
       Language.Python.Common.ParseError

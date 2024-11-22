@@ -1,9 +1,12 @@
-resolver: lts-10.2
+resolver: lts-20.26
 
 packages:
 - .
 
 extra-deps: []
+
+system-ghc: false
+install-ghc: true
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
