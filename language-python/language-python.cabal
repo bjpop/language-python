@@ -1,5 +1,5 @@
 name:                language-python
-version:             0.6.0
+version:             0.6.1
 cabal-version:       >= 1.8
 synopsis:            Parsing and pretty printing of Python code.
 description:         language-python is a Haskell library for lexical analysis, parsing
