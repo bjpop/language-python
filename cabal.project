@@ -1,2 +1,9 @@
-packages: language-python/
-          language-python-test/
+packages:
+  language-python
+  language-python-test
+
+
+with-compiler: ghc-9.8.4
+
+tests: True
+

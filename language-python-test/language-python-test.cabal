@@ -1,5 +1,5 @@
 name:                language-python-test
-version:             0.6.0
+version:             0.6.2
 cabal-version:       >= 1.8
 synopsis:            testing code for the language-python library
 description:         A few executables to test the language-python library.
@@ -14,6 +14,7 @@ build-type:          Simple
 stability:           experimental
 
 tested-with:
+  GHC == 9.8.4
   GHC == 9.6.1
   GHC == 9.4.4
   GHC == 9.2.7
@@ -35,18 +36,18 @@ Executable language-python-roundtrip
       ./src
    main-is: RoundTrip.hs
    other-modules:
-   build-depends:    base == 4.*, language-python == 0.6.0
+   build-depends:    base == 4.*, language-python == 0.6.2
 
 Executable language-python-tokens
    hs-source-dirs:
       ./src
    main-is: Tokens.hs
    other-modules:
-   build-depends:    base == 4.*, language-python == 0.6.0
+   build-depends:    base == 4.*, language-python == 0.6.2
 
 Executable language-python-parse-pretty
    hs-source-dirs:
       ./src
    main-is: ParsePretty.hs
    other-modules:
-   build-depends:    base == 4.*, language-python == 0.6.0
+   build-depends:    base == 4.*, language-python == 0.6.2
