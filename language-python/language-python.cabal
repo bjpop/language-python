@@ -41,7 +41,7 @@ Library
       pretty == 1.1.*,
       array >= 0.4 && < 0.6,
       transformers >= 0.3 && < 0.7,
-      monads-tf == 0.1.*,
+      monads-tf == 0.3.*,
       utf8-string >= 1 && < 2
    build-tools: happy, alex
    exposed-modules:
