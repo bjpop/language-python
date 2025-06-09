@@ -16,9 +16,12 @@ stability:           experimental
 extra-source-files:  Changelog.md
 
 tested-with:
-  GHC == 9.6.1
-  GHC == 9.4.4
-  GHC == 9.2.7
+  GHC == 9.12.2
+  GHC == 9.10.2
+  GHC == 9.8.4
+  GHC == 9.6.7
+  GHC == 9.4.8
+  GHC == 9.2.8
   GHC == 9.0.2
   GHC == 8.10.7
   GHC == 8.8.4
@@ -26,7 +29,6 @@ tested-with:
   GHC == 8.4.4
   GHC == 8.2.2
   GHC == 8.0.2
-  GHC == 7.10.3
 
 source-repository head
    type: git
@@ -37,11 +39,11 @@ Library
    ghc-options: -fwarn-incomplete-patterns -fwarn-unused-imports -fwarn-warnings-deprecations
    build-depends:
       base >= 4.8 && < 5,
-      containers >= 0.5 && < 0.7,
+      containers >= 0.5 && < 0.8,
       pretty == 1.1.*,
       array >= 0.4 && < 0.6,
       transformers >= 0.3 && < 0.7,
-      monads-tf == 0.1.*,
+      monads-tf >= 0.1,
       utf8-string >= 1 && < 2
    build-tools: happy, alex
    exposed-modules:
