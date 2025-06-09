@@ -1,4 +1,4 @@
-branches: master ci-*
+branches: master
 
 -- monads-tf does not like transformers-0.6
 installed: +all -transformers -mtl
